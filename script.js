@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ── Mobile Menu Toggle ──
+  
   const navToggle = document.getElementById('navToggle');
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileLinks = mobileMenu.querySelectorAll('a');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Sorteio de Times Logic ──
+ 
   const namesInput = document.getElementById('namesInput');
   const sizeBtns = document.querySelectorAll('.size-btn');
   const customSizeInput = document.getElementById('customSize');
