@@ -1,2 +1,3 @@
 Apenas um pequeno site, praticamente vibecode (Tirando a parte do sorteio em JS)
 Mas consiste em HTML e CSS, não tem nada demais, não há motivos para esse site ter uma construção robusta.
+atualização: Refiz o Html nao usando IA, div por div, e marcação por marcação, um bom exercício.(mesmo assim ainda sim considero um vibecode - "diga nao ao full vibecode" use a IA de forma inteligente e nao de forma integral em seus projetos, seu cerebro ira deteriorar.)
