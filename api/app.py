@@ -33,7 +33,8 @@ SUSPICIOUS_TERMS_ANDROID = {
     "gameguardian": {"tipo": "Memory Editor (GameGuardian)", "peso": 100, "risco": "Baixo (Ban direto)"},
     "com.mod.menu": {"tipo": "Mod Menu", "peso": 100, "risco": "Baixo (Ban direto)"},
     "ptrace": {"tipo": "Injeção de Memória (ptrace)", "peso": 50, "risco": "Alto (Aparece em logs normais)"},
-    "auto_clicker": {"tipo": "Macro/AutoClicker", "peso": 60, "risco": "Médio"},
+    "auto_clicker": {"tipo": "Macro/AutoClicker", "peso": 60, "risco": "Médio"}
+    "não pega adm":{"tipo":"Noban", "peso": 100, "risco": "Alto"},,
 }
 
 SUSPICIOUS_TERMS_IOS = {
@@ -45,6 +46,7 @@ SUSPICIOUS_TERMS_IOS = {
     "substituted": {"tipo": "Tweak Injector", "peso": 90, "risco": "Baixo"},
     "ellekit": {"tipo": "Tweak Injector", "peso": 90, "risco": "Baixo"},
     "mobile substrate": {"tipo": "Tweak Injector", "peso": 90, "risco": "Baixo"},
+    "não pega adm":{"tipo":"Noban", "peso": 100, "risco": "Alto"},
 }
 
 GENERAL_TERMS = {
