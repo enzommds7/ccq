@@ -62,9 +62,9 @@ def analyze_content(content, filename, os_type):
     elif os_type == "ios":
         terms_to_check.update(SUSPICIOUS_TERMS_IOS)
 
+    content_lower = content.lower()
     for termo, info in terms_to_check.items():
-        pattern = re.escape(termo)
-        if re.search(pattern, content, re.IGNORECASE):
+        if termo.lower() in content_lower:
             score += info["peso"]
             findings.append({
                 "arquivo": filename,
@@ -148,19 +148,18 @@ def scan_file():
                         
         elif filename.endswith('.tar.gz') or filename.endswith('.gz'):
             with tarfile.open(name=file_path, mode="r:gz") as tar:
-                target_files = [m for m in tar.getmembers() if m.isfile() and m.name.endswith(('.txt', '.log', '.prop', '.plist'))]
-                
-                for membro in target_files:
-                    if membro.size > 50 * 1024 * 1024:
-                        continue
-                    
-                    f = tar.extractfile(membro)
-                    if f:
-                        conteudo = f.read().decode('utf-8', errors='ignore')
-                        findings, score = analyze_content(conteudo, membro.name, os_type)
-                        if findings:
-                            relatorio.extend(findings)
-                            pontuacao_total += score
+                for membro in tar:
+                    if membro.isfile() and membro.name.endswith(('.txt', '.log', '.prop', '.plist')):
+                        if membro.size > 50 * 1024 * 1024:
+                            continue
+                        
+                        f = tar.extractfile(membro)
+                        if f:
+                            conteudo = f.read().decode('utf-8', errors='ignore')
+                            findings, score = analyze_content(conteudo, membro.name, os_type)
+                            if findings:
+                                relatorio.extend(findings)
+                                pontuacao_total += score
 
         # Limpa o arquivo temp
         os.remove(file_path)
