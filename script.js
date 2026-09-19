@@ -336,22 +336,61 @@ document.addEventListener('DOMContentLoaded', () => {
         terminalLines.scrollTop = terminalLines.scrollHeight;
       }
 
-      // Actually send file
-      const div = document.createElement('div');
-      div.className = 'terminal-line';
-      div.textContent = "> Enviando pacote ao servidor remoto para análise heurística profunda...";
-      terminalLines.appendChild(div);
-      terminalLines.scrollTop = terminalLines.scrollHeight;
-
-      const formData = new FormData();
-      formData.append('user', adminCredentials.user);
-      formData.append('pass', adminCredentials.pass);
-      formData.append('file', file);
-
+      const fileId = 'file_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+      const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB chunks
+      const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+      
       try {
+        if (totalChunks > 1) {
+          const div = document.createElement('div');
+          div.className = 'terminal-line';
+          div.textContent = `> Arquivo grande detectado. Iniciando upload em ${totalChunks} partes (bypassing Cloudflare limits)...`;
+          terminalLines.appendChild(div);
+          terminalLines.scrollTop = terminalLines.scrollHeight;
+        }
+
+        for (let i = 0; i < totalChunks; i++) {
+          if (totalChunks > 1) {
+             const progressDiv = document.createElement('div');
+             progressDiv.className = 'terminal-line';
+             progressDiv.textContent = `> Enviando parte ${i + 1} de ${totalChunks}...`;
+             terminalLines.appendChild(progressDiv);
+             terminalLines.scrollTop = terminalLines.scrollHeight;
+          }
+          
+          const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          const chunkForm = new FormData();
+          chunkForm.append('user', adminCredentials.user);
+          chunkForm.append('pass', adminCredentials.pass);
+          chunkForm.append('fileId', fileId);
+          chunkForm.append('chunk', chunk);
+          
+          const chunkRes = await fetch(`${API_URL}/upload_chunk`, {
+            method: 'POST',
+            body: chunkForm
+          });
+          
+          if (!chunkRes.ok) {
+            let errText = await chunkRes.text();
+            throw new Error(`Falha no upload da parte ${i+1} (${chunkRes.status}): ${errText.substring(0, 50)}`);
+          }
+        }
+
+        const div = document.createElement('div');
+        div.className = 'terminal-line';
+        div.textContent = "> Upload completo. Enviando comando de remontagem e análise profunda no servidor...";
+        terminalLines.appendChild(div);
+        terminalLines.scrollTop = terminalLines.scrollHeight;
+
+        const scanForm = new FormData();
+        scanForm.append('user', adminCredentials.user);
+        scanForm.append('pass', adminCredentials.pass);
+        scanForm.append('fileId', fileId);
+        scanForm.append('fileName', file.name);
+
         const res = await fetch(`${API_URL}/scan`, {
           method: 'POST',
-          body: formData
+          body: scanForm
         });
         
         if (!res.ok) {

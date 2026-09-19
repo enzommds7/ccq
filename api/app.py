@@ -6,6 +6,9 @@ import tarfile
 import io
 import re
 import os
+import tempfile
+import shutil
+import os
 
 load_dotenv()
 
@@ -15,6 +18,9 @@ CORS(app)
 
 ADMIN_USER = os.getenv("ADMIN_USER", "CACIQUE")
 ADMIN_PASS = os.getenv("ADMIN_PASS", "g.indiopatrocina777")
+
+TEMP_DIR = os.path.join(tempfile.gettempdir(), "cacique_scan_uploads")
+os.makedirs(TEMP_DIR, exist_ok=True)
 
 # Dicionários de termos maliciosos com pesos e risco
 SUSPICIOUS_TERMS_ANDROID = {
@@ -79,31 +85,54 @@ def login():
     else:
         return jsonify({"status": "error", "message": "Credenciais inválidas."}), 401
 
+@app.route('/upload_chunk', methods=['POST'])
+def upload_chunk():
+    user = request.form.get('user')
+    password = request.form.get('pass')
+    if user != ADMIN_USER or password != ADMIN_PASS:
+        return jsonify({"erro": "Acesso Negado."}), 401
+
+    file_id = request.form.get('fileId')
+    chunk = request.files.get('chunk')
+    
+    if not file_id or not chunk:
+        return jsonify({"erro": "Parâmetros inválidos."}), 400
+
+    chunk_path = os.path.join(TEMP_DIR, f"{file_id}.tmp")
+    
+    with open(chunk_path, "ab") as f:
+        f.write(chunk.read())
+        
+    return jsonify({"status": "ok"}), 200
+
 @app.route('/scan', methods=['POST'])
 def scan_file():
     user = request.form.get('user')
     password = request.form.get('pass')
-    file = request.files.get('file')
+    file_id = request.form.get('fileId')
+    filename = request.form.get('fileName')
 
     if user != ADMIN_USER or password != ADMIN_PASS:
         return jsonify({"erro": "Acesso Negado. Credenciais inválidas."}), 401
 
-    if not file or not (file.filename.endswith('.zip') or file.filename.endswith('.tar.gz') or file.filename.endswith('.gz')):
+    if not filename or not (filename.endswith('.zip') or filename.endswith('.tar.gz') or filename.endswith('.gz')):
         return jsonify({"erro": "Envie um arquivo .zip ou .tar.gz válido."}), 400
+
+    file_path = os.path.join(TEMP_DIR, f"{file_id}.tmp")
+    if not os.path.exists(file_path):
+        return jsonify({"erro": "Arquivo não encontrado no servidor."}), 400
 
     # Tenta descobrir o OS pelo nome do arquivo
     os_type = "android" # Padrão
-    if 'sysdiagnose' in file.filename.lower():
+    if 'sysdiagnose' in filename.lower():
         os_type = "ios"
 
     relatorio = []
     pontuacao_total = 0
 
     try:
-        file_bytes = file.read()
-        
-        if file.filename.endswith('.zip'):
-            with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
+        if filename.endswith('.zip'):
+            with zipfile.ZipFile(file_path) as z:
                 target_files = [n for n in z.namelist() if n.endswith(('.txt', '.log', '.prop', '.plist'))]
                 
                 for nome_arquivo in target_files:
@@ -116,8 +145,9 @@ def scan_file():
                     if findings:
                         relatorio.extend(findings)
                         pontuacao_total += score
-        elif file.filename.endswith('.tar.gz') or file.filename.endswith('.gz'):
-            with tarfile.open(fileobj=io.BytesIO(file_bytes), mode="r:gz") as tar:
+                        
+        elif filename.endswith('.tar.gz') or filename.endswith('.gz'):
+            with tarfile.open(name=file_path, mode="r:gz") as tar:
                 target_files = [m for m in tar.getmembers() if m.isfile() and m.name.endswith(('.txt', '.log', '.prop', '.plist'))]
                 
                 for membro in target_files:
@@ -131,6 +161,9 @@ def scan_file():
                         if findings:
                             relatorio.extend(findings)
                             pontuacao_total += score
+
+        # Limpa o arquivo temp
+        os.remove(file_path)
 
         veredito = "Limpo"
         color = "green"
@@ -159,6 +192,8 @@ def scan_file():
         })
 
     except Exception as e:
+        if os.path.exists(file_path):
+            os.remove(file_path)
         return jsonify({"erro": f"Erro ao processar o arquivo: {str(e)}"}), 500
 
 if __name__ == '__main__':
