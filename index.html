@@ -24,6 +24,7 @@
         <li><a href="#sobre">Sobre</a></li>
         <li><a href="#regras">Regras</a></li>
         <li><a href="#sorteio">Sorteio</a></li>
+        <li><a href="#scan">Cacique SCAN</a></li>
         <li><a href="#redes">Redes</a></li>
       </ul>
       <a href="#redes" class="btn btn-primary btn-sm">Entrar na Tribo</a>
@@ -35,6 +36,7 @@
       <a href="#sobre">Sobre</a>
       <a href="#regras">Regras</a>
       <a href="#sorteio">Sorteio</a>
+      <a href="#scan">Cacique SCAN</a>
       <a href="#redes">Redes</a>
       <a href="#redes" class="cta-link">Entrar na Tribo</a>
     </div>
@@ -252,6 +254,64 @@
     </section>
 
     
+    <section class="scan" id="scan">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-label">Anti-Cheat Profissional</div>
+          <h2>Cacique SCAN</h2>
+          <p>Análise avançada de Dumps (Android & iOS) para garantir a justiça na tribo.</p>
+        </div>
+
+        <div class="scan-wrapper">
+          <!-- Login View -->
+          <div class="scan-panel glass" id="scanLoginView">
+            <div class="scan-lock-icon">
+              <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3>Acesso Restrito</h3>
+            <p class="scan-hint">Faça login com a credencial de ADM para liberar o scanner.</p>
+            <input type="text" id="scanUser" placeholder="Usuário" class="scan-input">
+            <input type="password" id="scanPass" placeholder="Senha" class="scan-input">
+            <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Desbloquear Scanner</button>
+            <p id="scanLoginError" class="scan-error"></p>
+          </div>
+
+          <!-- Dashboard View -->
+          <div class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
+            <div class="scan-dash-header">
+              <div class="scan-sys-status"><div class="dot"></div> SISTEMA ATIVO</div>
+              <button class="btn btn-outline btn-sm" id="scanBtnLogout">Sair</button>
+            </div>
+            
+            <div class="scan-upload-box" id="scanUploadBox">
+              <div class="upload-icon">
+                <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <h4>Arraste o arquivo .zip aqui</h4>
+              <p>ou clique para selecionar (Sysdiagnose / Bugreport)</p>
+              <input type="file" id="scanFileInput" accept=".zip,.tar.gz" style="display:none">
+            </div>
+
+            <div class="scan-terminal" id="scanTerminal" style="display: none;">
+              <div class="terminal-header">CACIQUE TERMINAL v1.0</div>
+              <div class="terminal-body" id="terminalLines"></div>
+            </div>
+
+            <div class="scan-results" id="scanResults" style="display: none;">
+              <div class="result-summary" id="resultSummary">
+                <!-- Injected via JS -->
+              </div>
+              <div class="result-details" id="resultDetails">
+                <!-- Injected via JS -->
+              </div>
+              <button class="btn btn-secondary scan-btn-new" id="scanBtnNew">Nova Análise</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
     <section class="redes" id="redes">
       <div class="container">
         <div class="section-header">
@@ -333,6 +393,7 @@
           <li><a href="#sobre">Sobre</a></li>
           <li><a href="#regras">Regras</a></li>
           <li><a href="#sorteio">Sorteio</a></li>
+          <li><a href="#scan">Cacique SCAN</a></li>
           <li><a href="#redes">Redes</a></li>
         </ul>
       </div>
