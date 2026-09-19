@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  
+
   const navToggle = document.getElementById('navToggle');
   const mobileMenu = document.getElementById('mobileMenu');
   const mobileLinks = mobileMenu.querySelectorAll('a');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
- 
+
   const namesInput = document.getElementById('namesInput');
   const sizeBtns = document.querySelectorAll('.size-btn');
   const customSizeInput = document.getElementById('customSize');
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateSortInfo() {
     const namesCount = getValidNames().length;
     sortInfo.innerHTML = `<span class="hl">${namesCount}</span> jogadores válidos detectados`;
-    
+
     if (namesCount > 0 && namesCount < teamSize) {
       sortInfo.innerHTML += ` <span style="color:var(--red); font-weight:600;">(Mínimo de ${teamSize} necessário)</span>`;
       sortBtn.disabled = true;
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rollingNameEl = document.getElementById('rollingName');
     let rollCount = 0;
-    
+
     // Simulate fast rolling through names
     const rollInterval = setInterval(() => {
       rollingNameEl.textContent = names[Math.floor(Math.random() * names.length)];
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shuffledNames = shuffle([...names]);
     const numTeams = Math.floor(shuffledNames.length / teamSize);
     const leftovers = shuffledNames.length % teamSize;
-    
+
     let html = `
       <div class="teams-result">
         <div class="teams-header">Sorteio Concluído</div>
@@ -171,11 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="team-members">
       `;
-      
+
       for (let j = 0; j < teamSize; j++) {
         html += `<div class="team-member">${shuffledNames[i * teamSize + j]}</div>`;
       }
-      
+
       html += `
           </div>
         </div>
@@ -192,11 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="team-members">
       `;
-      
+
       for (let i = 0; i < leftovers; i++) {
         html += `<div class="team-member">${shuffledNames[numTeams * teamSize + i]}</div>`;
       }
-      
+
       html += `
           </div>
         </div>
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const scanBtnLogin = document.getElementById('scanBtnLogin');
   const scanLoginError = document.getElementById('scanLoginError');
   const scanBtnLogout = document.getElementById('scanBtnLogout');
-  
+
   const scanUploadBox = document.getElementById('scanUploadBox');
   const scanFileInput = document.getElementById('scanFileInput');
   const scanTerminal = document.getElementById('scanTerminal');
@@ -241,14 +241,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const scanBtnNew = document.getElementById('scanBtnNew');
 
   let adminCredentials = null;
-  const API_URL = 'http://localhost:5000'; // Change to deployed URL later
+  const API_URL = 'https://cacique-scan-api.onrender.com'; // Change to deployed URL later
 
-  if(scanBtnLogin) {
+  if (scanBtnLogin) {
     scanBtnLogin.addEventListener('click', async () => {
       const user = scanUser.value;
       const pass = scanPass.value;
       scanLoginError.textContent = 'Verificando credenciais...';
-      
+
       try {
         const res = await fetch(`${API_URL}/login`, {
           method: 'POST',
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ user, pass })
         });
         const data = await res.json();
-        
+
         if (res.ok && data.status === 'success') {
           adminCredentials = { user, pass };
           scanLoginError.textContent = '';
@@ -280,17 +280,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     scanUploadBox.addEventListener('click', () => scanFileInput.click());
-    
+
     scanUploadBox.addEventListener('dragover', (e) => {
       e.preventDefault();
       scanUploadBox.classList.add('dragover');
     });
-    
+
     scanUploadBox.addEventListener('dragleave', (e) => {
       e.preventDefault();
       scanUploadBox.classList.remove('dragover');
     });
-    
+
     scanUploadBox.addEventListener('drop', (e) => {
       e.preventDefault();
       scanUploadBox.classList.remove('dragover');
@@ -308,11 +308,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleFileSelected(file) {
       if (!adminCredentials) return;
-      
+
       scanUploadBox.style.display = 'none';
       scanTerminal.style.display = 'block';
       terminalLines.innerHTML = '';
-      
+
       const fakeLogs = [
         "INICIANDO CACIQUE SCAN ENGINE v1.0",
         `Alvo: ${file.name}`,
@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
         "Varrendo logs de memória em busca de injeção (ptrace, dylib)...",
         "Analisando requisições suspeitas de rede..."
       ];
-      
+
       // Simulate terminal fast output
       for (let i = 0; i < fakeLogs.length; i++) {
         await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         terminalLines.appendChild(div);
         terminalLines.scrollTop = terminalLines.scrollHeight;
       }
-      
+
       // Actually send file
       const div = document.createElement('div');
       div.className = 'terminal-line';
@@ -354,22 +354,22 @@ document.addEventListener('DOMContentLoaded', () => {
           body: formData
         });
         const data = await res.json();
-        
+
         const resDiv = document.createElement('div');
         resDiv.className = 'terminal-line';
         resDiv.textContent = "> Resposta recebida. Compilando relatório...";
         terminalLines.appendChild(resDiv);
         terminalLines.scrollTop = terminalLines.scrollHeight;
-        
+
         await new Promise(r => setTimeout(r, 1000));
-        
+
         showResults(data);
       } catch (e) {
         const err = document.createElement('div');
         err.className = 'terminal-line terminal-err';
         err.textContent = "> ERRO CRÍTICO: Falha na conexão com o servidor Cacique SCAN.";
         terminalLines.appendChild(err);
-        
+
         setTimeout(() => resetScan(), 4000);
       }
     }
@@ -377,20 +377,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function showResults(data) {
       scanTerminal.style.display = 'none';
       scanResults.style.display = 'block';
-      
+
       if (data.erro) {
         resultSummary.innerHTML = `<h3 style="color:var(--red)">ERRO</h3><p>${data.erro}</p>`;
         resultDetails.innerHTML = '';
         return;
       }
-      
+
       let colorHex = data.color === 'red' ? '#ef4444' : (data.color === 'yellow' ? '#f59e0b' : '#10b981');
-      
+
       resultSummary.innerHTML = `
         <h3 style="color:${colorHex}">${data.veredito}</h3>
         <p>OS: ${data.os_detectado} | Pontuação: ${data.pontuacao_suspeita}</p>
       `;
-      
+
       let detailsHtml = '';
       if (data.detalhes && data.detalhes.length > 0) {
         data.detalhes.forEach(d => {
@@ -410,17 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         `;
       }
-      
+
       resultDetails.innerHTML = detailsHtml;
     }
-    
+
     function resetScan() {
       scanFileInput.value = '';
       scanTerminal.style.display = 'none';
       scanResults.style.display = 'none';
       scanUploadBox.style.display = 'block';
     }
-    
+
     scanBtnNew.addEventListener('click', resetScan);
   }
 });
