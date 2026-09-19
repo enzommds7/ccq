@@ -353,24 +353,30 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           body: formData
         });
+        
+        if (!res.ok) {
+           let errText = await res.text();
+           throw new Error(`Erro do servidor (${res.status}): ${errText.substring(0, 50)}`);
+        }
+        
         const data = await res.json();
-
+        
         const resDiv = document.createElement('div');
         resDiv.className = 'terminal-line';
         resDiv.textContent = "> Resposta recebida. Compilando relatório...";
         terminalLines.appendChild(resDiv);
         terminalLines.scrollTop = terminalLines.scrollHeight;
-
+        
         await new Promise(r => setTimeout(r, 1000));
-
+        
         showResults(data);
       } catch (e) {
         const err = document.createElement('div');
         err.className = 'terminal-line terminal-err';
-        err.textContent = "> ERRO CRÍTICO: Falha na conexão com o servidor Cacique SCAN.";
+        err.textContent = `> ERRO CRÍTICO: ${e.message}`;
         terminalLines.appendChild(err);
-
-        setTimeout(() => resetScan(), 4000);
+        
+        setTimeout(() => resetScan(), 6000);
       }
     }
 
