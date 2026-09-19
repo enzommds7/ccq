@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 import zipfile
+import tarfile
 import io
 import re
 import os
@@ -87,8 +88,8 @@ def scan_file():
     if user != ADMIN_USER or password != ADMIN_PASS:
         return jsonify({"erro": "Acesso Negado. Credenciais inválidas."}), 401
 
-    if not file or not file.filename.endswith('.zip'):
-        return jsonify({"erro": "Envie um arquivo .zip válido. Se for sysdiagnose, compacte em .zip."}), 400
+    if not file or not (file.filename.endswith('.zip') or file.filename.endswith('.tar.gz') or file.filename.endswith('.gz')):
+        return jsonify({"erro": "Envie um arquivo .zip ou .tar.gz válido."}), 400
 
     # Tenta descobrir o OS pelo nome do arquivo
     os_type = "android" # Padrão
@@ -99,19 +100,37 @@ def scan_file():
     pontuacao_total = 0
 
     try:
-        with zipfile.ZipFile(io.BytesIO(file.read())) as z:
-            target_files = [n for n in z.namelist() if n.endswith(('.txt', '.log', '.prop', '.plist'))]
-            
-            for nome_arquivo in target_files:
-                info = z.getinfo(nome_arquivo)
-                if info.file_size > 50 * 1024 * 1024:
-                    continue
+        file_bytes = file.read()
+        
+        if file.filename.endswith('.zip'):
+            with zipfile.ZipFile(io.BytesIO(file_bytes)) as z:
+                target_files = [n for n in z.namelist() if n.endswith(('.txt', '.log', '.prop', '.plist'))]
+                
+                for nome_arquivo in target_files:
+                    info = z.getinfo(nome_arquivo)
+                    if info.file_size > 50 * 1024 * 1024:
+                        continue
+                        
+                    conteudo = z.read(nome_arquivo).decode('utf-8', errors='ignore')
+                    findings, score = analyze_content(conteudo, nome_arquivo, os_type)
+                    if findings:
+                        relatorio.extend(findings)
+                        pontuacao_total += score
+        elif file.filename.endswith('.tar.gz') or file.filename.endswith('.gz'):
+            with tarfile.open(fileobj=io.BytesIO(file_bytes), mode="r:gz") as tar:
+                target_files = [m for m in tar.getmembers() if m.isfile() and m.name.endswith(('.txt', '.log', '.prop', '.plist'))]
+                
+                for membro in target_files:
+                    if membro.size > 50 * 1024 * 1024:
+                        continue
                     
-                conteudo = z.read(nome_arquivo).decode('utf-8', errors='ignore')
-                findings, score = analyze_content(conteudo, nome_arquivo, os_type)
-                if findings:
-                    relatorio.extend(findings)
-                    pontuacao_total += score
+                    f = tar.extractfile(membro)
+                    if f:
+                        conteudo = f.read().decode('utf-8', errors='ignore')
+                        findings, score = analyze_content(conteudo, membro.name, os_type)
+                        if findings:
+                            relatorio.extend(findings)
+                            pontuacao_total += score
 
         veredito = "Limpo"
         color = "green"
