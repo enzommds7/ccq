@@ -463,4 +463,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     scanBtnNew.addEventListener('click', resetScan);
   }
+
+  /* ═══════════════════════════════════════════════
+     Nossas Redes — Abas
+     ═══════════════════════════════════════════════ */
+  const tabBtns = document.querySelectorAll('.rede-tab-btn');
+  const tabContents = document.querySelectorAll('.redes-tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+
+      btn.classList.add('active');
+      const targetContent = document.getElementById('tab-' + target);
+      if (targetContent) targetContent.classList.add('active');
+    });
+  });
+
+  /* Botões de copiar link */
+  document.querySelectorAll('.rede-copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const url = btn.dataset.copy;
+      if (!url) return;
+
+      navigator.clipboard.writeText(url).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copiado ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 2000);
+      }).catch(() => {
+        // Fallback para browsers sem clipboard API
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const original = btn.textContent;
+        btn.textContent = 'Copiado ✓';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  });
 });
