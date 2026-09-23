@@ -1153,17 +1153,23 @@ header nav {
 .rede-panel-icon {
   width: 64px;
   height: 64px;
+  min-width: 64px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   border: 1px solid var(--border);
+  overflow: hidden;
 }
 
 .rede-panel-icon svg {
   width: 28px;
   height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  max-width: 28px;
+  max-height: 28px;
 }
 
 .rede-panel-info {
