@@ -1441,6 +1441,11 @@ footer {
   color: var(--red);
 }
 
+.terminal-warn {
+  color: #f59e0b;
+  font-weight: 600;
+}
+
 .scan-results {
   text-align: left;
 }

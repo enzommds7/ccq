@@ -306,6 +306,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    function addTerminalLine(text, isError = false, isWarn = false) {
+      const div = document.createElement('div');
+      div.className = 'terminal-line' + (isError ? ' terminal-err' : '') + (isWarn ? ' terminal-warn' : '');
+      div.textContent = '> ' + text;
+      terminalLines.appendChild(div);
+      terminalLines.scrollTop = terminalLines.scrollHeight;
+    }
+
     async function handleFileSelected(file) {
       if (!adminCredentials) return;
 
@@ -313,74 +321,46 @@ document.addEventListener('DOMContentLoaded', () => {
       scanTerminal.style.display = 'block';
       terminalLines.innerHTML = '';
 
-      const fakeLogs = [
-        "INICIANDO CACIQUE SCAN ENGINE v1.0",
-        `Alvo: ${file.name}`,
-        "Tamanho: " + (file.size / 1024 / 1024).toFixed(2) + " MB",
-        "Descompactando dump do sistema na memória...",
-        "Extraindo system_logs, top.txt, CrashReporter...",
-        "Extraindo bugreport, logcat, DUMPSYS...",
-        "Procurando assinaturas nativas de root/jailbreak...",
-        "Checando overlays de tela (Wallhack/Menus)...",
-        "Varrendo logs de memória em busca de injeção (ptrace, dylib)...",
-        "Analisando requisições suspeitas de rede..."
-      ];
-
-      // Simulate terminal fast output
-      for (let i = 0; i < fakeLogs.length; i++) {
-        await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
-        const div = document.createElement('div');
-        div.className = 'terminal-line';
-        div.textContent = "> " + fakeLogs[i];
-        terminalLines.appendChild(div);
-        terminalLines.scrollTop = terminalLines.scrollHeight;
-      }
+      // Logs iniciais reais (client-side)
+      addTerminalLine('CACIQUE SCAN ENGINE v2.0 — INICIANDO');
+      addTerminalLine(`Alvo: ${file.name}`);
+      addTerminalLine(`Tamanho: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+      addTerminalLine('Estabelecendo conexão segura com o servidor de análise...');
 
       const fileId = 'file_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
       const CHUNK_SIZE = 50 * 1024 * 1024; // 50MB chunks
       const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-      
+
       try {
         if (totalChunks > 1) {
-          const div = document.createElement('div');
-          div.className = 'terminal-line';
-          div.textContent = `> Arquivo grande detectado. Iniciando upload em ${totalChunks} partes (bypassing Cloudflare limits)...`;
-          terminalLines.appendChild(div);
-          terminalLines.scrollTop = terminalLines.scrollHeight;
+          addTerminalLine(`Arquivo grande detectado. Iniciando upload em ${totalChunks} partes...`);
         }
 
         for (let i = 0; i < totalChunks; i++) {
           if (totalChunks > 1) {
-             const progressDiv = document.createElement('div');
-             progressDiv.className = 'terminal-line';
-             progressDiv.textContent = `> Enviando parte ${i + 1} de ${totalChunks}...`;
-             terminalLines.appendChild(progressDiv);
-             terminalLines.scrollTop = terminalLines.scrollHeight;
+            addTerminalLine(`Enviando parte ${i + 1} de ${totalChunks}...`);
           }
-          
+
           const chunk = file.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
           const chunkForm = new FormData();
           chunkForm.append('user', adminCredentials.user);
           chunkForm.append('pass', adminCredentials.pass);
           chunkForm.append('fileId', fileId);
           chunkForm.append('chunk', chunk);
-          
+
           const chunkRes = await fetch(`${API_URL}/upload_chunk`, {
             method: 'POST',
             body: chunkForm
           });
-          
+
           if (!chunkRes.ok) {
             let errText = await chunkRes.text();
-            throw new Error(`Falha no upload da parte ${i+1} (${chunkRes.status}): ${errText.substring(0, 50)}`);
+            throw new Error(`Falha no upload da parte ${i+1} (${chunkRes.status}): ${errText.substring(0, 80)}`);
           }
         }
 
-        const div = document.createElement('div');
-        div.className = 'terminal-line';
-        div.textContent = "> Upload completo. Enviando comando de remontagem e análise profunda no servidor...";
-        terminalLines.appendChild(div);
-        terminalLines.scrollTop = terminalLines.scrollHeight;
+        addTerminalLine('Upload completo. Disparando análise profunda no servidor...');
+        addTerminalLine('Aguardando resposta — isto pode levar alguns instantes para arquivos grandes...');
 
         const scanForm = new FormData();
         scanForm.append('user', adminCredentials.user);
@@ -392,29 +372,34 @@ document.addEventListener('DOMContentLoaded', () => {
           method: 'POST',
           body: scanForm
         });
-        
+
         if (!res.ok) {
-           let errText = await res.text();
-           throw new Error(`Erro do servidor (${res.status}): ${errText.substring(0, 50)}`);
+          let errText = await res.text();
+          throw new Error(`Erro do servidor (${res.status}): ${errText.substring(0, 80)}`);
         }
-        
+
         const data = await res.json();
-        
-        const resDiv = document.createElement('div');
-        resDiv.className = 'terminal-line';
-        resDiv.textContent = "> Resposta recebida. Compilando relatório...";
-        terminalLines.appendChild(resDiv);
-        terminalLines.scrollTop = terminalLines.scrollHeight;
-        
-        await new Promise(r => setTimeout(r, 1000));
-        
+
+        // Exibir logs REAIS que vieram do servidor
+        if (data.scan_logs && data.scan_logs.length > 0) {
+          addTerminalLine('─── LOGS DO SERVIDOR ───────────────────────────');
+          for (const logLine of data.scan_logs) {
+            const isWarn  = logLine.includes('⚠');
+            const isError = logLine.includes('[ERRO]');
+            addTerminalLine(logLine, isError, isWarn);
+            // Pequeno delay para dar sensação de streaming
+            await new Promise(r => setTimeout(r, 18));
+          }
+          addTerminalLine('────────────────────────────────────────────────');
+        }
+
+        await new Promise(r => setTimeout(r, 600));
+        addTerminalLine('Compilando relatório final...');
+        await new Promise(r => setTimeout(r, 500));
+
         showResults(data);
       } catch (e) {
-        const err = document.createElement('div');
-        err.className = 'terminal-line terminal-err';
-        err.textContent = `> ERRO CRÍTICO: ${e.message}`;
-        terminalLines.appendChild(err);
-        
+        addTerminalLine(`ERRO CRÍTICO: ${e.message}`, true);
         setTimeout(() => resetScan(), 6000);
       }
     }
@@ -431,9 +416,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let colorHex = data.color === 'red' ? '#ef4444' : (data.color === 'yellow' ? '#f59e0b' : '#10b981');
 
+      const stats = data.stats || {};
+      const statsHtml = stats.arquivos_analisados !== undefined
+        ? `<span style="font-size:0.8rem;opacity:0.7">
+             ${stats.arquivos_analisados} analisados &nbsp;|&nbsp;
+             ${stats.arquivos_ignorados} ignorados &nbsp;|&nbsp;
+             ${stats.erros} erros
+           </span>`
+        : '';
+
       resultSummary.innerHTML = `
         <h3 style="color:${colorHex}">${data.veredito}</h3>
-        <p>OS: ${data.os_detectado} | Pontuação: ${data.pontuacao_suspeita}</p>
+        <p>OS: ${data.os_detectado} &nbsp;|&nbsp; Pontuação: <strong>${data.pontuacao_suspeita}</strong></p>
+        ${statsHtml}
       `;
 
       let detailsHtml = '';
@@ -442,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let cardColor = d.risco_fp.includes('Baixo') ? 'red' : 'yellow';
           detailsHtml += `
             <div class="result-card ${cardColor}">
-              <div class="rc-type">[${d.categoria}] -> Encontrado: "${d.termo}"</div>
+              <div class="rc-type">[${d.categoria}] &rarr; Encontrado: &quot;${d.termo}&quot;</div>
               <div class="rc-file">Risco de Falso Positivo: ${d.risco_fp}<br>Arquivo: ${d.arquivo}</div>
             </div>
           `;
@@ -450,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         detailsHtml = `
           <div class="result-card green">
-            <div class="rc-type">Tudo Limpo</div>
+            <div class="rc-type">Tudo Limpo ✓</div>
             <div class="rc-file">Nenhuma assinatura de cheat conhecida foi encontrada no dump.</div>
           </div>
         `;
