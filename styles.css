@@ -1462,78 +1462,188 @@ footer {
   }
 }
 
+.scan-mode-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.scan-mode-btn {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scan-mode-btn:hover {
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+.scan-mode-btn.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--red);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+}
+
 .scan-upload-box {
   border: 1px dashed var(--border);
   border-radius: var(--radius-sm);
-  padding: 40px 20px;
-  background: rgba(0, 0, 0, 0.2);
+  padding: 40px 24px;
+  background: rgba(0, 0, 0, 0.25);
   cursor: pointer;
   transition: var(--transition);
   margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
 }
 
 .scan-upload-box:hover,
 .scan-upload-box.dragover {
   border-color: var(--red);
   background: rgba(239, 68, 68, 0.05);
+  transform: translateY(-1px);
 }
 
 .scan-upload-box .upload-icon {
-  color: var(--text-3);
-  margin-bottom: 12px;
+  color: var(--red);
+  margin-bottom: 14px;
+  opacity: 0.85;
 }
 
 .scan-upload-box .upload-icon svg {
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
 }
 
 .scan-upload-box h4 {
-  font-size: 1rem;
-  margin-bottom: 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
 }
 
 .scan-upload-box p {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--text-2);
+  max-width: 420px;
+  margin: 0 auto 14px;
+  line-height: 1.5;
+}
+
+.scan-upload-badge {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  padding: 4px 12px;
+  border-radius: 12px;
+  letter-spacing: 0.05em;
+}
+
+/* Terminal & Progress */
+.scan-terminal-wrap {
+  margin-bottom: 20px;
+}
+
+.scan-progress-bar-container {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.scan-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.76rem;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+
+.scan-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.scan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+  width: 0%;
+  transition: width 0.15s ease-out;
 }
 
 .scan-terminal {
-  background: #000;
-  border: 1px solid #333;
+  background: #060606;
+  border: 1px solid #222;
   border-radius: var(--radius-xs);
   text-align: left;
   overflow: hidden;
-  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
 .terminal-header {
   background: #111;
-  padding: 8px 12px;
+  padding: 9px 14px;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--text-3);
-  border-bottom: 1px solid #333;
+  font-size: 0.72rem;
+  color: var(--text-2);
+  border-bottom: 1px solid #222;
   letter-spacing: 0.1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.terminal-status-indicator {
+  color: #10b981;
+  font-size: 0.68rem;
+  animation: pulse 1.5s infinite;
 }
 
 .terminal-body {
-  padding: 16px;
+  padding: 14px 16px;
   font-family: 'Share Tech Mono', monospace;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #10b981;
-  line-height: 1.5;
-  min-height: 120px;
-  max-height: 200px;
+  line-height: 1.6;
+  min-height: 140px;
+  max-height: 230px;
   overflow-y: auto;
 }
 
 .terminal-line {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  word-break: break-all;
+}
+
+.terminal-info {
+  color: #38bdf8;
 }
 
 .terminal-err {
-  color: var(--red);
+  color: #ef4444;
+  font-weight: 700;
 }
 
 .terminal-warn {
@@ -1541,6 +1651,7 @@ footer {
   font-weight: 600;
 }
 
+/* Results Section */
 .scan-results {
   text-align: left;
 }
@@ -1548,30 +1659,142 @@ footer {
 .result-summary {
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border);
-  padding: 16px;
-  border-radius: var(--radius-xs);
+  padding: 22px 20px;
+  border-radius: var(--radius-sm);
   margin-bottom: 16px;
   text-align: center;
 }
 
 .result-summary h3 {
   font-family: 'Orbitron', var(--font);
-  font-size: 1.2rem;
-  margin-bottom: 4px;
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .result-summary p {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  color: var(--text-2);
+  margin-bottom: 12px;
+}
+
+.scan-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.scan-stat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 10px 8px;
+  text-align: center;
+}
+
+.scan-stat-val {
+  font-family: 'Orbitron', var(--font);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.scan-stat-lbl {
+  font-size: 0.65rem;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Device Info Card */
+.scan-device-card {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+
+.scan-device-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.device-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.device-spec-item {
   color: var(--text-2);
 }
 
-.result-card {
-  background: rgba(0, 0, 0, 0.3);
-  border-left: 3px solid var(--red);
-  padding: 12px 16px;
-  border-radius: 4px;
-  margin-bottom: 12px;
+.device-spec-item strong {
+  color: var(--text);
   font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+}
+
+/* Filters */
+.scan-filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.scan-filter-chip {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 0.72rem;
+  padding: 5px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.scan-filter-chip:hover {
+  border-color: var(--border-hover);
+  color: #fff;
+}
+
+.scan-filter-chip.active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--red);
+  color: #fff;
+}
+
+/* Threat Cards */
+.result-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--red);
+  padding: 14px 16px;
+  border-radius: var(--radius-xs);
+  margin-bottom: 12px;
+  font-family: var(--font);
+  transition: var(--transition);
+}
+
+.result-card:hover {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.02);
 }
 
 .result-card.yellow {
@@ -1582,22 +1805,77 @@ footer {
   border-left-color: #10b981;
 }
 
+.result-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .result-card .rc-type {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+.threat-tag {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.result-card.yellow .threat-tag {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.threat-meta {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.threat-evidence-code {
+  background: #000;
+  border: 1px solid #222;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.74rem;
+  color: #ff8a80;
+  word-break: break-all;
+  margin-top: 6px;
+}
+
+.threat-evidence-code span.hl {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+  font-weight: bold;
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.scan-result-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.scan-result-actions button {
+  flex: 1;
+  min-width: 180px;
+  padding: 13px 18px;
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-
-.result-card .rc-file {
-  font-size: 0.75rem;
-  color: var(--text-2);
-  word-break: break-all;
-}
-
-.scan-btn-new {
-  width: 100%;
-  margin-top: 12px;
 }
 
 /* ═══════════════════════

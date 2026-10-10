@@ -14,6 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=2">
+  <script src="jszip.min.js"></script>
 </head>
 
 <body>
@@ -317,8 +318,8 @@
             </div>
             <h3>Acesso Restrito</h3>
             <p class="scan-hint">Faça login com a credencial de ADM para liberar o scanner.</p>
-            <input type="text" id="scanUser" placeholder="Usuário" class="scan-input">
-            <input type="password" id="scanPass" placeholder="Senha" class="scan-input">
+            <input type="text" id="scanUser" placeholder="Usuário" class="scan-input" autocomplete="username">
+            <input type="password" id="scanPass" placeholder="Senha" class="scan-input" autocomplete="current-password">
             <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Desbloquear Scanner</button>
             <p id="scanLoginError" class="scan-error"></p>
           </div>
@@ -327,37 +328,90 @@
           <div class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
             <div class="scan-dash-header">
               <div class="scan-sys-status">
-                <div class="dot"></div> SISTEMA ATIVO
+                <div class="dot"></div> SISTEMA ATIVO &bull; CACIQUE SCAN ENGINE v3.0
               </div>
               <button class="btn btn-outline btn-sm" id="scanBtnLogout">Sair</button>
             </div>
 
-            <div class="scan-upload-box" id="scanUploadBox">
-              <div class="upload-icon">
-                <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
+            <!-- Upload Area & Mode Selector -->
+            <div class="scan-upload-container" id="scanUploadContainer">
+              <div class="scan-mode-selector">
+                <button type="button" class="scan-mode-btn active" data-mode="zip" id="modeZipBtn">
+                  <span>📦</span> Arquivo .ZIP / DUMP
+                </button>
+                <button type="button" class="scan-mode-btn" data-mode="folder" id="modeFolderBtn">
+                  <span>📂</span> Pasta Extraída
+                </button>
+                <button type="button" class="scan-mode-btn" data-mode="loose" id="modeLooseBtn">
+                  <span>📄</span> Logs Soltos
+                </button>
               </div>
-              <h4>Arraste o arquivo .zip aqui</h4>
-              <p>ou clique para selecionar (Sysdiagnose / Bugreport)</p>
-              <input type="file" id="scanFileInput" accept=".zip,.tar.gz" style="display:none">
+
+              <div class="scan-upload-box" id="scanUploadBox">
+                <div class="upload-icon">
+                  <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                </div>
+                <h4 id="scanUploadTitle">Arraste o arquivo .zip aqui</h4>
+                <p id="scanUploadDesc">Suporta Bugreports Android (.zip), Sysdiagnose iOS (.zip/.tar.gz) ou dumps de cheats</p>
+                <div class="scan-upload-badge">⚡ Processamento Local Ultra Rápido (Sem Limites de Upload)</div>
+              </div>
+
+              <input type="file" id="scanFileInput" accept=".zip,.tar.gz,.tgz,.gz,.tar" style="display:none">
+              <input type="file" id="scanFolderInput" webkitdirectory multiple style="display:none">
+              <input type="file" id="scanLooseInput" multiple style="display:none">
             </div>
 
-            <div class="scan-terminal" id="scanTerminal" style="display: none;">
-              <div class="terminal-header">CACIQUE TERMINAL v2.0</div>
-              <div class="terminal-body" id="terminalLines"></div>
+            <!-- Terminal & Progress -->
+            <div class="scan-terminal-wrap" id="scanTerminalWrap" style="display: none;">
+              <div class="scan-progress-bar-container">
+                <div class="scan-progress-meta">
+                  <span id="scanProgressLabel">Iniciando motor de análise...</span>
+                  <span id="scanProgressPercent">0%</span>
+                </div>
+                <div class="scan-progress-bar">
+                  <div class="scan-progress-fill" id="scanProgressFill" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <div class="scan-terminal" id="scanTerminal">
+                <div class="terminal-header">
+                  <span>CACIQUE FORENSIC TERMINAL // v3.0</span>
+                  <span class="terminal-status-indicator">ANALISANDO</span>
+                </div>
+                <div class="terminal-body" id="terminalLines"></div>
+              </div>
             </div>
 
+            <!-- Results View -->
             <div class="scan-results" id="scanResults" style="display: none;">
               <div class="result-summary" id="resultSummary">
                 <!-- Injected via JS -->
               </div>
+
+              <div class="scan-device-card" id="scanDeviceCard" style="display: none;">
+                <!-- Injected via JS -->
+              </div>
+
+              <div class="scan-filters" id="scanFilters" style="display: none;">
+                <!-- Injected via JS -->
+              </div>
+
               <div class="result-details" id="resultDetails">
                 <!-- Injected via JS -->
               </div>
-              <button class="btn btn-secondary scan-btn-new" id="scanBtnNew">Nova Análise</button>
+
+              <div class="scan-result-actions">
+                <button class="btn btn-primary" id="scanBtnCopyReport">
+                  📋 Copiar Relatório Oficial
+                </button>
+                <button class="btn btn-outline" id="scanBtnNew">
+                  🔄 Nova Análise
+                </button>
+              </div>
             </div>
           </div>
         </div>
