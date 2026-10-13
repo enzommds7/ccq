@@ -4,17 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cacique Apostas — A Tribo Mais Confiavel do Free Fire</title>
+  <title>Cacique Apostas — A Tribo Mais Confiável do Free Fire</title>
   <meta name="description"
-    content="Cacique Apostas: pagamento mais rapido do Brasil, regras claras, comunidade de mais de 900 guerreiros. Entre na tribo.">
-  <link rel="icon"
-    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>C</text></svg>">
+    content="Cacique Apostas: pagamento mais rápido do Brasil, regras claras e uma comunidade de mais de 1000 guerreiros. Entre na tribo.">
+  <meta name="theme-color" content="#09090b">
+  <link rel="canonical" href="https://enzommds7.github.io/ccq/">
+
+  <!-- Open Graph / WhatsApp / Discord -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Cacique Apostas">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:url" content="https://enzommds7.github.io/ccq/">
+  <meta property="og:title" content="Cacique Apostas — A tribo mais confiável do Free Fire">
+  <meta property="og:description" content="Pagamento via Pix na hora, regras claras e +1000 guerreiros. Duelos, sorteios e anti-cheat próprio.">
+  <meta property="og:image" content="https://enzommds7.github.io/ccq/og-image.jpg">
+  <meta property="og:image:width" content="1376">
+  <meta property="og:image:height" content="768">
+  <meta property="og:image:alt" content="Logo Cacique Apostas">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cacique Apostas — A tribo mais confiável do Free Fire">
+  <meta name="twitter:description" content="Pagamento via Pix na hora, regras claras e +1000 guerreiros.">
+  <meta name="twitter:image" content="https://enzommds7.github.io/ccq/og-image.jpg">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
-  <script src="jszip.min.js"></script>
+  <link rel="stylesheet" href="styles.css?v=4">
+  <script src="jszip.min.js" defer></script>
 </head>
 
 <body>
@@ -33,7 +55,13 @@
         <li><a href="#scan">Cacique SCAN</a></li>
         <li><a href="#redes">Redes</a></li>
       </ul>
-      <a href="#redes" class="btn btn-primary btn-sm">Entrar na Tribo</a>
+      <div class="nav-actions">
+        <button class="sound-toggle" id="soundToggle" type="button" aria-label="Ativar sons da interface" aria-pressed="false" title="Sons da interface">
+          <svg class="ico-on" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></svg>
+          <svg class="ico-off" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z" /><line x1="22" y1="9" x2="16" y2="15" /><line x1="16" y1="9" x2="22" y2="15" /></svg>
+        </button>
+        <a href="#redes" class="btn btn-primary btn-sm nav-cta">Entrar na Tribo</a>
+      </div>
       <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -78,7 +106,6 @@
           </div>
         </div>
         <div class="hero-emblem">
-          <div class="emblem-ring"></div>
           <img src="logo.jpg" alt="Cacique Apostas">
           <div class="seal-badge">
             <strong>PAGA</strong>
@@ -321,14 +348,13 @@
             <input type="text" id="scanUser" placeholder="Usuário" class="scan-input" autocomplete="username">
             <input type="password" id="scanPass" placeholder="Senha" class="scan-input" autocomplete="current-password">
             <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Desbloquear Scanner</button>
-            <p id="scanLoginError" class="scan-error"></p>
           </div>
 
           <!-- Dashboard View -->
           <div class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
             <div class="scan-dash-header">
               <div class="scan-sys-status">
-                <div class="dot"></div> SISTEMA ATIVO &bull; CACIQUE SCAN ENGINE v3.0
+                <div class="dot"></div> ENGINE ONLINE <span class="sys-sep">/</span> <span class="sys-ver">ccq-scan 3.1</span>
               </div>
               <button class="btn btn-outline btn-sm" id="scanBtnLogout">Sair</button>
             </div>
@@ -337,13 +363,16 @@
             <div class="scan-upload-container" id="scanUploadContainer">
               <div class="scan-mode-selector">
                 <button type="button" class="scan-mode-btn active" data-mode="zip" id="modeZipBtn">
-                  <span>📦</span> Arquivo .ZIP / DUMP
+                  <svg viewBox="0 0 24 24"><path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" /></svg>
+                  Arquivo .zip / .tar.gz
                 </button>
                 <button type="button" class="scan-mode-btn" data-mode="folder" id="modeFolderBtn">
-                  <span>📂</span> Pasta Extraída
+                  <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                  Pasta extraída
                 </button>
                 <button type="button" class="scan-mode-btn" data-mode="loose" id="modeLooseBtn">
-                  <span>📄</span> Logs Soltos
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h8M8 17h5" /></svg>
+                  Logs soltos
                 </button>
               </div>
 
@@ -356,13 +385,13 @@
                   </svg>
                 </div>
                 <h4 id="scanUploadTitle">Arraste o arquivo .zip aqui</h4>
-                <p id="scanUploadDesc">Suporta Bugreports Android (.zip), Sysdiagnose iOS (.zip/.tar.gz) ou dumps de cheats</p>
-                <div class="scan-upload-badge">⚡ Processamento Local Ultra Rápido (Sem Limites de Upload)</div>
+                <p id="scanUploadDesc">Bugreport Android (.zip), Sysdiagnose iOS (.tar.gz) ou dump de cheat</p>
+                <div class="scan-upload-badge">Processado no seu navegador &middot; nada é enviado para servidor</div>
               </div>
 
-              <input type="file" id="scanFileInput" accept=".zip,.tar.gz,.tgz,.gz,.tar" style="display:none">
-              <input type="file" id="scanFolderInput" webkitdirectory multiple style="display:none">
-              <input type="file" id="scanLooseInput" multiple style="display:none">
+              <input type="file" id="scanFileInput" accept=".zip,.tar.gz,.tgz,.gz,.tar" hidden>
+              <input type="file" id="scanFolderInput" webkitdirectory multiple hidden>
+              <input type="file" id="scanLooseInput" multiple hidden>
             </div>
 
             <!-- Terminal & Progress -->
@@ -379,8 +408,8 @@
 
               <div class="scan-terminal" id="scanTerminal">
                 <div class="terminal-header">
-                  <span>CACIQUE FORENSIC TERMINAL // v3.0</span>
-                  <span class="terminal-status-indicator">ANALISANDO</span>
+                  <span class="terminal-title"><i></i><i></i><i></i> ccq-forensics &mdash; tty0</span>
+                  <span class="terminal-status-indicator" id="terminalStatus">ANALISANDO</span>
                 </div>
                 <div class="terminal-body" id="terminalLines"></div>
               </div>
@@ -405,12 +434,8 @@
               </div>
 
               <div class="scan-result-actions">
-                <button class="btn btn-primary" id="scanBtnCopyReport">
-                  📋 Copiar Relatório Oficial
-                </button>
-                <button class="btn btn-outline" id="scanBtnNew">
-                  🔄 Nova Análise
-                </button>
+                <button class="btn btn-primary" id="scanBtnCopyReport">Copiar relatório</button>
+                <button class="btn btn-secondary" id="scanBtnNew">Nova análise</button>
               </div>
             </div>
           </div>
@@ -478,15 +503,15 @@
               <h3>WhatsApp</h3>
               <p>Dois grupos ativos: <strong>Grupo de Duelos</strong> para marcar apostas e <strong>Grupo Sorteado do CCQ</strong> para sorteios.</p>
               <span class="tag-live">Ativo</span>
-              <div style="margin-top: 18px;">
-                <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); margin-bottom:8px;">Grupo de Duelos</div>
+              <div class="rede-group">
+                <div class="rede-sub-label">Grupo de Duelos</div>
                 <div class="rede-copy-row">
                   <span class="rede-link-display">chat.whatsapp.com/IfgMH8Zmy1vGFGJ2Zs0kGQ</span>
                   <button class="rede-copy-btn" data-copy="https://chat.whatsapp.com/IfgMH8Zmy1vGFGJ2Zs0kGQ?s=cl&p=i&mlu=4&ilr=4">Copiar</button>
                 </div>
               </div>
-              <div style="margin-top: 16px;">
-                <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-3); margin-bottom:8px;">Grupo Sorteado CCQ</div>
+              <div class="rede-group">
+                <div class="rede-sub-label">Grupo Sorteado CCQ</div>
                 <div class="rede-copy-row">
                   <span class="rede-link-display">chat.whatsapp.com/JCwvu2xdbmN7Jmm0PVi1Oy</span>
                   <button class="rede-copy-btn" data-copy="https://chat.whatsapp.com/JCwvu2xdbmN7Jmm0PVi1Oy">Copiar</button>
@@ -509,7 +534,7 @@
             <div class="rede-panel-info">
               <h3>Instagram</h3>
               <p>Acompanhe as novidades, resultados de partidas e conteudo da tribo no Instagram do ADM Indio.</p>
-              <div class="rede-copy-row" style="margin-top:18px;">
+              <div class="rede-copy-row">
                 <span class="rede-link-display">instagram.com/admindio7</span>
                 <button class="rede-copy-btn" data-copy="https://www.instagram.com/admindio7">Copiar link</button>
               </div>
@@ -529,7 +554,7 @@
             <div class="rede-panel-info">
               <h3>YouTube</h3>
               <p>Canal Cacique Apostas no YouTube — videos, highlights e conteudo da comunidade.</p>
-              <div class="rede-copy-row" style="margin-top:18px;">
+              <div class="rede-copy-row">
                 <span class="rede-link-display">youtube.com/@CaciqueApostas</span>
                 <button class="rede-copy-btn" data-copy="https://www.youtube.com/@CaciqueApostas">Copiar link</button>
               </div>
@@ -576,7 +601,9 @@
     </div>
   </footer>
 
-  <script src="script.js?v=2"></script>
+  <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
+
+  <script src="script.js?v=4" defer></script>
 </body>
 
 </html>

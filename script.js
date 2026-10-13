@@ -1,9 +1,235 @@
 /* ═══════════════════════════════════════════════
-   Cacique Apostas — Interactivity & Sorteio
+   Cacique Apostas — Interactivity & Forensic Scan
    ═══════════════════════════════════════════════ */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // ── Header Scroll Effect ──
+
+  // ─────────────────────────────────────────────────────────────
+  // 1. Web Audio API — Interface Sintetizada (Zero dependências)
+  // ─────────────────────────────────────────────────────────────
+  class SoundController {
+    constructor() {
+      this.ctx = null;
+      this.enabled = localStorage.getItem('cacique_sfx_enabled') === 'true';
+      this.toggleBtn = document.getElementById('soundToggle');
+      this.updateBtnState();
+      if (this.toggleBtn) {
+        this.toggleBtn.addEventListener('click', () => this.toggle());
+      }
+    }
+
+    init() {
+      if (!this.ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) this.ctx = new AudioCtx();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume();
+      }
+    }
+
+    updateBtnState() {
+      if (!this.toggleBtn) return;
+      this.toggleBtn.setAttribute('aria-pressed', this.enabled ? 'true' : 'false');
+      this.toggleBtn.title = this.enabled ? 'Sons da interface ativados' : 'Sons desativados (clique para ativar)';
+    }
+
+    toggle() {
+      this.init();
+      this.enabled = !this.enabled;
+      localStorage.setItem('cacique_sfx_enabled', this.enabled ? 'true' : 'false');
+      this.updateBtnState();
+      if (this.enabled) {
+        this.tick();
+        showToast('info', 'Áudio ativado', 'Feedback sonoro mecânico habilitado.');
+      } else {
+        showToast('info', 'Áudio desativado', 'Interface silenciosa.');
+      }
+    }
+
+    // Bipe mecânico ultra-curto (usado nos logs e sorteio)
+    tick(freq = 1100) {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.exponentialRampToValueAtTime(300, t + 0.03);
+      gain.gain.setValueAtTime(0.045, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.03);
+    }
+
+    // Sucesso / Ação concluída (acorde harmônico mecânico)
+    done() {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, t + idx * 0.04);
+        gain.gain.setValueAtTime(0.06, t + idx * 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.04 + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t + idx * 0.04);
+        osc.stop(t + idx * 0.04 + 0.17);
+      });
+    }
+
+    // Alerta de ameaça detectada
+    alert(isSevere = false) {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = isSevere ? 'sawtooth' : 'square';
+      osc.frequency.setValueAtTime(isSevere ? 220 : 380, t);
+      osc.frequency.linearRampToValueAtTime(isSevere ? 110 : 260, t + 0.14);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    }
+
+    // Erro / Validação falha
+    error() {
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(260, t);
+      osc.frequency.linearRampToValueAtTime(140, t + 0.18);
+      gain.gain.setValueAtTime(0.08, t);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.19);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.19);
+    }
+  }
+
+  const sfx = new SoundController();
+
+  // ─────────────────────────────────────────────────────────────
+  // 2. Sistema de Notificações Toast (Sem alert() nativo)
+  // ─────────────────────────────────────────────────────────────
+  const toastRegion = document.getElementById('toastRegion');
+
+  function showToast(type, title, message, duration = 3000) {
+    if (!toastRegion) return;
+
+    // Limita a 4 toasts na tela
+    while (toastRegion.children.length >= 4) {
+      toastRegion.firstElementChild.remove();
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast is-${type}`;
+
+    let iconSvg = '';
+    if (type === 'success') {
+      iconSvg = `<svg class="toast-icon" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>`;
+    } else if (type === 'error') {
+      iconSvg = `<svg class="toast-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`;
+    } else {
+      iconSvg = `<svg class="toast-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+    }
+
+    toast.innerHTML = `
+      ${iconSvg}
+      <div class="toast-body">
+        <strong>${escapeHtml(title)}</strong>
+        ${message ? `<span>${escapeHtml(message)}</span>` : ''}
+      </div>
+    `;
+
+    toastRegion.appendChild(toast);
+
+    let dismissed = false;
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      toast.classList.add('is-leaving');
+      setTimeout(() => toast.remove(), 220);
+    };
+
+    setTimeout(dismiss, duration);
+    toast.addEventListener('click', dismiss);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 3. Microinterações de Cópia (Botões com Check Sutil)
+  // ─────────────────────────────────────────────────────────────
+  async function performCopy(text, btnElement, successLabel = 'Copiado!') {
+    let ok = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        ok = true;
+      } catch (_) {
+        ok = fallbackCopy(text);
+      }
+    } else {
+      ok = fallbackCopy(text);
+    }
+
+    if (ok) {
+      sfx.tick(1400);
+      const originalHtml = btnElement.innerHTML;
+      btnElement.classList.add('is-copied');
+      btnElement.innerHTML = `
+        <svg class="copy-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+        <span class="copy-label">${escapeHtml(successLabel)}</span>
+      `;
+      setTimeout(() => {
+        btnElement.classList.remove('is-copied');
+        btnElement.innerHTML = originalHtml;
+      }, 2000);
+      showToast('success', 'Copiado', 'Texto copiado para a área de transferência.');
+    } else {
+      sfx.error();
+      showToast('error', 'Erro ao copiar', 'Não foi possível acessar a área de transferência.');
+    }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    let success = false;
+    try {
+      success = document.execCommand('copy');
+    } catch (_) {
+      success = false;
+    }
+    document.body.removeChild(ta);
+    return success;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 4. Header & Navegação Mobile
+  // ─────────────────────────────────────────────────────────────
   const header = document.getElementById('header');
   window.addEventListener('scroll', () => {
     if (window.scrollY > 20) {
@@ -11,31 +237,29 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       header.classList.remove('scrolled');
     }
-  });
-
+  }, { passive: true });
 
   const navToggle = document.getElementById('navToggle');
   const mobileMenu = document.getElementById('mobileMenu');
-  const mobileLinks = mobileMenu.querySelectorAll('a');
+  if (navToggle && mobileMenu) {
+    function toggleMenu() {
+      navToggle.classList.toggle('active');
+      mobileMenu.classList.toggle('open');
+      const isExpanded = navToggle.classList.contains('active');
+      navToggle.setAttribute('aria-expanded', isExpanded);
+    }
 
-  function toggleMenu() {
-    navToggle.classList.toggle('active');
-    mobileMenu.classList.toggle('open');
-    const isExpanded = navToggle.classList.contains('active');
-    navToggle.setAttribute('aria-expanded', isExpanded);
+    navToggle.addEventListener('click', toggleMenu);
+    mobileMenu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        if (mobileMenu.classList.contains('open')) toggleMenu();
+      });
+    });
   }
 
-  navToggle.addEventListener('click', toggleMenu);
-
-  mobileLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      if (mobileMenu.classList.contains('open')) {
-        toggleMenu();
-      }
-    });
-  });
-
-
+  // ─────────────────────────────────────────────────────────────
+  // 5. Sorteio de Times (Com Sons Mecânicos e Ritmo)
+  // ─────────────────────────────────────────────────────────────
   const namesInput = document.getElementById('namesInput');
   const sizeBtns = document.querySelectorAll('.size-btn');
   const customSizeInput = document.getElementById('customSize');
@@ -46,70 +270,75 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let teamSize = 4;
 
-  // Update selected team size
   function updateTeamSize(size, btnElement) {
     teamSize = parseInt(size, 10);
     sizeBtns.forEach(btn => btn.classList.remove('active'));
     if (btnElement) {
       btnElement.classList.add('active');
-      customSizeInput.value = '';
+      if (customSizeInput) customSizeInput.value = '';
     }
     updateSortInfo();
+    sfx.tick(900);
   }
 
   sizeBtns.forEach(btn => {
     btn.addEventListener('click', (e) => {
-      updateTeamSize(e.target.dataset.size, e.target);
+      updateTeamSize(e.currentTarget.dataset.size, e.currentTarget);
     });
   });
 
-  customSizeInput.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value, 10);
-    if (val >= 2) {
-      teamSize = val;
-      sizeBtns.forEach(btn => btn.classList.remove('active'));
-      updateSortInfo();
-    }
-  });
+  if (customSizeInput) {
+    customSizeInput.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      if (val >= 2) {
+        teamSize = val;
+        sizeBtns.forEach(btn => btn.classList.remove('active'));
+        updateSortInfo();
+      }
+    });
+  }
 
-  // Get valid names from textarea
   function getValidNames() {
-    const text = namesInput.value;
-    return text.split('\n')
+    if (!namesInput) return [];
+    return namesInput.value
+      .split('\n')
       .map(name => name.trim())
       .filter(name => name.length > 0);
   }
 
-  // Update info text
   function updateSortInfo() {
+    if (!sortInfo) return;
     const namesCount = getValidNames().length;
     sortInfo.innerHTML = `<span class="hl">${namesCount}</span> jogadores válidos detectados`;
 
     if (namesCount > 0 && namesCount < teamSize) {
-      sortInfo.innerHTML += ` <span style="color:var(--red); font-weight:600;">(Mínimo de ${teamSize} necessário)</span>`;
-      sortBtn.disabled = true;
+      sortInfo.innerHTML += ` <span style="color:var(--red); font-weight:500;">(Mínimo de ${teamSize} necessário)</span>`;
+      if (sortBtn) sortBtn.disabled = true;
     } else if (namesCount === 0) {
-      sortBtn.disabled = true;
+      if (sortBtn) sortBtn.disabled = true;
     } else {
-      sortBtn.disabled = false;
+      if (sortBtn) sortBtn.disabled = false;
     }
   }
 
-  namesInput.addEventListener('input', updateSortInfo);
+  if (namesInput) namesInput.addEventListener('input', updateSortInfo);
 
-  // Clear everything
-  clearBtn.addEventListener('click', () => {
-    namesInput.value = '';
-    updateSortInfo();
-    sorteioStage.innerHTML = `
-      <div class="stage-empty">
-        <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
-        <p>Adicione nomes e clique em sortear para gerar os times</p>
-      </div>
-    `;
-  });
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (namesInput) namesInput.value = '';
+      updateSortInfo();
+      if (sorteioStage) {
+        sorteioStage.innerHTML = `
+          <div class="stage-empty">
+            <svg viewBox="0 0 24 24"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+            <p>Adicione nomes e clique em sortear para gerar os times</p>
+          </div>
+        `;
+      }
+      sfx.tick(600);
+    });
+  }
 
-  // Array shuffle algorithm (Fisher-Yates)
   function shuffle(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex !== 0) {
@@ -120,35 +349,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return array;
   }
 
-  // Colors for teams
-  const teamColors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+  const teamColors = ['#e5484d', '#3b82f6', '#3dd68c', '#f5a524', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
-  // Handle sort button click
-  sortBtn.addEventListener('click', () => {
-    const names = getValidNames();
-    if (names.length < teamSize) return;
+  if (sortBtn) {
+    sortBtn.addEventListener('click', () => {
+      const names = getValidNames();
+      if (names.length < teamSize) return;
 
-    // Drum roll animation
-    sorteioStage.innerHTML = `
-      <div class="rolling">
-        <div class="rolling-label">Sorteando...</div>
-        <div class="rolling-name" id="rollingName">???</div>
-      </div>
-    `;
+      sorteioStage.innerHTML = `
+        <div class="rolling">
+          <div class="rolling-label">Sorteando...</div>
+          <div class="rolling-name" id="rollingName">···</div>
+        </div>
+      `;
 
-    const rollingNameEl = document.getElementById('rollingName');
-    let rollCount = 0;
+      const rollingNameEl = document.getElementById('rollingName');
+      let rollCount = 0;
 
-    // Simulate fast rolling through names
-    const rollInterval = setInterval(() => {
-      rollingNameEl.textContent = names[Math.floor(Math.random() * names.length)];
-      rollCount++;
-      if (rollCount > 15) {
-        clearInterval(rollInterval);
-        generateTeams(names);
-      }
-    }, 50);
-  });
+      const rollInterval = setInterval(() => {
+        rollingNameEl.textContent = names[Math.floor(Math.random() * names.length)];
+        rollCount++;
+        sfx.tick(800 + Math.random() * 400);
+
+        if (rollCount > 16) {
+          clearInterval(rollInterval);
+          generateTeams(names);
+          sfx.done();
+        }
+      }, 55);
+    });
+  }
 
   function generateTeams(names) {
     const shuffledNames = shuffle([...names]);
@@ -173,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       for (let j = 0; j < teamSize; j++) {
-        html += `<div class="team-member">${shuffledNames[i * teamSize + j]}</div>`;
+        html += `<div class="team-member">${escapeHtml(shuffledNames[i * teamSize + j])}</div>`;
       }
 
       html += `
@@ -182,10 +412,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
 
-    // Handle leftovers
     if (leftovers > 0) {
       html += `
-        <div class="team-card" style="--team-color: #52525b;">
+        <div class="team-card" style="--team-color: #5d5d66;">
           <div class="team-card-header">
             <div class="team-badge">!</div>
             <div class="team-name">Ficaram de fora (${leftovers})</div>
@@ -194,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       for (let i = 0; i < leftovers; i++) {
-        html += `<div class="team-member">${shuffledNames[numTeams * teamSize + i]}</div>`;
+        html += `<div class="team-member">${escapeHtml(shuffledNames[numTeams * teamSize + i])}</div>`;
       }
 
       html += `
@@ -205,30 +434,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     html += `
         </div>
-        <button class="btn btn-outline resort-btn" id="resortBtn">Sortear Novamente</button>
+        <button class="btn btn-secondary resort-btn" id="resortBtn">Sortear Novamente</button>
       </div>
     `;
 
     sorteioStage.innerHTML = html;
 
-    // Attach event to the new resort button
-    document.getElementById('resortBtn').addEventListener('click', () => {
-      sortBtn.click();
-    });
+    const resortBtn = document.getElementById('resortBtn');
+    if (resortBtn) {
+      resortBtn.addEventListener('click', () => {
+        sortBtn.click();
+      });
+    }
   }
 
-  // Initialize state
   updateSortInfo();
 
   /* ═══════════════════════════════════════════════
-     Cacique SCAN Engine v3.0 — High-Speed Anti-Cheat
+     6. Cacique SCAN Engine v3.1 — Forensic Anti-Cheat
      ═══════════════════════════════════════════════ */
   const scanLoginView = document.getElementById('scanLoginView');
   const scanDashboardView = document.getElementById('scanDashboardView');
   const scanUser = document.getElementById('scanUser');
   const scanPass = document.getElementById('scanPass');
   const scanBtnLogin = document.getElementById('scanBtnLogin');
-  const scanLoginError = document.getElementById('scanLoginError');
   const scanBtnLogout = document.getElementById('scanBtnLogout');
 
   const scanUploadContainer = document.getElementById('scanUploadContainer');
@@ -261,15 +490,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentScanReport = null;
   let activeFilterCategory = 'all';
 
-  // Credenciais de administrador
   const ADMIN_USER_VAL = 'CACIQUE';
   const ADMIN_PASS_VAL = 'g.indiopatrocina777';
   const AUTH_STORAGE_KEY = 'cacique_scan_authenticated';
 
-  // ─────────────────────────────────────────────────────────────
-  // Base de Assinaturas e Cheats (Free Fire, Root, Jailbreak, etc.)
-  // ─────────────────────────────────────────────────────────────
-  const CHEAT_SIGNATURES = [
+const CHEAT_SIGNATURES = [
     // --- CORINGA CODES & OFFSETS LIBIL2CPP (PDF 2) ---
     { term: 'd0264a54', name: 'HS Cabeça (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd0264a55', name: 'Aimbot Direto (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
@@ -446,7 +671,6 @@ document.addEventListener('DOMContentLoaded', () => {
     emulator_clone: '💻 Emuladores & Clones'
   };
 
-  // Ignorar extensões de mídia para não travar na extração
   const SKIP_EXTENSIONS = [
     '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico', '.heic',
     '.mp4', '.mov', '.avi', '.mkv', '.mp3', '.wav', '.ogg', '.m4a',
@@ -458,8 +682,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return !SKIP_EXTENSIONS.some(ext => lower.endsWith(ext));
   }
 
+  function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  function clearFileInputs() {
+    if (scanFileInput) scanFileInput.value = '';
+    if (scanFolderInput) scanFolderInput.value = '';
+    if (scanLooseInput) scanLooseInput.value = '';
+  }
+
   // ─────────────────────────────────────────────────────────────
-  // Autenticação
+  // Autenticação com Toasts e Feedback Visual (Sem Alert)
   // ─────────────────────────────────────────────────────────────
   if (localStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
     if (scanLoginView && scanDashboardView) {
@@ -472,18 +706,35 @@ document.addEventListener('DOMContentLoaded', () => {
     scanBtnLogin.addEventListener('click', () => {
       const user = (scanUser.value || '').trim();
       const pass = (scanPass.value || '').trim();
-      scanLoginError.textContent = 'Verificando credenciais...';
+
+      [scanUser, scanPass].forEach(input => input.classList.remove('is-invalid'));
 
       if (user === ADMIN_USER_VAL && pass === ADMIN_PASS_VAL) {
         localStorage.setItem(AUTH_STORAGE_KEY, 'true');
-        scanLoginError.textContent = '';
         scanLoginView.style.display = 'none';
         scanDashboardView.style.display = 'block';
+        sfx.done();
+        showToast('success', 'Acesso Autorizado', 'Sessão de ADM liberada para análise forense.');
       } else {
-        scanLoginError.textContent = 'Usuário ou senha inválidos.';
+        sfx.error();
+        [scanUser, scanPass].forEach(input => {
+          input.classList.add('is-invalid');
+          setTimeout(() => input.classList.remove('is-invalid'), 600);
+        });
+        showToast('error', 'Credenciais Inválidas', 'Usuário ou senha de ADM incorretos.');
       }
     });
 
+    [scanUser, scanPass].forEach(input => {
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') scanBtnLogin.click();
+        });
+      }
+    });
+  }
+
+  if (scanBtnLogout) {
     scanBtnLogout.addEventListener('click', () => {
       localStorage.removeItem(AUTH_STORAGE_KEY);
       if (scanUser) scanUser.value = '';
@@ -491,6 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
       scanDashboardView.style.display = 'none';
       scanLoginView.style.display = 'block';
       resetScan();
+      sfx.tick(500);
+      showToast('info', 'Sessão Encerrada', 'Scanner bloqueado com sucesso.');
     });
   }
 
@@ -506,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mode === 'zip') {
       if (modeZipBtn) modeZipBtn.classList.add('active');
       if (scanUploadTitle) scanUploadTitle.textContent = 'Arraste o arquivo .zip aqui';
-      if (scanUploadDesc) scanUploadDesc.textContent = 'Suporta Bugreports Android (.zip), Sysdiagnose iOS (.zip/.tar.gz) ou dumps';
+      if (scanUploadDesc) scanUploadDesc.textContent = 'Bugreport Android (.zip), Sysdiagnose iOS (.tar.gz) ou dump de cheat';
     } else if (mode === 'folder') {
       if (modeFolderBtn) modeFolderBtn.classList.add('active');
       if (scanUploadTitle) scanUploadTitle.textContent = 'Clique para selecionar uma Pasta Extraída';
@@ -516,6 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (scanUploadTitle) scanUploadTitle.textContent = 'Selecione arquivos soltos / logs';
       if (scanUploadDesc) scanUploadDesc.textContent = 'Selecione um ou vários arquivos de texto, logs, dumpsys, prop, etc.';
     }
+    sfx.tick(900);
   }
 
   if (modeZipBtn) modeZipBtn.addEventListener('click', (e) => { e.stopPropagation(); setScanMode('zip'); });
@@ -533,6 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Drag-and-drop interativo (borda contínua iluminada + leve escala)
     scanUploadBox.addEventListener('dragover', (e) => {
       e.preventDefault();
       scanUploadBox.classList.add('dragover');
@@ -551,38 +806,98 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    scanFileInput.addEventListener('change', () => {
-      if (scanFileInput.files && scanFileInput.files.length) {
-        startScanProcess(scanFileInput.files);
-      }
-    });
+    if (scanFileInput) {
+      scanFileInput.addEventListener('change', () => {
+        if (scanFileInput.files && scanFileInput.files.length) {
+          startScanProcess(scanFileInput.files);
+        }
+      });
+    }
 
-    scanFolderInput.addEventListener('change', () => {
-      if (scanFolderInput.files && scanFolderInput.files.length) {
-        startScanProcess(scanFolderInput.files);
-      }
-    });
+    if (scanFolderInput) {
+      scanFolderInput.addEventListener('change', () => {
+        if (scanFolderInput.files && scanFolderInput.files.length) {
+          startScanProcess(scanFolderInput.files);
+        }
+      });
+    }
 
-    scanLooseInput.addEventListener('change', () => {
-      if (scanLooseInput.files && scanLooseInput.files.length) {
-        startScanProcess(scanLooseInput.files);
-      }
-    });
+    if (scanLooseInput) {
+      scanLooseInput.addEventListener('change', () => {
+        if (scanLooseInput.files && scanLooseInput.files.length) {
+          startScanProcess(scanLooseInput.files);
+        }
+      });
+    }
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Funções de Terminal & Progresso
+  // Terminal forense: fila com timestamp real e atraso dinâmico
   // ─────────────────────────────────────────────────────────────
-  function addTerminalLine(text, type = 'normal') {
+  const LOG_LEVELS = { info: 'INFO', parse: 'PARSE', analysis: 'ANALYSIS', ok: 'OK', warn: 'DETECT', error: 'ERROR' };
+  let logQueue = [];
+  let logPumpRunning = false;
+  let logDrainWaiters = [];
+
+  function formatClock(d) {
+    const p = (n, l = 2) => String(n).padStart(l, '0');
+    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}.${p(d.getMilliseconds(), 3)}`;
+  }
+
+  function formatBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  function log(level, text) {
+    logQueue.push({ level, text, time: new Date() });
+    if (!logPumpRunning) pumpLogs();
+  }
+
+  async function pumpLogs() {
+    logPumpRunning = true;
+    while (logQueue.length) {
+      renderLogLine(logQueue.shift());
+      const backlog = logQueue.length;
+      const delay = backlog > 30 ? 0 : backlog > 10 ? 6 : 18 + Math.random() * 55;
+      if (delay) await sleep(delay);
+    }
+    logPumpRunning = false;
+    logDrainWaiters.splice(0).forEach(fn => fn());
+  }
+
+  function waitLogsDrained() {
+    if (!logPumpRunning && !logQueue.length) return Promise.resolve();
+    return new Promise(r => logDrainWaiters.push(r));
+  }
+
+  function renderLogLine({ level, text, time }) {
     if (!terminalLines) return;
-    const div = document.createElement('div');
-    div.className = 'terminal-line' +
-      (type === 'error' ? ' terminal-err' : '') +
-      (type === 'warn' ? ' terminal-warn' : '') +
-      (type === 'info' ? ' terminal-info' : '');
-    div.textContent = '> ' + text;
-    terminalLines.appendChild(div);
+    const row = document.createElement('div');
+    row.className = `terminal-line lvl-${level}`;
+    const t = document.createElement('span');
+    t.className = 't-time';
+    t.textContent = `[${formatClock(time)}]`;
+    const l = document.createElement('span');
+    l.className = 't-lvl';
+    l.textContent = `[${LOG_LEVELS[level] || 'INFO'}]`;
+    const m = document.createElement('span');
+    m.className = 't-msg';
+    m.textContent = text;
+    row.append(t, l, m);
+    terminalLines.appendChild(row);
     terminalLines.scrollTop = terminalLines.scrollHeight;
+
+    if (level === 'warn') sfx.alert();
+    else if (level !== 'parse') sfx.tick(1200);
+  }
+
+  function setTerminalStatus(text, cls = '') {
+    const el = document.getElementById('terminalStatus');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'terminal-status-indicator ' + cls;
   }
 
   function setProgress(percent, label) {
@@ -594,26 +909,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─────────────────────────────────────────────────────────────
   // Motor de Extração de Strings & Informações
   // ─────────────────────────────────────────────────────────────
-  function extractPrintableStrings(uint8Array, minLen = 5) {
-    let result = '';
-    let current = '';
-    for (let i = 0; i < uint8Array.length; i++) {
-      const code = uint8Array[i];
-      if (code >= 32 && code <= 126) {
-        current += String.fromCharCode(code);
-      } else {
-        if (current.length >= minLen) {
-          result += current + '\n';
-        }
-        current = '';
+  const BINARY_EXT = /\.(so|dex|dylib|odex|vdex|oat|apk|arsc|db|sqlite|bin|dat)$/i;
+  const ARCHIVE_RE = /\.(zip|tar\.gz|tgz|tar|gz)$/i;
+  const latin1 = new TextDecoder('latin1');
+  const utf8 = new TextDecoder('utf-8');
+
+  function extractPrintableStrings(bytes, minLen = 5) {
+    const out = [];
+    let start = -1;
+    for (let i = 0; i <= bytes.length; i++) {
+      const c = i < bytes.length ? bytes[i] : 0;
+      if (c >= 32 && c <= 126) {
+        if (start < 0) start = i;
+      } else if (start >= 0) {
+        if (i - start >= minLen) out.push(latin1.decode(bytes.subarray(start, i)));
+        start = -1;
       }
     }
-    if (current.length >= minLen) result += current + '\n';
-    return result;
+    return out.join('\n');
   }
 
   function extractDeviceInfo(text, deviceInfo) {
-    // Modelos Android comuns
     const mModel = text.match(/ro\.product\.model\s*[:=]\s*([^\r\n]+)/i) ||
                    text.match(/model\s*[:=]\s*([^\r\n]+)/i);
     if (mModel && !deviceInfo.model) deviceInfo.model = mModel[1].trim();
@@ -633,7 +949,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const mKernel = text.match(/Linux\s+version\s+([0-9a-zA-Z._\-+]+)/i);
     if (mKernel && !deviceInfo.kernel) deviceInfo.kernel = 'Linux ' + mKernel[1].trim();
 
-    // iOS Sysdiagnose
     const mIosProd = text.match(/<key>ProductType<\/key>\s*<string>([^<]+)<\/string>/i);
     if (mIosProd && !deviceInfo.model) deviceInfo.model = mIosProd[1].trim();
 
@@ -644,174 +959,210 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mIosSerial && !deviceInfo.serial) deviceInfo.serial = mIosSerial[1].trim();
   }
 
+  async function readZipEntries(file) {
+    let zip;
+    try {
+      zip = await JSZip.loadAsync(file);
+    } catch (e) {
+      throw new Error('O arquivo não é um .zip válido (corrompido ou incompleto).');
+    }
+    return Object.values(zip.files).filter(e => !e.dir).map(e => ({
+      path: e.name,
+      bytes: () => e.async('uint8array'),
+      text: () => e.async('string')
+    }));
+  }
+
+  async function gunzip(file) {
+    if (typeof DecompressionStream === 'undefined') {
+      throw new Error('Este navegador não descomprime .gz. Extraia o arquivo e use "Pasta extraída".');
+    }
+    const stream = file.stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  function parseTar(buf) {
+    if (buf.length < 512 || latin1.decode(buf.subarray(257, 262)) !== 'ustar') return null;
+    const entries = [];
+    const cstr = (b) => latin1.decode(b).replace(/\0[\s\S]*$/, '');
+    let off = 0;
+    let pendingName = null;
+
+    while (off + 512 <= buf.length) {
+      const h = buf.subarray(off, off + 512);
+      if (h[0] === 0 && h.every(b => b === 0)) break;
+
+      let name = cstr(h.subarray(0, 100));
+      const prefix = cstr(h.subarray(345, 500));
+      const size = parseInt(cstr(h.subarray(124, 136)).trim() || '0', 8) || 0;
+      const type = String.fromCharCode(h[156] || 48);
+      const dataStart = off + 512;
+      const data = buf.subarray(dataStart, dataStart + size);
+
+      if (type === 'L') {
+        pendingName = cstr(data);
+      } else if (type === 'x') {
+        const m = utf8.decode(data).match(/\d+ path=([^\n]+)\n/);
+        if (m) pendingName = m[1];
+      } else if (type === '0' || type === '7') {
+        if (pendingName) name = pendingName;
+        else if (prefix) name = prefix + '/' + name;
+        pendingName = null;
+        entries.push({ path: name, bytes: async () => data, text: async () => utf8.decode(data) });
+      } else if (type !== 'g') {
+        pendingName = null;
+      }
+      off = dataStart + Math.ceil(size / 512) * 512;
+    }
+    return entries;
+  }
+
+  async function readTarLike(file) {
+    const lower = file.name.toLowerCase();
+    const raw = lower.endsWith('.tar') ? new Uint8Array(await file.arrayBuffer()) : await gunzip(file);
+    const entries = parseTar(raw);
+    if (entries) return entries;
+    return [{ path: file.name.replace(/\.gz$/i, ''), bytes: async () => raw, text: async () => utf8.decode(raw) }];
+  }
+
+  function readFileListEntries(files) {
+    return files.map(f => ({
+      path: f.webkitRelativePath || f.name,
+      bytes: async () => new Uint8Array(await f.arrayBuffer()),
+      text: () => f.text()
+    }));
+  }
+
   // ─────────────────────────────────────────────────────────────
-  // Execução do Scan (100% In-Browser, Ultra-Rápido com JSZip)
+  // Execução do Scan (100% In-Browser)
   // ─────────────────────────────────────────────────────────────
+  let scanBusy = false;
+
   async function startScanProcess(fileList) {
     if (!fileList || fileList.length === 0) return;
+    if (scanBusy) {
+      showToast('info', 'Análise em andamento', 'Aguarde o scan atual terminar.');
+      return;
+    }
 
+    const files = Array.from(fileList);
+    const first = files[0];
+    const isArchive = files.length === 1 && ARCHIVE_RE.test(first.name);
+
+    if (currentScanMode === 'zip' && !isArchive) {
+      sfx.error();
+      showToast('error', 'Arquivo inválido', 'Neste modo envie um único .zip, .tar.gz ou .tar. Para outros use "Logs soltos".');
+      clearFileInputs();
+      return;
+    }
+    if (files.every(f => f.size === 0)) {
+      sfx.error();
+      showToast('error', 'Arquivo vazio', 'O arquivo selecionado tem 0 bytes.');
+      clearFileInputs();
+      return;
+    }
+
+    scanBusy = true;
     scanUploadContainer.style.display = 'none';
     scanTerminalWrap.style.display = 'block';
     scanResults.style.display = 'none';
     terminalLines.innerHTML = '';
+    logQueue = [];
+    setTerminalStatus('ANALISANDO');
+    sfx.tick(1200);
 
     const startTime = performance.now();
-    addTerminalLine('CACIQUE SCAN ENGINE v3.0 [ALTA VELOCIDADE NATIVA] — INICIANDO', 'info');
-
-    const firstFile = fileList[0];
-    const isSingleArchive = fileList.length === 1 && /\.(zip|tar\.gz|tgz|tar)$/i.test(firstFile.name);
-
-    addTerminalLine(`Origem: ${isSingleArchive ? firstFile.name : fileList.length + ' arquivos selecionados'}`);
-    if (isSingleArchive) {
-      addTerminalLine(`Tamanho: ${(firstFile.size / 1024 / 1024).toFixed(2)} MB`);
+    log('info', 'ccq-scan 3.1 — motor local, nenhum dado sai do navegador');
+    if (isArchive) {
+      log('info', `Lendo cabeçalho do arquivo ${first.name} (${formatBytes(first.size)})...`);
+    } else {
+      log('info', `${files.length} arquivo(s) recebidos de ${currentScanMode === 'folder' ? 'pasta extraída' : 'seleção manual'}`);
     }
-
-    setProgress(5, 'Carregando bibliotecas...');
-    await new Promise(r => setTimeout(r, 60));
+    setProgress(4, 'Preparando...');
+    await sleep(40);
 
     const findings = [];
+    const seen = new Set();
     let analyzedCount = 0;
     let skippedCount = 0;
     let totalScore = 0;
     let osDetected = 'ANDROID';
-
-    const deviceInfo = {
-      brand: '',
-      model: '',
-      osVersion: '',
-      serial: '',
-      kernel: ''
-    };
+    let gamePkgSeen = false;
+    const deviceInfo = { brand: '', model: '', osVersion: '', serial: '', kernel: '' };
 
     try {
-      if (isSingleArchive) {
-        // --- MODO 1: ARQUIVO COMPACTADO (.ZIP) ---
-        if (typeof JSZip === 'undefined') {
-          throw new Error('Biblioteca JSZip não encontrada. Verifique sua conexão.');
-        }
-
-        addTerminalLine('Abrindo pacote comprimido via JSZip em memória local...');
-        setProgress(15, 'Descompactando estrutura do arquivo...');
-
-        const zip = await JSZip.loadAsync(firstFile);
-        const fileEntries = Object.keys(zip.files).filter(path => !zip.files[path].dir && isRelevantEntry(path));
-        const totalFiles = fileEntries.length;
-
-        addTerminalLine(`Total de arquivos relevantes para análise: ${totalFiles}`);
-
-        // Verificação rápida de iOS
-        if (Object.keys(zip.files).some(p => p.toLowerCase().includes('sysdiagnose') || p.toLowerCase().includes('.plist'))) {
-          osDetected = 'IOS';
-        }
-
-        let index = 0;
-        for (const relPath of fileEntries) {
-          index++;
-          const entry = zip.files[relPath];
-          const pct = 20 + Math.round((index / totalFiles) * 75);
-
-          if (index % 5 === 0 || index === totalFiles) {
-            setProgress(pct, `Analisando: ${relPath.split('/').pop()} (${index}/${totalFiles})`);
-          }
-
-          try {
-            let contentText = '';
-            const lowerPath = relPath.toLowerCase();
-
-            if (lowerPath.endsWith('.so') || lowerPath.endsWith('.dex') || lowerPath.endsWith('.dylib')) {
-              // Binário: extrai strings imprimíveis
-              const rawBytes = await entry.async('uint8array');
-              if (rawBytes.length <= 15 * 1024 * 1024) {
-                contentText = extractPrintableStrings(rawBytes);
-              }
-            } else {
-              // Texto/Log/XML/Prop
-              contentText = await entry.async('string');
-            }
-
-            if (contentText) {
-              extractDeviceInfo(contentText, deviceInfo);
-              const fileFindings = scanTextForCheats(contentText, relPath);
-              if (fileFindings.length > 0) {
-                for (const f of fileFindings) {
-                  findings.push(f);
-                  totalScore += f.weight;
-                  addTerminalLine(`⚠ DETECTADO: [${f.name}] em "${f.file.split('/').pop()}"`, 'warn');
-                }
-              }
-              analyzedCount++;
-            } else {
-              skippedCount++;
-            }
-          } catch (err) {
-            skippedCount++;
-          }
-
-          // Permitir renderização do DOM
-          if (index % 15 === 0) {
-            await new Promise(r => setTimeout(r, 0));
-          }
-        }
-
+      let entries;
+      if (isArchive && /\.zip$/i.test(first.name)) {
+        if (typeof JSZip === 'undefined') throw new Error('JSZip não carregou. Recarregue a página.');
+        setProgress(10, 'Lendo índice do .zip...');
+        entries = await readZipEntries(first);
+      } else if (isArchive) {
+        setProgress(10, 'Descomprimindo...');
+        log('parse', 'Descomprimindo fluxo gzip/tar em memória...');
+        entries = await readTarLike(first);
       } else {
-        // --- MODO 2: PASTA OU ARQUIVOS SOLTOS ---
-        const filesArray = Array.from(fileList).filter(f => isRelevantEntry(f.webkitRelativePath || f.name));
-        const totalFiles = filesArray.length;
-
-        addTerminalLine(`Processando ${totalFiles} arquivos da pasta/seleção...`);
-        let index = 0;
-
-        for (const file of filesArray) {
-          index++;
-          const relPath = file.webkitRelativePath || file.name;
-          const pct = 10 + Math.round((index / totalFiles) * 85);
-
-          if (index % 4 === 0 || index === totalFiles) {
-            setProgress(pct, `Lendo: ${file.name} (${index}/${totalFiles})`);
-          }
-
-          try {
-            let text = '';
-            const lowerName = file.name.toLowerCase();
-
-            if (lowerName.endsWith('.so') || lowerName.endsWith('.dex') || lowerName.endsWith('.dylib')) {
-              const buffer = await file.arrayBuffer();
-              text = extractPrintableStrings(new Uint8Array(buffer));
-            } else {
-              text = await file.text();
-            }
-
-            if (text) {
-              extractDeviceInfo(text, deviceInfo);
-              const fileFindings = scanTextForCheats(text, relPath);
-              if (fileFindings.length > 0) {
-                for (const f of fileFindings) {
-                  findings.push(f);
-                  totalScore += f.weight;
-                  addTerminalLine(`⚠ DETECTADO: [${f.name}] em "${relPath.split('/').pop()}"`, 'warn');
-                }
-              }
-              analyzedCount++;
-            } else {
-              skippedCount++;
-            }
-          } catch (e) {
-            skippedCount++;
-          }
-
-          if (index % 12 === 0) {
-            await new Promise(r => setTimeout(r, 0));
-          }
-        }
+        entries = readFileListEntries(files);
       }
 
-      setProgress(98, 'Compilando relatório final...');
-      await new Promise(r => setTimeout(r, 350));
+      const totalRaw = entries.length;
+      if (entries.some(e => /sysdiagnose|\.plist$|\.ips$/i.test(e.path))) osDetected = 'IOS';
+      entries = entries.filter(e => isRelevantEntry(e.path));
+      log('info', `Estrutura indexada: ${totalRaw} entradas, ${entries.length} relevantes (mídia ignorada)`);
+      if (!entries.length) throw new Error('Nenhum arquivo analisável foi encontrado no pacote.');
+      log('analysis', `Sistema alvo: ${osDetected === 'IOS' ? 'iOS (sysdiagnose)' : 'Android (bugreport/dump)'}`);
+
+      const total = entries.length;
+      for (let i = 0; i < total; i++) {
+        const entry = entries[i];
+        const name = entry.path.split('/').pop();
+
+        if (i % 4 === 0 || i === total - 1) {
+          setProgress(12 + Math.round(((i + 1) / total) * 84), `${name} (${i + 1}/${total})`);
+        }
+
+        try {
+          let text = '';
+          if (BINARY_EXT.test(entry.path)) {
+            const bytes = await entry.bytes();
+            if (bytes.length <= 24 * 1024 * 1024) text = extractPrintableStrings(bytes);
+          } else {
+            text = await entry.text();
+          }
+
+          if (!text) {
+            skippedCount++;
+            continue;
+          }
+
+          if (text.length > 1024 * 1024) log('parse', `Extraindo ${name} (${formatBytes(text.length)})`);
+
+          extractDeviceInfo(text, deviceInfo);
+
+          if (!gamePkgSeen && /com\.dts\.freefire(th|max)/i.test(text)) {
+            gamePkgSeen = true;
+            log('analysis', `Pacote com.dts.freefireth localizado em ${name} — verificando integridade...`);
+          }
+
+          for (const f of scanTextForCheats(text, entry.path)) {
+            const key = f.name + '|' + f.file;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            findings.push(f);
+            totalScore += f.weight;
+            log('warn', `${f.name} → ${name}`);
+          }
+          analyzedCount++;
+        } catch (e) {
+          skippedCount++;
+        }
+
+        if (i % 10 === 0) await sleep(0);
+      }
 
       const durationSec = ((performance.now() - startTime) / 1000).toFixed(1);
-      addTerminalLine(`─── Análise Concluída: ${analyzedCount} analisados em ${durationSec}s (${findings.length} ameaças) ───`, findings.length ? 'warn' : 'info');
+      log('info', `Varredura concluída: ${analyzedCount} lidos, ${skippedCount} ignorados em ${durationSec}s`);
+      setProgress(98, 'Compilando relatório...');
 
-      // Veredito
       let veredito = '100% LIMPO (VERIFICADO)';
       let colorClass = 'green';
       const hasDirectBan = findings.some(f => f.risk.includes('Ban Direto') || f.weight >= 90);
@@ -824,9 +1175,12 @@ document.addEventListener('DOMContentLoaded', () => {
         colorClass = 'yellow';
       }
 
+      log(colorClass === 'red' ? 'error' : colorClass === 'yellow' ? 'warn' : 'ok',
+        findings.length ? `${findings.length} indicador(es) — veredito: ${veredito}` : `Nenhuma assinatura encontrada — ${veredito}`);
+
       currentScanReport = {
-        targetName: isSingleArchive ? firstFile.name : (fileList.length + ' arquivos'),
-        targetSizeMb: isSingleArchive ? (firstFile.size / 1024 / 1024).toFixed(2) : null,
+        targetName: isArchive ? first.name : (files.length + ' arquivos'),
+        targetSizeMb: isArchive ? (first.size / 1024 / 1024).toFixed(2) : null,
         os: osDetected,
         veredito,
         colorClass,
@@ -839,16 +1193,23 @@ document.addEventListener('DOMContentLoaded', () => {
         timestamp: new Date().toLocaleString('pt-BR')
       };
 
-      setProgress(100, 'Concluído');
-      await new Promise(r => setTimeout(r, 200));
+      await waitLogsDrained();
+      setTerminalStatus('CONCLUÍDO', 'is-done');
+      setProgress(100, `Concluído em ${durationSec}s`);
+      if (colorClass === 'red') sfx.alert(true);
+      else sfx.done();
+      await sleep(350);
 
       renderScanResults(currentScanReport);
-
     } catch (err) {
-      addTerminalLine(`ERRO CRÍTICO NO SCAN: ${err.message}`, 'error');
-      setTimeout(() => {
-        resetScan();
-      }, 5000);
+      log('error', err.message || String(err));
+      await waitLogsDrained();
+      setTerminalStatus('FALHOU', 'is-error');
+      sfx.error();
+      showToast('error', 'Falha na análise', err.message || 'Arquivo corrompido ou formato não suportado.', 4500);
+      setTimeout(resetScan, 3500);
+    } finally {
+      scanBusy = false;
     }
   }
 
@@ -862,7 +1223,6 @@ document.addEventListener('DOMContentLoaded', () => {
     for (const sig of CHEAT_SIGNATURES) {
       const idx = textLower.indexOf(sig.term.toLowerCase());
       if (idx !== -1) {
-        // Obter trecho de contexto com a linha onde ocorreu
         const snippetStart = Math.max(0, idx - 40);
         const snippetEnd = Math.min(text.length, idx + sig.term.length + 50);
         const rawSnippet = text.substring(snippetStart, snippetEnd).replace(/\r?\n/g, ' ');
@@ -889,15 +1249,14 @@ document.addEventListener('DOMContentLoaded', () => {
     scanTerminalWrap.style.display = 'none';
     scanResults.style.display = 'block';
 
-    const colorHex = report.colorClass === 'red' ? '#ef4444' : (report.colorClass === 'yellow' ? '#f59e0b' : '#10b981');
+    const colorHex = report.colorClass === 'red' ? '#e5484d' : (report.colorClass === 'yellow' ? '#f5a524' : '#3dd68c');
 
-    // 1. Sumário do Veredito
     resultSummary.innerHTML = `
       <h3 style="color:${colorHex}">${report.veredito}</h3>
-      <p>Alvo: <strong>${report.targetName}</strong> &nbsp;|&nbsp; Pontuação de Risco: <strong>${report.totalScore}</strong></p>
+      <p>Alvo: <strong>${escapeHtml(report.targetName)}</strong> &nbsp;|&nbsp; Pontuação de Risco: <strong>${report.totalScore}</strong></p>
       <div class="scan-stats-grid">
         <div class="scan-stat-card">
-          <div class="scan-stat-val" style="color:#10b981;">${report.analyzedCount}</div>
+          <div class="scan-stat-val" style="color:var(--green);">${report.analyzedCount}</div>
           <div class="scan-stat-lbl">Arquivos Lidos</div>
         </div>
         <div class="scan-stat-card">
@@ -905,13 +1264,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="scan-stat-lbl">Ameaças Detectadas</div>
         </div>
         <div class="scan-stat-card">
-          <div class="scan-stat-val" style="color:#38bdf8;">${report.durationSec}s</div>
+          <div class="scan-stat-val" style="color:var(--blue);">${report.durationSec}s</div>
           <div class="scan-stat-lbl">Tempo de Varredura</div>
         </div>
       </div>
     `;
 
-    // 2. Cartão de Identidade do Dispositivo
     const dev = report.deviceInfo;
     const hasDeviceData = dev.brand || dev.model || dev.osVersion || dev.serial || dev.kernel;
     if (hasDeviceData) {
@@ -920,20 +1278,17 @@ document.addEventListener('DOMContentLoaded', () => {
       scanDeviceCard.innerHTML = `
         <div class="scan-device-header">📱 Dispositivo Analisado (Prova Forense)</div>
         <div class="device-spec-grid">
-          <div class="device-spec-item">Aparelho: <strong>${deviceModel}</strong></div>
-          <div class="device-spec-item">Sistema: <strong>${dev.osVersion || report.os}</strong></div>
-          ${dev.serial ? `<div class="device-spec-item">HWID/Serial: <strong>${dev.serial}</strong></div>` : ''}
-          ${dev.kernel ? `<div class="device-spec-item">Kernel: <strong>${dev.kernel}</strong></div>` : ''}
+          <div class="device-spec-item">Aparelho: <strong>${escapeHtml(deviceModel)}</strong></div>
+          <div class="device-spec-item">Sistema: <strong>${escapeHtml(dev.osVersion || report.os)}</strong></div>
+          ${dev.serial ? `<div class="device-spec-item">HWID/Serial: <strong>${escapeHtml(dev.serial)}</strong></div>` : ''}
+          ${dev.kernel ? `<div class="device-spec-item">Kernel: <strong>${escapeHtml(dev.kernel)}</strong></div>` : ''}
         </div>
       `;
     } else {
       scanDeviceCard.style.display = 'none';
     }
 
-    // 3. Filtros por Categoria
     renderCategoryFilters(report.findings);
-
-    // 4. Lista de Cartões de Ameaças
     renderThreatList(report.findings, activeFilterCategory);
   }
 
@@ -970,6 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scanFilters.querySelectorAll('.scan-filter-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
         renderThreatList(currentScanReport.findings, activeFilterCategory);
+        sfx.tick(1000);
       });
     });
   }
@@ -1025,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>"']/g, m => ({
+    return String(str).replace(/[&<>"']/g, m => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
     }[m]));
   }
@@ -1035,7 +1391,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Ações de Relatório: Copiar para Discord / WhatsApp
+  // 7. Copiar Relatório Oficial (Discord / WhatsApp)
   // ─────────────────────────────────────────────────────────────
   if (scanBtnCopyReport) {
     scanBtnCopyReport.addEventListener('click', () => {
@@ -1072,61 +1428,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       text += `------------------------------------------\n`;
-      text += `🔍 Cacique SCAN Engine v3.0 // Anti-Cheat Oficial\n`;
+      text += `🔍 Cacique SCAN Engine v3.1 // Anti-Cheat Oficial\n`;
       text += `══════════════════════════════════════════`;
 
-      copyTextToClipboard(text, scanBtnCopyReport, '📋 Relatório Copiado! ✓');
+      performCopy(text, scanBtnCopyReport, 'Relatório copiado!');
     });
   }
 
-  function copyTextToClipboard(text, btnElement, successMsg) {
-    const originalText = btnElement.textContent;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(() => {
-        btnElement.textContent = successMsg;
-        setTimeout(() => { btnElement.textContent = originalText; }, 2500);
-      }).catch(() => fallbackCopy(text, btnElement, successMsg, originalText));
-    } else {
-      fallbackCopy(text, btnElement, successMsg, originalText);
-    }
-  }
-
-  function fallbackCopy(text, btnElement, successMsg, originalText) {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    try {
-      document.execCommand('copy');
-      btnElement.textContent = successMsg;
-      setTimeout(() => { btnElement.textContent = originalText; }, 2500);
-    } catch (e) {
-      alert('Não foi possível copiar automaticamente.');
-    }
-    document.body.removeChild(ta);
-  }
-
   function resetScan() {
-    if (scanFileInput) scanFileInput.value = '';
-    if (scanFolderInput) scanFolderInput.value = '';
-    if (scanLooseInput) scanLooseInput.value = '';
+    clearFileInputs();
     if (scanTerminalWrap) scanTerminalWrap.style.display = 'none';
     if (scanResults) scanResults.style.display = 'none';
     if (scanUploadContainer) scanUploadContainer.style.display = 'block';
     currentScanReport = null;
     activeFilterCategory = 'all';
+    logQueue = [];
+    scanBusy = false;
   }
 
   if (scanBtnNew) {
-    scanBtnNew.addEventListener('click', resetScan);
+    scanBtnNew.addEventListener('click', () => {
+      resetScan();
+      sfx.tick(900);
+    });
   }
 
-  /* ═══════════════════════════════════════════════
-     Nossas Redes — Abas
-     ═══════════════════════════════════════════════ */
+  // ─────────────────────────────────────────────────────────────
+  // 8. Nossas Redes — Abas & Feedback de Cópia Ativo
+  // ─────────────────────────────────────────────────────────────
   const tabBtns = document.querySelectorAll('.rede-tab-btn');
   const tabContents = document.querySelectorAll('.redes-tab-content');
 
@@ -1140,41 +1469,15 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.add('active');
       const targetContent = document.getElementById('tab-' + target);
       if (targetContent) targetContent.classList.add('active');
+      sfx.tick(1000);
     });
   });
 
-  /* Botões de copiar link */
   document.querySelectorAll('.rede-copy-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const url = btn.dataset.copy;
       if (!url) return;
-
-      navigator.clipboard.writeText(url).then(() => {
-        const original = btn.textContent;
-        btn.textContent = 'Copiado ✓';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }, 2000);
-      }).catch(() => {
-        // Fallback para browsers sem clipboard API
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.position = 'fixed';
-        ta.style.opacity = '0';
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        const original = btn.textContent;
-        btn.textContent = 'Copiado ✓';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }, 2000);
-      });
+      performCopy(url, btn, 'Copiado!');
     });
   });
 });
