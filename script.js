@@ -306,18 +306,71 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter(name => name.length > 0);
   }
 
+  let lastPlayerCount = 0;
+  let countAnimFrame = null;
+
+  function animatePlayerCounter(targetCount) {
+    const counterEl = document.getElementById('playerCounter');
+    if (!counterEl) {
+      updateSortInfoFallback(targetCount);
+      return;
+    }
+
+    if (countAnimFrame) cancelAnimationFrame(countAnimFrame);
+
+    const start = lastPlayerCount;
+    const diff = targetCount - start;
+    if (diff === 0) {
+      counterEl.textContent = targetCount;
+      return;
+    }
+
+    const duration = 280;
+    const startTime = performance.now();
+
+    counterEl.classList.add('bump');
+    setTimeout(() => counterEl.classList.remove('bump'), 220);
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      // Easing out cubic
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(start + diff * ease);
+      counterEl.textContent = current;
+
+      if (progress < 1) {
+        countAnimFrame = requestAnimationFrame(step);
+      } else {
+        counterEl.textContent = targetCount;
+        lastPlayerCount = targetCount;
+      }
+    }
+    countAnimFrame = requestAnimationFrame(step);
+  }
+
+  function updateSortInfoFallback(count) {
+    if (!sortInfo) return;
+    sortInfo.innerHTML = `<span class="hl">${count}</span> jogadores válidos detectados`;
+  }
+
   function updateSortInfo() {
     if (!sortInfo) return;
     const namesCount = getValidNames().length;
-    sortInfo.innerHTML = `<span class="hl">${namesCount}</span> jogadores válidos detectados`;
+    animatePlayerCounter(namesCount);
 
     if (namesCount > 0 && namesCount < teamSize) {
-      sortInfo.innerHTML += ` <span style="color:var(--red); font-weight:500;">(Mínimo de ${teamSize} necessário)</span>`;
-      if (sortBtn) sortBtn.disabled = true;
+      if (sortBtn) {
+        sortBtn.disabled = true;
+        sortBtn.title = `Mínimo de ${teamSize} jogadores necessário`;
+      }
     } else if (namesCount === 0) {
       if (sortBtn) sortBtn.disabled = true;
     } else {
-      if (sortBtn) sortBtn.disabled = false;
+      if (sortBtn) {
+        sortBtn.disabled = false;
+        sortBtn.title = '';
+      }
     }
   }
 
@@ -356,27 +409,51 @@ document.addEventListener('DOMContentLoaded', () => {
       const names = getValidNames();
       if (names.length < teamSize) return;
 
+      // Estado de loading com suspense propositado (1.4s)
       sorteioStage.innerHTML = `
-        <div class="rolling">
-          <div class="rolling-label">Sorteando...</div>
-          <div class="rolling-name" id="rollingName">···</div>
+        <div class="sorteio-suspense">
+          <span class="suspense-label">
+            <span class="pulse-dot"></span>
+            Embaralhando guerreiros...
+          </span>
+          <div class="suspense-name" id="suspenseName">···</div>
+          <div class="suspense-bar-track">
+            <div class="suspense-bar-fill" id="suspenseBar"></div>
+          </div>
         </div>
       `;
 
-      const rollingNameEl = document.getElementById('rollingName');
-      let rollCount = 0;
+      const suspenseNameEl = document.getElementById('suspenseName');
+      const suspenseBarEl = document.getElementById('suspenseBar');
+      const totalDuration = 1400; // ms
+      const startTime = performance.now();
+      let rollTicks = 0;
 
-      const rollInterval = setInterval(() => {
-        rollingNameEl.textContent = names[Math.floor(Math.random() * names.length)];
-        rollCount++;
-        sfx.tick(800 + Math.random() * 400);
+      const suspenseInterval = setInterval(() => {
+        const elapsed = performance.now() - startTime;
+        const pct = Math.min(100, (elapsed / totalDuration) * 100);
 
-        if (rollCount > 16) {
-          clearInterval(rollInterval);
-          generateTeams(names);
-          sfx.done();
+        if (suspenseNameEl) {
+          suspenseNameEl.textContent = names[Math.floor(Math.random() * names.length)];
         }
-      }, 55);
+        if (suspenseBarEl) {
+          suspenseBarEl.style.width = pct + '%';
+        }
+
+        rollTicks++;
+        if (rollTicks % 2 === 0) {
+          sfx.tick(700 + Math.random() * 500);
+        }
+
+        if (elapsed >= totalDuration) {
+          clearInterval(suspenseInterval);
+          if (suspenseBarEl) suspenseBarEl.style.width = '100%';
+          setTimeout(() => {
+            generateTeams(names);
+            sfx.done();
+          }, 120);
+        }
+      }, 45);
     });
   }
 
@@ -387,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let html = `
       <div class="teams-result">
-        <div class="teams-header">Sorteio Concluído</div>
+        <div class="teams-header">Confronto Definido — ${numTeams} ${numTeams === 1 ? 'Time' : 'Times'}</div>
         <div class="teams-grid">
     `;
 
@@ -434,7 +511,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     html += `
         </div>
-        <button class="btn btn-secondary resort-btn" id="resortBtn">Sortear Novamente</button>
+        <div class="teams-actions">
+          <button type="button" class="btn btn-secondary resort-btn" id="resortBtn">Sortear Novamente</button>
+          <button type="button" class="btn btn-whatsapp-export" id="exportWhatsappBtn">Copiar para WhatsApp</button>
+        </div>
       </div>
     `;
 
@@ -444,6 +524,35 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resortBtn) {
       resortBtn.addEventListener('click', () => {
         sortBtn.click();
+      });
+    }
+
+    const exportWhatsappBtn = document.getElementById('exportWhatsappBtn');
+    if (exportWhatsappBtn) {
+      exportWhatsappBtn.addEventListener('click', () => {
+        let text = `⚔️ CACIQUE APOSTAS — CONFRONTO DEFINIDO ⚔️\n\n`;
+        for (let i = 0; i < numTeams; i++) {
+          text += `🔥 TIME ${i + 1}:\n`;
+          for (let j = 0; j < teamSize; j++) {
+            text += ` • ${shuffledNames[i * teamSize + j]}\n`;
+          }
+          if (i < numTeams - 1 && i % 2 === 0) {
+            text += `\n⚡ VS ⚡\n\n`;
+          } else {
+            text += `\n`;
+          }
+        }
+        if (leftovers > 0) {
+          text += `⚠️ RESERVAS / FORA (${leftovers}):\n`;
+          for (let i = 0; i < leftovers; i++) {
+            text += ` • ${shuffledNames[numTeams * teamSize + i]}\n`;
+          }
+          text += `\n`;
+        }
+        text += `----------------------------------\n`;
+        text += `🛡️ Tribo Oficial: https://enzommds7.github.io/ccq/`;
+
+        performCopy(text, exportWhatsappBtn, 'Copiado para WhatsApp!');
       });
     }
   }

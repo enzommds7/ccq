@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cacique Apostas — A Tribo Mais Confiável do Free Fire</title>
   <meta name="description"
-    content="Cacique Apostas: pagamento mais rápido do Brasil, regras claras e uma comunidade de mais de 1000 guerreiros. Entre na tribo.">
-  <meta name="theme-color" content="#09090b">
+    content="Cacique Apostas: pagamento mais rápido do Brasil, regras claras e uma comunidade ativa com mais de 1000 guerreiros. Entre na Tribo.">
+  <meta name="theme-color" content="#0d0e12">
   <link rel="canonical" href="https://enzommds7.github.io/ccq/">
 
   <!-- Open Graph / WhatsApp / Discord -->
@@ -15,19 +15,19 @@
   <meta property="og:site_name" content="Cacique Apostas">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:url" content="https://enzommds7.github.io/ccq/">
-  <meta property="og:title" content="Cacique Apostas — A tribo mais confiável do Free Fire">
-  <meta property="og:description" content="Pagamento via Pix na hora, regras claras e +1000 guerreiros. Duelos, sorteios e anti-cheat próprio.">
+  <meta property="og:title" content="Cacique Apostas — A Tribo Mais Confiável do Free Fire">
+  <meta property="og:description" content="Pagamento via Pix na hora, regras claras e mais de 1000 guerreiros. Duelos, sorteios e anti-cheat próprio.">
   <meta property="og:image" content="https://enzommds7.github.io/ccq/og-image.jpg">
   <meta property="og:image:width" content="1376">
   <meta property="og:image:height" content="768">
-  <meta property="og:image:alt" content="Logo Cacique Apostas">
+  <meta property="og:image:alt" content="Cacique Apostas">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Cacique Apostas — A tribo mais confiável do Free Fire">
-  <meta name="twitter:description" content="Pagamento via Pix na hora, regras claras e +1000 guerreiros.">
+  <meta name="twitter:title" content="Cacique Apostas — A Tribo Mais Confiável do Free Fire">
+  <meta name="twitter:description" content="Pagamento via Pix na hora, regras claras e mais de 1000 guerreiros.">
   <meta name="twitter:image" content="https://enzommds7.github.io/ccq/og-image.jpg">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="apple-touch-icon" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.webp">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -35,17 +35,19 @@
   <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="stylesheet" href="styles.css?v=5">
   <script src="jszip.min.js" defer></script>
 </head>
 
 <body>
 
-
   <header id="header">
     <nav class="container">
-      <a href="#" class="nav-brand">
-        <img src="logo.jpg" alt="Cacique Apostas" class="nav-logo">
+      <a href="#" class="nav-brand" aria-label="Página inicial do Cacique Apostas">
+        <picture>
+          <source srcset="logo.webp" type="image/webp">
+          <img src="logo.jpg" alt="Logo Cacique Apostas" width="32" height="32" class="nav-logo">
+        </picture>
         <span>Cacique Apostas</span>
       </a>
       <ul class="nav-links" id="navLinks">
@@ -56,13 +58,13 @@
         <li><a href="#redes">Redes</a></li>
       </ul>
       <div class="nav-actions">
-        <button class="sound-toggle" id="soundToggle" type="button" aria-label="Ativar sons da interface" aria-pressed="false" title="Sons da interface">
+        <button class="sound-toggle" id="soundToggle" type="button" aria-label="Alternar sons da interface" aria-pressed="false" title="Sons da interface">
           <svg class="ico-on" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></svg>
           <svg class="ico-off" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z" /><line x1="22" y1="9" x2="16" y2="15" /><line x1="16" y1="9" x2="22" y2="15" /></svg>
         </button>
         <a href="#redes" class="btn btn-primary btn-sm nav-cta">Entrar na Tribo</a>
       </div>
-      <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false">
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menu de navegação" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
     </nav>
@@ -78,238 +80,229 @@
 
   <main>
 
-
     <section class="hero" id="hero">
       <div class="container hero-grid">
-        <div class="hero-copy">
-          <div class="hero-label">Tribo oficial de apostas Free Fire</div>
-          <h1>O cacique <span class="accent">paga.</span><br>Sempre.</h1>
-          <p class="hero-desc">Mais de 1000 guerreiros ja apostam com a gente todos os dias. Pagamento mais rapido do
-            Brasil, regras claras e justiça pra quem joga limpo.</p>
+        <article class="hero-copy">
+          <span class="hero-label">Tribo oficial de apostas Free Fire</span>
+          <h1>O Cacique <span class="accent">paga.</span><br>Sempre.</h1>
+          <p class="hero-desc">Mais de 1000 guerreiros já apostam com a gente todos os dias. Pagamento mais rápido do
+            Brasil, regras claras e justiça para quem joga limpo.</p>
           <div class="hero-actions">
             <a href="#redes" class="btn btn-primary">Entrar na Tribo</a>
             <a href="#regras" class="btn btn-secondary">Ver Regras</a>
           </div>
-          <div class="hero-stats">
-            <div>
-              <div class="stat-value">1000+</div>
-              <div class="stat-label">Guerreiros ativos</div>
+          <aside class="hero-stats">
+            <div class="stat-item">
+              <span class="stat-value">1000+</span>
+              <span class="stat-label">Guerreiros ativos</span>
             </div>
-            <div>
-              <div class="stat-value">100%</div>
-              <div class="stat-label">Pagamento garantido</div>
+            <div class="stat-item">
+              <span class="stat-value">100%</span>
+              <span class="stat-label">Pagamento garantido</span>
             </div>
-            <div>
-              <div class="stat-value">24h</div>
-              <div class="stat-label">Partidas diarias</div>
+            <div class="stat-item">
+              <span class="stat-value">24h</span>
+              <span class="stat-label">Partidas diárias</span>
             </div>
-          </div>
-        </div>
-        <div class="hero-emblem">
-          <img src="logo.jpg" alt="Cacique Apostas">
-          <div class="seal-badge">
+          </aside>
+        </article>
+        <figure class="hero-emblem">
+          <picture>
+            <source srcset="logo.webp" type="image/webp">
+            <img src="logo.jpg" alt="Brasão Cacique Apostas" width="380" height="380">
+          </picture>
+          <figcaption class="seal-badge">
             <strong>PAGA</strong>
             <span>Garantido</span>
-          </div>
-        </div>
+          </figcaption>
+        </figure>
       </div>
     </section>
 
-
     <section class="sobre" id="sobre">
       <div class="container">
-        <div class="section-header">
-          <div class="section-label">Por que nós?</div>
-          <h2>A Tribo mais confiavel do Free Fire</h2>
-          <p>Somos uma comunidade seria, com pagamento rapido e regras transparentes desde o primeiro dia.</p>
-        </div>
+        <header class="section-header">
+          <span class="section-label">Por que nós?</span>
+          <h2>A Tribo mais confiável do Free Fire</h2>
+          <p>Somos uma comunidade séria, com pagamento ágil e regras transparentes desde o primeiro dia.</p>
+        </header>
 
         <div class="pillars-grid">
-          <!-- Pillar 1 -->
-          <div class="pillar glass">
-            <div class="pillar-icon">
+          <article class="pillar glass">
+            <figure class="pillar-icon">
               <svg viewBox="0 0 24 24">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
               </svg>
-            </div>
-            <h3>Pagamento Instantaneo</h3>
-            <p>Pagamos na hora via Pix. Sem desculpa, sem atraso, sem enrolacao. O dinheiro cai e pronto.</p>
-          </div>
-          <!-- Pillar 2 -->
-          <div class="pillar glass">
-            <div class="pillar-icon">
+            </figure>
+            <h3>Pagamento Instantâneo</h3>
+            <p>Pagamos na hora via Pix. Sem desculpas, sem atrasos e sem enrolação. O valor é creditado imediatamente.</p>
+          </article>
+
+          <article class="pillar glass">
+            <figure class="pillar-icon">
               <svg viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
-            </div>
+            </figure>
             <h3>Regras Claras</h3>
-            <p>Nossas regras estão no nosso discord na aba <strong>#Regras</strong> e
-              <strong>#Regras-bate-soco</strong>. Sem zona cinza, sem pegadinha.</p>
-          </div>
-          <!-- Pillar 3 -->
-          <div class="pillar glass">
-            <div class="pillar-icon">
+            <p>Regulamentos públicos e objetivos nos canais <strong>#regras</strong> e <strong>#regras-bate-soco</strong> no Discord. Sem entrelinhas ou pegadinhas.</p>
+          </article>
+
+          <article class="pillar glass">
+            <figure class="pillar-icon">
               <svg viewBox="0 0 24 24">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                 <circle cx="9" cy="7" r="4" />
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
-            </div>
+            </figure>
             <h3>Comunidade Ativa</h3>
-            <p>Mais de 1000 guerreiros jogando e apostando diariamente. Ambiente competitivo e respeitoso.</p>
-          </div>
+            <p>Mais de 1000 competidores jogando e apostando diariamente em um ambiente competitivo, organizado e respeitoso.</p>
+          </article>
         </div>
 
-        <div class="sobre-banner">
+        <aside class="sobre-banner">
           <div>
             <strong>Quer virar cacique?</strong>
-            <span>Vire da Tribo e venha se divertir diariamente em nossa comunidade.</span>
+            <span>Entre para a Tribo e dispute diariamente na maior comunidade organizada do cenário.</span>
           </div>
           <a href="#redes" class="btn btn-outline">Entrar agora</a>
-        </div>
+        </aside>
       </div>
     </section>
 
-
     <section class="regras" id="regras">
       <div class="container">
-        <div class="section-header">
-          <div class="section-label">Regulamento</div>
-          <h2>Regras da tribo</h2>
-          <p>Leia com atencao. Quem entra na tribo aceita e respeita todas as regras abaixo.</p>
-        </div>
+        <header class="section-header">
+          <span class="section-label">Regulamento</span>
+          <h2>Regras da Tribo</h2>
+          <p>Leia com atenção. Quem entra na Tribo aceita e respeita integralmente todas as normas abaixo.</p>
+        </header>
 
         <div class="regras-grid">
-
-          <div class="regra-card glass">
-            <div class="regra-head">
-              <div class="regra-icon">
+          <article class="regra-card glass">
+            <header class="regra-head">
+              <figure class="regra-icon">
                 <svg viewBox="0 0 24 24">
                   <line x1="12" y1="1" x2="12" y2="23" />
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                 </svg>
-              </div>
-              <h3>Apostas e Valores</h3>
-            </div>
+              </figure>
+              <h3>Apostas & Valores</h3>
+            </header>
             <ul>
-              <li>Valor minimo de aposta: <strong>R$15,00 + R$1,50 (Taxa da gateway)</strong></li>
-              <li>Pagamento somente via <strong>Pix</strong></li>
-              <li>Enviar comprovante no grupo após pagar</li>
-              <li>Apostas sem comprovante serão <strong>canceladas</strong></li>
+              <li>Valor mínimo de aposta: <strong>R$ 15,00 + R$ 1,50 (taxa da gateway)</strong></li>
+              <li>Pagamento exclusivamente via <strong>Pix</strong></li>
+              <li>Envio obrigatório de comprovante no grupo logo após pagar</li>
+              <li>Apostas sem comprovante são canceladas de imediato</li>
             </ul>
-          </div>
+          </article>
 
-          <div class="regra-card glass">
-            <div class="regra-head">
-              <div class="regra-icon">
+          <article class="regra-card glass">
+            <header class="regra-head">
+              <figure class="regra-icon">
                 <svg viewBox="0 0 24 24">
                   <rect x="2" y="3" width="20" height="14" rx="2" />
                   <line x1="8" y1="21" x2="16" y2="21" />
                   <line x1="12" y1="17" x2="12" y2="21" />
                 </svg>
-              </div>
-              <h3>Partidas</h3>
-            </div>
+              </figure>
+              <h3>Partidas & Duelos</h3>
+            </header>
             <ul>
-              <li>Modos: X1, X2, X3, X4 em BATE-SOCO OU NORMAL, <strong>Regras</strong> e <strong>Regras
-                  bate-soco</strong> em nosso <strong><a href="https://discord.gg/QsQwyQMUf"
-                    target="_blank">discord</a></strong> (conforme anuncio no grupo CACIQUE APOSTAS OU SORTEADO). </li>
-              <li>Regras do grupo de duelo e sortedo na BIO do Grupo definidos pelo <strong>ADM INDIO.</strong></li>
-              <li>ADM da aposta que decide o resultado (Mantenha o respeito, todos seguem regras)!</li>
-              <li>Provas em vídeo podem ser solicitadas.</li>
+              <li>Formatos: X1, X2, X3 e X4 (modo Bate-Soco ou Normal), detalhados em nosso <strong><a href="https://discord.gg/QsQwyQMUf" target="_blank" rel="noopener">Discord</a></strong>.</li>
+              <li>Diretrizes do grupo de duelo e sorteio fixadas na bio do grupo pelo <strong>ADM Índio</strong>.</li>
+              <li>Decisão final da rodada pelo ADM responsável (respeito mútuo obrigatório).</li>
+              <li>Gravações de tela ou provas em vídeo podem ser requisitadas a qualquer momento.</li>
             </ul>
-          </div>
+          </article>
 
-          <div class="regra-card glass">
-            <div class="regra-head">
-              <div class="regra-icon">
+          <article class="regra-card glass">
+            <header class="regra-head">
+              <figure class="regra-icon">
                 <svg viewBox="0 0 24 24">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
-              </div>
-              <h3>Conduta</h3>
-            </div>
+              </figure>
+              <h3>Conduta & Disciplina</h3>
+            </header>
             <ul>
-              <li><strong>Respeito </strong> é obrigatório com todos os membros. </li>
-              <li>Proibido hack, bug ou qualquer trapaça. </li>
-              <li>Ofensas, racismo e assédio: <strong>ban permanente</strong>.</li>
-              <li>Decisão do ADM é a <strong>final</strong>.</li>
+              <li><strong>Respeito mútuo</strong> é indispensável com todos os jogadores e moderadores.</li>
+              <li>Tolerância zero para trapaças, hacks, regedits ou abusos de bugs do jogo.</li>
+              <li>Ofensas graves, preconceito, assédio ou toxicidade: <strong>banimento permanente</strong>.</li>
+              <li>A decisão da arbitragem da Tribo é soberana e definitiva.</li>
             </ul>
-          </div>
+          </article>
 
-          <div class="regra-card glass">
-            <div class="regra-head">
-              <div class="regra-icon">
+          <article class="regra-card glass">
+            <header class="regra-head">
+              <figure class="regra-icon">
                 <svg viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-              </div>
-              <h3>Pagamentos</h3>
-            </div>
+              </figure>
+              <h3>Pagamentos & Premiação</h3>
+            </header>
             <ul>
-              <li>Prêmios pagos o <strong>mais rápido possível</strong>.</li>
-              <li>Enviar chave Pix correta e falar qual tipo dela EX:CPF, Número, etc. (responsabilidade do apostador)
-              </li>
-              <li>Mantenha BOA FÉ, se seu time perdeu, não envie sua chave pix, <strong>Passivo de ban</strong> condutas
-                de má fé.</li>
-              <li>Calote comprovado: <strong>ban + exposicao</strong></li>
+              <li>Premiações repassadas com a <strong>máxima agilidade</strong> após validação.</li>
+              <li>Envio da chave Pix correta e especificação do tipo (CPF, telefone, chave aleatória, etc.).</li>
+              <li>Mantenha a <strong>boa-fé</strong>: se o seu time perdeu, não envie chave. Condutas de má-fé geram banimento.</li>
+              <li>Tentativa de calote comprovada: <strong>banimento e exposição pública</strong>.</li>
             </ul>
-          </div>
+          </article>
         </div>
 
-        <div class="regras-alert">
+        <aside class="regras-alert">
           <svg viewBox="0 0 24 24">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
             <line x1="12" y1="9" x2="12" y2="13" />
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
-          <p><strong>Atencao:</strong> Ao entrar na tribo voce concorda automaticamente com todas as regras.
-            Descumprimento resulta em advertencia ou banimento, sem exceção.</p>
-        </div>
+          <p><strong>Atenção:</strong> Ao ingressar na Tribo, você concorda automaticamente com todo o regulamento. O descumprimento resulta em advertência ou banimento, sem exceções.</p>
+        </aside>
       </div>
     </section>
 
-
     <section class="sorteio" id="sorteio">
       <div class="container">
-        <div class="section-header">
-          <div class="section-label">Ferramenta</div>
+        <header class="section-header">
+          <span class="section-label">Ferramenta</span>
           <h2>Sorteio de Times</h2>
-          <p>Cole os nomes dos jogadores e gere times aleatorios de forma justa e instantanea.</p>
-        </div>
+          <p>Cole a lista de jogadores e gere confrontos aleatórios e equilibrados de forma instantânea.</p>
+        </header>
 
         <div class="sorteio-wrapper">
-          <!-- Painel esquerdo -->
-          <div class="sorteio-panel glass">
-            <div class="panel-title">Jogadores</div>
-            <div class="panel-hint">Um nome por linha</div>
+          <article class="sorteio-panel glass">
+            <div class="panel-header-row">
+              <span class="panel-title">Jogadores</span>
+              <span class="panel-hint">Um nome por linha</span>
+            </div>
             <textarea class="names-textarea" id="namesInput"
-              placeholder="Cole os nomes aqui...&#10;Ex:&#10;Player1&#10;Player2&#10;Player3"></textarea>
+              placeholder="Cole os nomes dos jogadores aqui...&#10;Exemplo:&#10;Guerreiro1&#10;Guerreiro2&#10;Guerreiro3"></textarea>
 
-            <label class="team-size-label">Jogadores por time</label>
+            <label class="team-size-label" for="customSize">Jogadores por time</label>
             <div class="size-options">
-              <button class="size-btn" data-size="2">2</button>
-              <button class="size-btn" data-size="3">3</button>
-              <button class="size-btn active" data-size="4">4</button>
-              <button class="size-btn" data-size="5">5</button>
+              <button type="button" class="size-btn" data-size="2">2</button>
+              <button type="button" class="size-btn" data-size="3">3</button>
+              <button type="button" class="size-btn active" data-size="4">4</button>
+              <button type="button" class="size-btn" data-size="5">5</button>
             </div>
             <div class="size-custom">
-              <label>Outro:</label>
+              <label for="customSize">Personalizado:</label>
               <input type="number" class="size-input" id="customSize" min="2" max="50" placeholder="N">
             </div>
 
-            <div class="sort-info" id="sortInfo">0 jogadores</div>
+            <div class="sort-info" id="sortInfo"><span class="hl" id="playerCounter">0</span> jogadores detectados</div>
 
             <div class="sorteio-btns">
-              <button class="btn-sort" id="sortBtn">Sortear</button>
-              <button class="btn-clear" id="clearBtn">Limpar</button>
+              <button type="button" class="btn btn-primary btn-sort" id="sortBtn">Sortear Times</button>
+              <button type="button" class="btn btn-secondary btn-clear" id="clearBtn">Limpar</button>
             </div>
-          </div>
+          </article>
 
-          <!-- Painel direito -->
-          <div class="sorteio-stage glass" id="sorteioStage">
+          <article class="sorteio-stage glass" id="sorteioStage">
             <div class="stage-empty">
               <svg viewBox="0 0 24 24">
                 <path d="M16 3h5v5" />
@@ -318,50 +311,46 @@
                 <path d="M15 15l6 6" />
                 <path d="M4 4l5 5" />
               </svg>
-              <p>Adicione nomes e clique em sortear para gerar os times</p>
+              <p>Adicione os nomes e clique em sortear para gerar os confrontos da partida</p>
             </div>
-          </div>
+          </article>
         </div>
       </div>
     </section>
 
-
     <section class="scan" id="scan">
       <div class="container">
-        <div class="section-header">
-          <div class="section-label">Anti-Cheat Profissional</div>
+        <header class="section-header">
+          <span class="section-label">Anti-Cheat Profissional</span>
           <h2>Cacique SCAN</h2>
-          <p>Análise avançada de Dumps (Android & iOS) para garantir a justiça na tribo.</p>
-        </div>
+          <p>Análise forense avançada de dumps (Android e iOS) para garantir integridade competitiva na Tribo.</p>
+        </header>
 
         <div class="scan-wrapper">
-          <!-- Login View -->
-          <div class="scan-panel glass" id="scanLoginView">
-            <div class="scan-lock-icon">
+          <article class="scan-panel glass" id="scanLoginView">
+            <figure class="scan-lock-icon">
               <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-            </div>
+            </figure>
             <h3>Acesso Restrito</h3>
             <p class="scan-hint">Faça login com a credencial de ADM para liberar o scanner.</p>
-            <input type="text" id="scanUser" placeholder="Usuário" class="scan-input" autocomplete="username">
-            <input type="password" id="scanPass" placeholder="Senha" class="scan-input" autocomplete="current-password">
+            <input type="text" id="scanUser" placeholder="Usuário de ADM" class="scan-input" autocomplete="username">
+            <input type="password" id="scanPass" placeholder="Senha de ADM" class="scan-input" autocomplete="current-password">
             <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Desbloquear Scanner</button>
-          </div>
+          </article>
 
-          <!-- Dashboard View -->
-          <div class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
-            <div class="scan-dash-header">
+          <article class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
+            <header class="scan-dash-header">
               <div class="scan-sys-status">
                 <div class="dot"></div> ENGINE ONLINE <span class="sys-sep">/</span> <span class="sys-ver">ccq-scan 3.1</span>
               </div>
-              <button class="btn btn-outline btn-sm" id="scanBtnLogout">Sair</button>
-            </div>
+              <button class="btn btn-secondary btn-sm" id="scanBtnLogout">Sair</button>
+            </header>
 
-            <!-- Upload Area & Mode Selector -->
             <div class="scan-upload-container" id="scanUploadContainer">
-              <div class="scan-mode-selector">
+              <nav class="scan-mode-selector" aria-label="Modo de análise">
                 <button type="button" class="scan-mode-btn active" data-mode="zip" id="modeZipBtn">
                   <svg viewBox="0 0 24 24"><path d="M21 8v13H3V8" /><path d="M1 3h22v5H1z" /><path d="M10 12h4" /></svg>
                   Arquivo .zip / .tar.gz
@@ -374,19 +363,19 @@
                   <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /><path d="M8 13h8M8 17h5" /></svg>
                   Logs soltos
                 </button>
-              </div>
+              </nav>
 
-              <div class="scan-upload-box" id="scanUploadBox">
-                <div class="upload-icon">
+              <div class="scan-upload-box" id="scanUploadBox" role="button" tabindex="0">
+                <figure class="upload-icon">
                   <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                </div>
+                </figure>
                 <h4 id="scanUploadTitle">Arraste o arquivo .zip aqui</h4>
                 <p id="scanUploadDesc">Bugreport Android (.zip), Sysdiagnose iOS (.tar.gz) ou dump de cheat</p>
-                <div class="scan-upload-badge">Processado no seu navegador &middot; nada é enviado para servidor</div>
+                <div class="scan-upload-badge">Processado no seu navegador · nenhum dado sai da máquina</div>
               </div>
 
               <input type="file" id="scanFileInput" accept=".zip,.tar.gz,.tgz,.gz,.tar" hidden>
@@ -394,7 +383,6 @@
               <input type="file" id="scanLooseInput" multiple hidden>
             </div>
 
-            <!-- Terminal & Progress -->
             <div class="scan-terminal-wrap" id="scanTerminalWrap" style="display: none;">
               <div class="scan-progress-bar-container">
                 <div class="scan-progress-meta">
@@ -407,53 +395,39 @@
               </div>
 
               <div class="scan-terminal" id="scanTerminal">
-                <div class="terminal-header">
-                  <span class="terminal-title"><i></i><i></i><i></i> ccq-forensics &mdash; tty0</span>
+                <header class="terminal-header">
+                  <span class="terminal-title"><i></i><i></i><i></i> ccq-forensics — tty0</span>
                   <span class="terminal-status-indicator" id="terminalStatus">ANALISANDO</span>
-                </div>
+                </header>
                 <div class="terminal-body" id="terminalLines"></div>
               </div>
             </div>
 
-            <!-- Results View -->
             <div class="scan-results" id="scanResults" style="display: none;">
-              <div class="result-summary" id="resultSummary">
-                <!-- Injected via JS -->
-              </div>
-
-              <div class="scan-device-card" id="scanDeviceCard" style="display: none;">
-                <!-- Injected via JS -->
-              </div>
-
-              <div class="scan-filters" id="scanFilters" style="display: none;">
-                <!-- Injected via JS -->
-              </div>
-
-              <div class="result-details" id="resultDetails">
-                <!-- Injected via JS -->
-              </div>
+              <div class="result-summary" id="resultSummary"></div>
+              <aside class="scan-device-card" id="scanDeviceCard" style="display: none;"></aside>
+              <nav class="scan-filters" id="scanFilters" style="display: none;"></nav>
+              <div class="result-details" id="resultDetails"></div>
 
               <div class="scan-result-actions">
-                <button class="btn btn-primary" id="scanBtnCopyReport">Copiar relatório</button>
-                <button class="btn btn-secondary" id="scanBtnNew">Nova análise</button>
+                <button class="btn btn-primary" id="scanBtnCopyReport">Copiar Relatório</button>
+                <button class="btn btn-secondary" id="scanBtnNew">Nova Análise</button>
               </div>
             </div>
-          </div>
+          </article>
         </div>
       </div>
     </section>
 
-
     <section class="redes" id="redes">
       <div class="container">
-        <div class="section-header">
-          <div class="section-label">Comunidade</div>
+        <header class="section-header">
+          <span class="section-label">Comunidade</span>
           <h2>Nossas Redes</h2>
-          <p>Siga a tribo em todas as plataformas e fique por dentro de tudo.</p>
-        </div>
+          <p>Siga a Tribo em todas as plataformas oficiais e fique por dentro das apostas diárias.</p>
+        </header>
 
-        <!-- Abas -->
-        <div class="redes-tabs" id="redesTabs">
+        <nav class="redes-tabs" id="redesTabs" aria-label="Plataformas da comunidade">
           <button class="rede-tab-btn active" data-tab="discord">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z"/></svg>
             Discord
@@ -470,51 +444,51 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
             YouTube
           </button>
-        </div>
+        </nav>
 
         <!-- Discord -->
-        <div class="redes-tab-content active" id="tab-discord">
+        <article class="redes-tab-content active" id="tab-discord">
           <div class="rede-panel">
-            <div class="rede-panel-icon" style="background: rgba(88,101,242,0.1);">
+            <figure class="rede-panel-icon" style="background: rgba(88,101,242,0.1);">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.369a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z"/></svg>
-            </div>
+            </figure>
             <div class="rede-panel-info">
-              <h3>Discord</h3>
-              <p>Servidor oficial da Cacique Apostas. Regras, anuncios, partidas e canal de duelos — tudo aqui.</p>
-              <span class="tag-live">Online</span>
+              <h3>Discord Oficial</h3>
+              <p>Servidor oficial da Tribo Cacique Apostas. Regras, anúncios, chamadas de partidas e canais de duelos organizados em tempo real.</p>
+              <span class="tag-live">Comunidade Ativa</span>
               <div class="rede-copy-row">
                 <span class="rede-link-display">discord.gg/QsQwyQMUf</span>
-                <button class="rede-copy-btn" data-copy="https://discord.gg/QsQwyQMUf">Copiar link</button>
+                <button type="button" class="rede-copy-btn" data-copy="https://discord.gg/QsQwyQMUf">Copiar link</button>
               </div>
               <div class="rede-actions">
                 <a href="https://discord.gg/QsQwyQMUf" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Entrar no Discord</a>
               </div>
             </div>
           </div>
-        </div>
+        </article>
 
         <!-- WhatsApp -->
-        <div class="redes-tab-content" id="tab-whatsapp">
+        <article class="redes-tab-content" id="tab-whatsapp">
           <div class="rede-panel">
-            <div class="rede-panel-icon" style="background: rgba(37,211,102,0.1);">
+            <figure class="rede-panel-icon" style="background: rgba(37,211,102,0.1);">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
-            </div>
+            </figure>
             <div class="rede-panel-info">
-              <h3>WhatsApp</h3>
-              <p>Dois grupos ativos: <strong>Grupo de Duelos</strong> para marcar apostas e <strong>Grupo Sorteado do CCQ</strong> para sorteios.</p>
-              <span class="tag-live">Ativo</span>
+              <h3>Grupos do WhatsApp</h3>
+              <p>Dois grupos oficiais e movimentados: <strong>Grupo de Duelos</strong> para agendar partidas imediatas e <strong>Grupo Sorteado do CCQ</strong> para sorteios.</p>
+              <span class="tag-live">Grupos Ativos</span>
               <div class="rede-group">
                 <div class="rede-sub-label">Grupo de Duelos</div>
                 <div class="rede-copy-row">
                   <span class="rede-link-display">chat.whatsapp.com/IfgMH8Zmy1vGFGJ2Zs0kGQ</span>
-                  <button class="rede-copy-btn" data-copy="https://chat.whatsapp.com/IfgMH8Zmy1vGFGJ2Zs0kGQ?s=cl&p=i&mlu=4&ilr=4">Copiar</button>
+                  <button type="button" class="rede-copy-btn" data-copy="https://chat.whatsapp.com/IfgMH8Zmy1vGFGJ2Zs0kGQ?s=cl&p=i&mlu=4&ilr=4">Copiar</button>
                 </div>
               </div>
               <div class="rede-group">
                 <div class="rede-sub-label">Grupo Sorteado CCQ</div>
                 <div class="rede-copy-row">
                   <span class="rede-link-display">chat.whatsapp.com/JCwvu2xdbmN7Jmm0PVi1Oy</span>
-                  <button class="rede-copy-btn" data-copy="https://chat.whatsapp.com/JCwvu2xdbmN7Jmm0PVi1Oy">Copiar</button>
+                  <button type="button" class="rede-copy-btn" data-copy="https://chat.whatsapp.com/JCwvu2xdbmN7Jmm0PVi1Oy">Copiar</button>
                 </div>
               </div>
               <div class="rede-actions">
@@ -523,66 +497,68 @@
               </div>
             </div>
           </div>
-        </div>
+        </article>
 
         <!-- Instagram -->
-        <div class="redes-tab-content" id="tab-instagram">
+        <article class="redes-tab-content" id="tab-instagram">
           <div class="rede-panel">
-            <div class="rede-panel-icon" style="background: rgba(228,64,95,0.1);">
+            <figure class="rede-panel-icon" style="background: rgba(228,64,95,0.1);">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E4405F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-            </div>
+            </figure>
             <div class="rede-panel-info">
               <h3>Instagram</h3>
-              <p>Acompanhe as novidades, resultados de partidas e conteudo da tribo no Instagram do ADM Indio.</p>
+              <p>Acompanhe novidades, clipes das melhores jogadas, comprovantes de pagamentos e bastidores da Tribo no perfil oficial do ADM Índio.</p>
               <div class="rede-copy-row">
                 <span class="rede-link-display">instagram.com/admindio7</span>
-                <button class="rede-copy-btn" data-copy="https://www.instagram.com/admindio7">Copiar link</button>
+                <button type="button" class="rede-copy-btn" data-copy="https://www.instagram.com/admindio7">Copiar link</button>
               </div>
               <div class="rede-actions">
                 <a href="https://www.instagram.com/admindio7?stkn=YWQ4d3RkaHE5Znho" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir Instagram</a>
               </div>
             </div>
           </div>
-        </div>
+        </article>
 
         <!-- YouTube -->
-        <div class="redes-tab-content" id="tab-youtube">
+        <article class="redes-tab-content" id="tab-youtube">
           <div class="rede-panel">
-            <div class="rede-panel-icon" style="background: rgba(255,0,0,0.1);">
+            <figure class="rede-panel-icon" style="background: rgba(255,0,0,0.1);">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-            </div>
+            </figure>
             <div class="rede-panel-info">
-              <h3>YouTube</h3>
-              <p>Canal Cacique Apostas no YouTube — videos, highlights e conteudo da comunidade.</p>
+              <h3>Canal no YouTube</h3>
+              <p>Canal oficial da Cacique Apostas: destaques, análises de partidas, tutoriais de regras e transmissões dos maiores confrontos.</p>
               <div class="rede-copy-row">
                 <span class="rede-link-display">youtube.com/@CaciqueApostas</span>
-                <button class="rede-copy-btn" data-copy="https://www.youtube.com/@CaciqueApostas">Copiar link</button>
+                <button type="button" class="rede-copy-btn" data-copy="https://www.youtube.com/@CaciqueApostas">Copiar link</button>
               </div>
               <div class="rede-actions">
                 <a href="https://www.youtube.com/@CaciqueApostas" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir YouTube</a>
               </div>
             </div>
           </div>
-        </div>
+        </article>
 
-        <div class="redes-cta">
-          <p>Entre na tribo e comece a jogar agora mesmo</p>
+        <aside class="redes-cta">
+          <p>Entre na Tribo e comece a competir com segurança e agilidade hoje mesmo.</p>
           <a href="https://discord.gg/QsQwyQMUf" target="_blank" rel="noopener" class="btn btn-primary">Entrar no Discord</a>
-        </div>
+        </aside>
       </div>
     </section>
 
   </main>
 
-
-  <footer>
+  <footer id="footer">
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <img src="logo.jpg" alt="Cacique Apostas">
+          <picture>
+            <source srcset="logo.webp" type="image/webp">
+            <img src="logo.jpg" alt="Logo Cacique Apostas" width="38" height="38">
+          </picture>
           <div>
             <strong>Cacique Apostas</strong>
-            <span>A tribo mais confiavel do FF</span>
+            <span>A tribo mais confiável do Free Fire</span>
           </div>
         </div>
         <ul class="footer-links">
@@ -594,16 +570,14 @@
         </ul>
       </div>
       <div class="footer-bottom">
-        <p>Cacique Apostas &mdash; Todos os direitos reservados. Comunidade de <strong> <a
-              href="https://www.google.com/search?q=definição+de+entretenimento&client=opera-gx&hs=34&sca_esv=16067ccfc9d0a6cf&sxsrf=APpeQnuH7MILKLxFidKbtVLTpnGfarcNQw%3A1788992326015&ei=RtuhatdIwMDk5Q_Vt77QBg&biw=1875&bih=966&oq=definição+de+entre&gs_lp=Egxnd3Mtd2l6LXNlcnAiFGRlZmluacOnw6NvIGRlIGVudHJlKgIIATIFEAAYgAQyBRAAGIAEMgUQABiABDIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeMgYQABgWGB4yBhAAGBYYHjIGEAAYFhgeSIc7ULoFWPAscAJ4AZABAJgBmgGgAdgRqgEEMC4xObgBA8gBAPgBAZgCFaAC4RKoAhTCAgcQIxjqAhgnwgIWEAAYgAQYigUYQxjnBhjqAhi0AtgBAcICEBAAGAMYjwEY6gIYtALYAQHCAhAQLhgDGI8BGOoCGLQC2AEBwgIEECMYJ8ICCBAAGIAEGLEDwgILEAAYgAQYsQMYgwHCAgoQIxjJAhjwBRgnwgINEAAYgAQYigUYQxixA8ICDhAuGIAEGLEDGMcBGNEDwgILEAAYgAQYsQMYyQPCAg4QABiABBiKBRixAxiDAcICCxAAGIAEGIoFGJIDwgIKEAAYgAQYigUYQ8ICBBAAGAPCAggQABiABBjLAcICBxAAGIAEGAqYAxTxBaUyY1giTDDMugYGCAEQARgBkgcEMi4xOaAHwmeyBwQwLjE5uAfIEsIHBjItMTkuMsgHbIAIAQ&sclient=gws-wiz-serp"
-              target="_blank" rel="noopener">Entretenimento</a></strong>. Jogue com responsabilidade.</p>
+        <p>Cacique Apostas &mdash; Todos os direitos reservados. Comunidade dedicada a duelos de entretenimento competitivo. Jogue com responsabilidade.</p>
       </div>
     </div>
   </footer>
 
   <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
 
-  <script src="script.js?v=4" defer></script>
+  <script src="script.js?v=5" defer></script>
 </body>
 
 </html>

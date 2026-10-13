@@ -1,8 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0c0c0f"/>
-  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
-  <!-- penas -->
-  <path d="M11 9.5 9.2 4.8M16 8.6V3.6M21 9.5l1.8-4.7" stroke="#d4af37" stroke-width="1.8" stroke-linecap="round"/>
-  <!-- C -->
-  <path d="M22.4 13.2a7.6 7.6 0 1 0 0 9.6" fill="none" stroke="#ef4444" stroke-width="3.6" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Fundo sutil com borda fina estilo app tech -->
+  <rect width="64" height="64" rx="14" fill="#121318"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  
+  <!-- Penas do Cocar (estilizadas, dinâmicas estilo GitHub Octocat) -->
+  <!-- Penas esquerdas -->
+  <path d="M12 28C10 20 15 13 22 10C21 16 19 22 18 26Z" fill="#E5484D"/>
+  <path d="M18 24C17 16 22 9 29 7C28 13 26 19 25 23Z" fill="#EDEDEF"/>
+  <!-- Pena central dominante -->
+  <path d="M32 4C34.5 9 34.5 15 33 21C31 21 29.5 15 32 4Z" fill="#E5484D"/>
+  <!-- Penas direitas -->
+  <path d="M46 24C47 16 42 9 35 7C36 13 38 19 39 23Z" fill="#EDEDEF"/>
+  <path d="M52 28C54 20 49 13 42 10C43 16 45 22 46 26Z" fill="#E5484D"/>
+
+  <!-- Faixa do cocar (Headband) -->
+  <path d="M16 26C21 24.5 43 24.5 48 26L47 29.5C42 28 22 28 17 29.5L16 26Z" fill="#F5A524"/>
+  <circle cx="32" cy="27" r="1.8" fill="#121318"/>
+
+  <!-- Rosto estilizado / Máscara do Guerreiro -->
+  <path d="M21 29C23 37 25 45 32 50C39 45 41 37 43 29C38 30 26 30 21 29Z" fill="#EDEDEF"/>
+  
+  <!-- Pintura de Guerra nos olhos (War paint vermelha) -->
+  <path d="M24 35L29 37L25 39Z" fill="#E5484D"/>
+  <path d="M40 35L35 37L39 39Z" fill="#E5484D"/>
+  
+  <!-- Detalhe do queixo forte / sombra sutil -->
+  <path d="M30 46L32 48L34 46L32 44Z" fill="#121318"/>
 </svg>
