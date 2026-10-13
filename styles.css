@@ -256,7 +256,7 @@ section {
 }
 
 
-header {
+#header {
   position: fixed;
   top: 0;
   left: 0;
@@ -269,12 +269,12 @@ header {
   transition: background var(--transition), border-color var(--transition);
 }
 
-header.scrolled {
+#header.scrolled {
   background: rgba(9, 9, 11, 0.94);
   border-bottom-color: var(--border);
 }
 
-header nav {
+#header nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1455,7 +1455,7 @@ header nav {
 /* ═══════════════════════
    FOOTER
    ═══════════════════════ */
-footer {
+#footer {
   background: var(--bg);
   padding: 40px 0 24px;
   border-top: 1px solid var(--border);
@@ -2308,7 +2308,7 @@ footer {
     display: none;
   }
 
-  header nav .nav-cta {
+  #header nav .nav-cta {
     display: none;
   }
 
