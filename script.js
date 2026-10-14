@@ -1538,7 +1538,7 @@ NinjaFF (sem patente)`;
         const isBalanced = delta <= maxTolerance;
 
         return `
-          <article class="match-showdown-card glass">
+          <article class="match-showdown-card">
             <header class="match-card-head">
               <div class="match-title">
                 <span class="wheel-id-badge badge-${w.id.toLowerCase()}">${w.title}</span>
@@ -1798,15 +1798,15 @@ NinjaFF (sem patente)`;
         // Renderiza conteúdo em alta visibilidade
         telaoContent.innerHTML = `
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%;">
-            <div class="wheel-arena-cell glass">
+            <div class="wheel-arena-cell">
               <h3 style="color: var(--red); margin-bottom: 12px;">MESA A (4v4)</h3>
               <div id="telaoSlotsA"></div>
             </div>
-            <div class="wheel-arena-cell glass">
+            <div class="wheel-arena-cell">
               <h3 style="color: var(--gold); margin-bottom: 12px;">MESA B (4v4 Bate-Soco)</h3>
               <div id="telaoSlotsB"></div>
             </div>
-            <div class="wheel-arena-cell glass">
+            <div class="wheel-arena-cell">
               <h3 style="color: var(--cyan); margin-bottom: 12px;">MESA C (2v2)</h3>
               <div id="telaoSlotsC"></div>
             </div>

@@ -40,7 +40,7 @@
     href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Share+Tech+Mono&display=swap"
     rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=10">
   <script src="jszip.min.js" defer></script>
 </head>
 
@@ -170,7 +170,7 @@
         </header>
 
         <div class="pillars-grid">
-          <article class="pillar glass">
+          <article class="pillar">
             <figure class="pillar-icon">
               <svg viewBox="0 0 24 24">
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
@@ -181,7 +181,7 @@
             </p>
           </article>
 
-          <article class="pillar glass">
+          <article class="pillar">
             <figure class="pillar-icon">
               <svg viewBox="0 0 24 24">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -192,7 +192,7 @@
               <strong>#regras-bate-soco</strong> no Discord. Sem entrelinhas ou pegadinhas.</p>
           </article>
 
-          <article class="pillar glass">
+          <article class="pillar">
             <figure class="pillar-icon">
               <svg viewBox="0 0 24 24">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -409,7 +409,7 @@
           <div class="arena-step-pane active" id="paneStep1">
             <div class="step1-grid">
               <!-- Caixa de Entrada Livre de Texto -->
-              <article class="step-card glass">
+              <article class="step-card">
                 <header class="step-card-header">
                   <div>
                     <h3>Colar Jogadores & Patentes</h3>
@@ -450,7 +450,7 @@ LendaFF (sem patente = padrão)"></textarea>
               </article>
 
               <!-- Painel do Elenco Cadastrado -->
-              <article class="step-card glass">
+              <article class="step-card">
                 <header class="step-card-header">
                   <div>
                     <h3>Elenco da Rodada (<span id="rosterTotalCount">0</span> jogadores)</h3>
@@ -540,7 +540,7 @@ LendaFF (sem patente = padrão)"></textarea>
             <!-- Abas e Cards das Roletas A, B e C -->
             <div class="wheels-config-grid">
               <!-- Roleta A -->
-              <article class="wheel-config-card glass" id="wheelConfigCardA">
+              <article class="wheel-config-card" id="wheelConfigCardA">
                 <header class="wheel-card-head">
                   <div class="wheel-id-badge badge-a">MESA A</div>
                   <label class="toggle-checkbox">
@@ -602,7 +602,7 @@ LendaFF (sem patente = padrão)"></textarea>
               </article>
 
               <!-- Roleta B -->
-              <article class="wheel-config-card glass" id="wheelConfigCardB">
+              <article class="wheel-config-card" id="wheelConfigCardB">
                 <header class="wheel-card-head">
                   <div class="wheel-id-badge badge-b">MESA B</div>
                   <label class="toggle-checkbox">
@@ -662,7 +662,7 @@ LendaFF (sem patente = padrão)"></textarea>
               </article>
 
 
-              <article class="wheel-config-card glass" id="wheelConfigCardC">
+              <article class="wheel-config-card" id="wheelConfigCardC">
                 <header class="wheel-card-head">
                   <div class="wheel-id-badge badge-c">MESA C</div>
                   <label class="toggle-checkbox">
@@ -670,7 +670,8 @@ LendaFF (sem patente = padrão)"></textarea>
                     <span class="toggle-switch"></span>
                     <span class="toggle-label">Ativa</span>
                   </label>
-                </header <div class="wheel-config-body">
+                </header>
+                <div class="wheel-config-body">
                 <div class="config-row">
                   <label>Formato da Partida:</label>
                   <select id="whlFormatC" class="form-select">
@@ -717,7 +718,7 @@ LendaFF (sem patente = padrão)"></textarea>
           </div>
 
           <!-- Parâmetros de Tolerância e Navegação -->
-          <div class="step2-footer-bar glass">
+          <div class="step2-footer-bar">
             <div class="tolerance-box">
               <label for="balanceTolerance">Tolerância Máxima de Desequilíbrio:</label>
               <div class="tolerance-input-wrap">
@@ -737,7 +738,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
         <!-- PASSO 3: Girar as Roletas (Canvas 2D com Física, Ticks e Montagem em Tempo Real) -->
         <div class="arena-step-pane" id="paneStep3">
-          <header class="step3-controls-bar glass">
+          <header class="step3-controls-bar">
             <div class="spin-master-actions">
               <button type="button" class="btn btn-primary btn-lg" id="btnSpinAllWheels">
                 <svg width="20" height="20" viewBox="0 0 24 24">
@@ -930,7 +931,7 @@ LendaFF (sem patente = padrão)"></textarea>
           <div class="matches-results-grid" id="matchesResultsGrid"></div>
 
           <!-- Selo Criptográfico de Auditoria do Sorteio -->
-          <aside class="audit-verification-banner glass" id="auditVerificationBanner">
+          <aside class="audit-verification-banner" id="auditVerificationBanner">
             <div class="audit-meta-row">
               <div class="audit-meta-item">
                 <span class="audit-lbl">ID DO SORTEIO</span>
@@ -960,7 +961,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
       <!-- ════════════ MODO RÁPIDO (PRESERVADO 100%) ════════════ -->
       <div class="sorteio-wrapper" id="quickSorteioWrapper" style="display: none;">
-        <article class="sorteio-panel glass">
+        <article class="sorteio-panel">
           <div class="panel-header-row">
             <span class="panel-title">Jogadores (Modo Rápido)</span>
             <span class="panel-hint">Um nome por linha</span>
@@ -988,7 +989,7 @@ LendaFF (sem patente = padrão)"></textarea>
           </div>
         </article>
 
-        <article class="sorteio-stage glass" id="sorteioStage">
+        <article class="sorteio-stage" id="sorteioStage">
           <div class="stage-empty">
             <svg viewBox="0 0 24 24">
               <path d="M16 3h5v5" />
@@ -1016,7 +1017,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
         <div class="scan-wrapper">
           <!-- Login Restrito de ADM (com validação SHA-256 no client) -->
-          <article class="scan-panel glass" id="scanLoginView">
+          <article class="scan-panel" id="scanLoginView">
             <figure class="scan-lock-icon">
               <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -1032,7 +1033,7 @@ LendaFF (sem patente = padrão)"></textarea>
           </article>
 
           <!-- Dashboard do Scanner Liberado -->
-          <article class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
+          <article class="scan-dashboard" id="scanDashboardView" style="display: none;">
             <header class="scan-dash-header">
               <div class="scan-sys-status">
                 <div class="dot"></div> ENGINE ONLINE <span class="sys-sep">/</span> <span class="sys-ver">ccq-scan
@@ -1330,7 +1331,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
   <!-- Modal 1: Configuração de Pesos das Patentes -->
   <div class="modal-backdrop" id="modalWeightsBackdrop" style="display: none;">
-    <div class="modal-dialog glass">
+    <div class="modal-dialog">
       <header class="modal-header">
         <h3>Configuração de Pesos por Patente</h3>
         <button type="button" class="modal-close" data-close="modalWeightsBackdrop">&times;</button>
@@ -1349,7 +1350,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
   <!-- Modal 2: Auditoria & Histórico de Sorteios -->
   <div class="modal-backdrop" id="modalAuditBackdrop" style="display: none;">
-    <div class="modal-dialog modal-lg glass">
+    <div class="modal-dialog modal-lg">
       <header class="modal-header">
         <div>
           <h3>Histórico de Auditoria & Sorteios</h3>
@@ -1375,7 +1376,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
   <!-- Modal 3: Verificar Sorteio Criptográfico -->
   <div class="modal-backdrop" id="modalVerifyBackdrop" style="display: none;">
-    <div class="modal-dialog glass">
+    <div class="modal-dialog">
       <header class="modal-header">
         <h3>Verificador Criptográfico de Sorteio</h3>
         <button type="button" class="modal-close" data-close="modalVerifyBackdrop">&times;</button>
@@ -1403,7 +1404,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
   <!-- Modal 4: Login Unificado de ADM (Validação SHA-256) -->
   <div class="modal-backdrop" id="modalAuthBackdrop" style="display: none;">
-    <div class="modal-dialog modal-sm glass">
+    <div class="modal-dialog modal-sm">
       <header class="modal-header">
         <h3>Painel de Acesso ADM</h3>
         <button type="button" class="modal-close" data-close="modalAuthBackdrop">&times;</button>
@@ -1426,7 +1427,7 @@ LendaFF (sem patente = padrão)"></textarea>
 
   <!-- Modal 5: Importar / Exportar Elenco (JSON / CSV) -->
   <div class="modal-backdrop" id="modalImportExportBackdrop" style="display: none;">
-    <div class="modal-dialog glass">
+    <div class="modal-dialog">
       <header class="modal-header">
         <h3>Importar / Exportar Elenco</h3>
         <button type="button" class="modal-close" data-close="modalImportExportBackdrop">&times;</button>
