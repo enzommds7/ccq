@@ -189,7 +189,8 @@
             </figure>
             <h3>Regras Claras</h3>
             <p>Regulamentos públicos e objetivos nos canais <strong>#regras</strong> e
-              <strong>#regras-bate-soco</strong> no Discord. Sem entrelinhas ou pegadinhas.</p>
+              <strong>#regras-bate-soco</strong> no Discord. Sem entrelinhas ou pegadinhas.
+            </p>
           </article>
 
           <article class="pillar">
@@ -414,7 +415,8 @@
                   <div>
                     <h3>Colar Jogadores & Patentes</h3>
                     <p>Cole lista em formato livre: <code>Nick - D2</code>, <code>Guerreiro | Platina 1</code>,
-                      <code>Lobo M</code>, etc.</p>
+                      <code>Lobo M</code>, etc.
+                    </p>
                   </div>
                   <div class="step-card-actions">
                     <button type="button" class="btn-text-action" id="btnLoadSampleRoster">Carregar Exemplo</button>
@@ -426,7 +428,7 @@
 Capitão - Mestre
 SniperX | D1
 BalaFina - Platina 2
-Guerreiro7 D3
+Jogador7 D3
 TioSam - Ouro 1
 LendaFF (sem patente = padrão)"></textarea>
 
@@ -672,336 +674,340 @@ LendaFF (sem patente = padrão)"></textarea>
                   </label>
                 </header>
                 <div class="wheel-config-body">
-                <div class="config-row">
-                  <label>Formato da Partida:</label>
-                  <select id="whlFormatC" class="form-select">
-                    <option value="2v2_normal" selected>2v2 Normal</option>
-                    <option value="2v2_soco">2v2 Bate-Soco</option>
-                    <option value="4v4_normal">4v4 Normal</option>
-                    <option value="1v1">X1 dos Crias</option>
-                    <option value="custom">Personalizado</option>
-                  </select>
-                </div>
-
-                <div class="config-row">
-                  <label>Jogadores por Time:</label>
-                  <div class="number-stepper">
-                    <button type="button" class="btn-step" data-action="dec" data-target="whlTeamSizeC">-</button>
-                    <input type="number" id="whlTeamSizeC" value="2" min="1" max="10" class="input-step">
-                    <button type="button" class="btn-step" data-action="inc" data-target="whlTeamSizeC">+</button>
-                  </div>
-                </div>
-
-                <div class="config-row">
-                  <label>Faixa de Patentes Permitida:</label>
-                  <div class="rank-range-picker">
-                    <select id="whlRankMinC" class="form-select-sm">
-                      <option value="1">Mínimo: Ouro 3</option>
-                      <option value="4">Mínimo: Platina 3</option>
-                    </select>
-                    <span>até</span>
-                    <select id="whlRankMaxC" class="form-select-sm">
-                      <option value="10" selected>Máximo: Mestre</option>
+                  <div class="config-row">
+                    <label>Formato da Partida:</label>
+                    <select id="whlFormatC" class="form-select">
+                      <option value="2v2_normal" selected>2v2 Normal</option>
+                      <option value="2v2_soco">2v2 Bate-Soco</option>
+                      <option value="4v4_normal">4v4 Normal</option>
+                      <option value="1v1">X1 dos Crias</option>
+                      <option value="custom">Personalizado</option>
                     </select>
                   </div>
-                </div>
 
-                <div class="config-row">
-                  <label class="toggle-checkbox">
-                    <input type="checkbox" id="whlBalanceC" checked>
-                    <span class="toggle-switch"></span>
-                    <span class="toggle-label">Equilíbrio Ativo por Peso</span>
-                  </label>
+                  <div class="config-row">
+                    <label>Jogadores por Time:</label>
+                    <div class="number-stepper">
+                      <button type="button" class="btn-step" data-action="dec" data-target="whlTeamSizeC">-</button>
+                      <input type="number" id="whlTeamSizeC" value="2" min="1" max="10" class="input-step">
+                      <button type="button" class="btn-step" data-action="inc" data-target="whlTeamSizeC">+</button>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Faixa de Patentes Permitida:</label>
+                    <div class="rank-range-picker">
+                      <select id="whlRankMinC" class="form-select-sm">
+                        <option value="1">Mínimo: Ouro 3</option>
+                        <option value="4">Mínimo: Platina 3</option>
+                      </select>
+                      <span>até</span>
+                      <select id="whlRankMaxC" class="form-select-sm">
+                        <option value="10" selected>Máximo: Mestre</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label class="toggle-checkbox">
+                      <input type="checkbox" id="whlBalanceC" checked>
+                      <span class="toggle-switch"></span>
+                      <span class="toggle-label">Equilíbrio Ativo por Peso</span>
+                    </label>
+                  </div>
                 </div>
+              </article>
             </div>
-            </article>
+
+            <!-- Parâmetros de Tolerância e Navegação -->
+            <div class="step2-footer-bar">
+              <div class="tolerance-box">
+                <label for="balanceTolerance">Tolerância Máxima de Desequilíbrio:</label>
+                <div class="tolerance-input-wrap">
+                  <input type="range" id="balanceTolerance" min="1" max="8" value="3" class="form-range">
+                  <span id="toleranceValDisplay" class="tolerance-val">± 3 pontos</span>
+                </div>
+                <span class="tolerance-hint">A roleta filtrará as fatias para que a diferença final entre os times fique
+                  dentro deste limite.</span>
+              </div>
+
+              <div class="step-nav-actions">
+                <button type="button" class="btn btn-secondary" id="btnBackToStep1">← Voltar aos Jogadores</button>
+                <button type="button" class="btn btn-primary" id="btnGoToStep3">Avançar para a Arena de Giro →</button>
+              </div>
+            </div>
           </div>
 
-          <!-- Parâmetros de Tolerância e Navegação -->
-          <div class="step2-footer-bar">
-            <div class="tolerance-box">
-              <label for="balanceTolerance">Tolerância Máxima de Desequilíbrio:</label>
-              <div class="tolerance-input-wrap">
-                <input type="range" id="balanceTolerance" min="1" max="8" value="3" class="form-range">
-                <span id="toleranceValDisplay" class="tolerance-val">± 3 pontos</span>
+          <!-- PASSO 3: Girar as Roletas (Canvas 2D com Física, Ticks e Montagem em Tempo Real) -->
+          <div class="arena-step-pane" id="paneStep3">
+            <header class="step3-controls-bar">
+              <div class="spin-master-actions">
+                <button type="button" class="btn btn-primary btn-lg" id="btnSpinAllWheels">
+                  <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                  </svg>
+                  Girar Todas as Roletas Ativas (Espaço)
+                </button>
+                <span class="spin-hint">Giro sincronizado com paradas escalonadas para suspense máximo.</span>
               </div>
-              <span class="tolerance-hint">A roleta filtrará as fatias para que a diferença final entre os times fique
-                dentro deste limite.</span>
+
+              <div class="step3-quick-tools">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnResetSpins" title="Atalho: Tecla R">
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                  Resetar Giros (R)
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnGoToStep4From3">
+                  Ver Resultados →
+                </button>
+              </div>
+            </header>
+
+            <!-- Container das 3 Roletas Simultâneas -->
+            <div class="wheels-arena-grid" id="wheelsArenaGrid">
+              <!-- Roleta A Arena Slot -->
+              <div class="wheel-arena-cell" id="wheelCellA">
+                <div class="wheel-cell-header">
+                  <span class="wheel-tag badge-a">MESA A</span>
+                  <span class="wheel-format-pill" id="wheelFormatPillA">4v4 Normal</span>
+                  <button type="button" class="btn-spin-single" id="btnSpinA" title="Girar apenas esta roleta">Girar
+                    Mesa
+                    A</button>
+                </div>
+
+                <div class="wheel-canvas-wrapper">
+                  <div class="wheel-pointer"></div>
+                  <canvas id="canvasWheelA" width="360" height="360" class="roulette-canvas"></canvas>
+                  <div class="wheel-center-cap">
+                    <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
+                  </div>
+                </div>
+
+                <!-- Montagem dos Times em Tempo Real -->
+                <div class="live-match-builder" id="liveMatchA">
+                  <div class="builder-team team-alpha">
+                    <div class="builder-team-head">
+                      <strong>TIME 1</strong>
+                      <span class="team-force-meter" id="forceMeterA1">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsA1"></div>
+                  </div>
+                  <div class="builder-vs">VS</div>
+                  <div class="builder-team team-beta">
+                    <div class="builder-team-head">
+                      <strong>TIME 2</strong>
+                      <span class="team-force-meter" id="forceMeterA2">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsA2"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Roleta B Arena Slot -->
+              <div class="wheel-arena-cell" id="wheelCellB">
+                <div class="wheel-cell-header">
+                  <span class="wheel-tag badge-b">MESA B</span>
+                  <span class="wheel-format-pill" id="wheelFormatPillB">4v4 Bate-Soco</span>
+                  <button type="button" class="btn-spin-single" id="btnSpinB" title="Girar apenas esta roleta">Girar
+                    Mesa
+                    B</button>
+                </div>
+
+                <div class="wheel-canvas-wrapper">
+                  <div class="wheel-pointer"></div>
+                  <canvas id="canvasWheelB" width="360" height="360" class="roulette-canvas"></canvas>
+                  <div class="wheel-center-cap">
+                    <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
+                  </div>
+                </div>
+
+                <div class="live-match-builder" id="liveMatchB">
+                  <div class="builder-team team-alpha">
+                    <div class="builder-team-head">
+                      <strong>TIME 1</strong>
+                      <span class="team-force-meter" id="forceMeterB1">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsB1"></div>
+                  </div>
+                  <div class="builder-vs">VS</div>
+                  <div class="builder-team team-beta">
+                    <div class="builder-team-head">
+                      <strong>TIME 2</strong>
+                      <span class="team-force-meter" id="forceMeterB2">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsB2"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Roleta C Arena Slot -->
+              <div class="wheel-arena-cell" id="wheelCellC">
+                <div class="wheel-cell-header">
+                  <span class="wheel-tag badge-c">MESA C</span>
+                  <span class="wheel-format-pill" id="wheelFormatPillC">2v2 Normal</span>
+                  <button type="button" class="btn-spin-single" id="btnSpinC" title="Girar apenas esta roleta">Girar
+                    Mesa
+                    C</button>
+                </div>
+
+                <div class="wheel-canvas-wrapper">
+                  <div class="wheel-pointer"></div>
+                  <canvas id="canvasWheelC" width="360" height="360" class="roulette-canvas"></canvas>
+                  <div class="wheel-center-cap">
+                    <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
+                  </div>
+                </div>
+
+                <div class="live-match-builder" id="liveMatchC">
+                  <div class="builder-team team-alpha">
+                    <div class="builder-team-head">
+                      <strong>TIME 1</strong>
+                      <span class="team-force-meter" id="forceMeterC1">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsC1"></div>
+                  </div>
+                  <div class="builder-vs">VS</div>
+                  <div class="builder-team team-beta">
+                    <div class="builder-team-head">
+                      <strong>TIME 2</strong>
+                      <span class="team-force-meter" id="forceMeterC2">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsC2"></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="step-nav-actions">
-              <button type="button" class="btn btn-secondary" id="btnBackToStep1">← Voltar aos Jogadores</button>
-              <button type="button" class="btn btn-primary" id="btnGoToStep3">Avançar para a Arena de Giro →</button>
+            <!-- Modal Pop-Up de Revelação Dramática -->
+            <div class="reveal-banner" id="revealBanner" style="display: none;">
+              <span class="reveal-lbl">SORTEADO NA MESA <span id="revealWheelId">A</span></span>
+              <div class="reveal-body">
+                <span class="reveal-nick" id="revealNick">Jogador</span>
+                <span class="reveal-rank-badge" id="revealRankBadge">MESTRE (10)</span>
+                <span class="reveal-slot" id="revealSlot">→ Time 1 (Vaga 1)</span>
+              </div>
             </div>
+
+            <footer class="step-footer">
+              <button type="button" class="btn btn-secondary" id="btnBackToStep2">← Voltar às Configurações</button>
+              <button type="button" class="btn btn-primary" id="btnGoToStep4">Concluir e Ver Resultados Oficiais
+                →</button>
+            </footer>
+          </div>
+
+          <!-- PASSO 4: Resultado Oficial, Auto-Equilíbrio & Compartilhamento -->
+          <div class="arena-step-pane" id="paneStep4">
+            <header class="step4-header">
+              <div>
+                <h3>Confrontos Definidos & Auditoria</h3>
+                <p>Resultados gerados criptograficamente com verificação de integridade e exportação direta.</p>
+              </div>
+
+              <div class="step4-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAutoBalanceAll"
+                  title="Reorganiza times matematicamente pelo menor desnível de peso">
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path
+                      d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  </svg>
+                  Auto-Equilibrar
+                </button>
+
+                <button type="button" class="btn btn-primary btn-sm" id="btnShareWhatsApp">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
+                  </svg>
+                  Copiar para WhatsApp
+                </button>
+
+                <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadCardPng">
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                  Baixar Imagem (Card PNG)
+                </button>
+              </div>
+            </header>
+
+            <!-- Grid de Confrontos Finais -->
+            <div class="matches-results-grid" id="matchesResultsGrid"></div>
+
+            <!-- Selo Criptográfico de Auditoria do Sorteio -->
+            <aside class="audit-verification-banner" id="auditVerificationBanner">
+              <div class="audit-meta-row">
+                <div class="audit-meta-item">
+                  <span class="audit-lbl">ID DO SORTEIO</span>
+                  <strong class="audit-val" id="auditDisplayId">#CCQ-0000</strong>
+                </div>
+                <div class="audit-meta-item">
+                  <span class="audit-lbl">SEED CRIPTOGRÁFICA</span>
+                  <span class="audit-val-mono" id="auditDisplaySeed">0000000000000000</span>
+                </div>
+                <div class="audit-meta-item">
+                  <span class="audit-lbl">HASH SHA-256</span>
+                  <span class="audit-val-mono truncate"
+                    id="auditDisplayHash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                </div>
+                <div class="audit-meta-item">
+                  <span class="audit-status-tag valid">AUDITADO & LIMPO</span>
+                </div>
+              </div>
+            </aside>
+
+            <footer class="step-footer">
+              <button type="button" class="btn btn-secondary" id="btnBackToStep3">← Voltar à Arena de Giro</button>
+              <button type="button" class="btn btn-primary" id="btnStartNewRound">Iniciar Nova Rodada de
+                Sorteio</button>
+            </footer>
           </div>
         </div>
 
-        <!-- PASSO 3: Girar as Roletas (Canvas 2D com Física, Ticks e Montagem em Tempo Real) -->
-        <div class="arena-step-pane" id="paneStep3">
-          <header class="step3-controls-bar">
-            <div class="spin-master-actions">
-              <button type="button" class="btn btn-primary btn-lg" id="btnSpinAllWheels">
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
-                </svg>
-                Girar Todas as Roletas Ativas (Espaço)
-              </button>
-              <span class="spin-hint">Giro sincronizado com paradas escalonadas para suspense máximo.</span>
+
+        <div class="sorteio-wrapper" id="quickSorteioWrapper" style="display: none;">
+          <article class="sorteio-panel">
+            <div class="panel-header-row">
+              <span class="panel-title">Jogadores (Modo Rápido)</span>
+              <span class="panel-hint">Um nome por linha</span>
+            </div>
+            <textarea class="names-textarea" id="namesInput"
+              placeholder="Cole os nomes dos jogadores aqui...&#10;Exemplo:&#10;Guerreiro1&#10;Guerreiro2&#10;Guerreiro3"></textarea>
+
+            <label class="team-size-label" for="customSize">Jogadores por time</label>
+            <div class="size-options">
+              <button type="button" class="size-btn" data-size="2">2</button>
+              <button type="button" class="size-btn" data-size="3">3</button>
+              <button type="button" class="size-btn active" data-size="4">4</button>
+              <button type="button" class="size-btn" data-size="5">5</button>
+            </div>
+            <div class="size-custom">
+              <label for="customSize">Personalizado:</label>
+              <input type="number" class="size-input" id="customSize" min="2" max="50" placeholder="N">
             </div>
 
-            <div class="step3-quick-tools">
-              <button type="button" class="btn btn-secondary btn-sm" id="btnResetSpins" title="Atalho: Tecla R">
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                </svg>
-                Resetar Giros (R)
-              </button>
-              <button type="button" class="btn btn-secondary btn-sm" id="btnGoToStep4From3">
-                Ver Resultados →
-              </button>
+            <div class="sort-info" id="sortInfo"><span class="hl" id="playerCounter">0</span> jogadores detectados</div>
+
+            <div class="sorteio-btns">
+              <button type="button" class="btn btn-primary btn-sort" id="sortBtn">Sortear Times</button>
+              <button type="button" class="btn btn-secondary btn-clear" id="clearBtn">Limpar</button>
             </div>
-          </header>
+          </article>
 
-          <!-- Container das 3 Roletas Simultâneas -->
-          <div class="wheels-arena-grid" id="wheelsArenaGrid">
-            <!-- Roleta A Arena Slot -->
-            <div class="wheel-arena-cell" id="wheelCellA">
-              <div class="wheel-cell-header">
-                <span class="wheel-tag badge-a">MESA A</span>
-                <span class="wheel-format-pill" id="wheelFormatPillA">4v4 Normal</span>
-                <button type="button" class="btn-spin-single" id="btnSpinA" title="Girar apenas esta roleta">Girar Mesa
-                  A</button>
-              </div>
-
-              <div class="wheel-canvas-wrapper">
-                <div class="wheel-pointer"></div>
-                <canvas id="canvasWheelA" width="360" height="360" class="roulette-canvas"></canvas>
-                <div class="wheel-center-cap">
-                  <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
-                </div>
-              </div>
-
-              <!-- Montagem dos Times em Tempo Real -->
-              <div class="live-match-builder" id="liveMatchA">
-                <div class="builder-team team-alpha">
-                  <div class="builder-team-head">
-                    <strong>TIME 1</strong>
-                    <span class="team-force-meter" id="forceMeterA1">0 pts</span>
-                  </div>
-                  <div class="team-slots-list" id="slotsA1"></div>
-                </div>
-                <div class="builder-vs">VS</div>
-                <div class="builder-team team-beta">
-                  <div class="builder-team-head">
-                    <strong>TIME 2</strong>
-                    <span class="team-force-meter" id="forceMeterA2">0 pts</span>
-                  </div>
-                  <div class="team-slots-list" id="slotsA2"></div>
-                </div>
-              </div>
+          <article class="sorteio-stage" id="sorteioStage">
+            <div class="stage-empty">
+              <svg viewBox="0 0 24 24">
+                <path d="M16 3h5v5" />
+                <path d="M4 20L21 3" />
+                <path d="M21 16v5h-5" />
+                <path d="M15 15l6 6" />
+                <path d="M4 4l5 5" />
+              </svg>
+              <p>Adicione os nomes e clique em sortear para gerar os confrontos da partida</p>
             </div>
-
-            <!-- Roleta B Arena Slot -->
-            <div class="wheel-arena-cell" id="wheelCellB">
-              <div class="wheel-cell-header">
-                <span class="wheel-tag badge-b">MESA B</span>
-                <span class="wheel-format-pill" id="wheelFormatPillB">4v4 Bate-Soco</span>
-                <button type="button" class="btn-spin-single" id="btnSpinB" title="Girar apenas esta roleta">Girar Mesa
-                  B</button>
-              </div>
-
-              <div class="wheel-canvas-wrapper">
-                <div class="wheel-pointer"></div>
-                <canvas id="canvasWheelB" width="360" height="360" class="roulette-canvas"></canvas>
-                <div class="wheel-center-cap">
-                  <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
-                </div>
-              </div>
-
-              <div class="live-match-builder" id="liveMatchB">
-                <div class="builder-team team-alpha">
-                  <div class="builder-team-head">
-                    <strong>TIME 1</strong>
-                    <span class="team-force-meter" id="forceMeterB1">0 pts</span>
-                  </div>
-                  <div class="team-slots-list" id="slotsB1"></div>
-                </div>
-                <div class="builder-vs">VS</div>
-                <div class="builder-team team-beta">
-                  <div class="builder-team-head">
-                    <strong>TIME 2</strong>
-                    <span class="team-force-meter" id="forceMeterB2">0 pts</span>
-                  </div>
-                  <div class="team-slots-list" id="slotsB2"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Roleta C Arena Slot -->
-            <div class="wheel-arena-cell" id="wheelCellC">
-              <div class="wheel-cell-header">
-                <span class="wheel-tag badge-c">MESA C</span>
-                <span class="wheel-format-pill" id="wheelFormatPillC">2v2 Normal</span>
-                <button type="button" class="btn-spin-single" id="btnSpinC" title="Girar apenas esta roleta">Girar Mesa
-                  C</button>
-              </div>
-
-              <div class="wheel-canvas-wrapper">
-                <div class="wheel-pointer"></div>
-                <canvas id="canvasWheelC" width="360" height="360" class="roulette-canvas"></canvas>
-                <div class="wheel-center-cap">
-                  <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
-                </div>
-              </div>
-
-              <div class="live-match-builder" id="liveMatchC">
-                <div class="builder-team team-alpha">
-                  <div class="builder-team-head">
-                    <strong>TIME 1</strong>
-                    <span class="team-force-meter" id="forceMeterC1">0 pts</span>
-                  </div>
-                  <div class="team-slots-list" id="slotsC1"></div>
-                </div>
-                <div class="builder-vs">VS</div>
-                <div class="builder-team team-beta">
-                  <div class="builder-team-head">
-                    <strong>TIME 2</strong>
-                    <span class="team-force-meter" id="forceMeterC2">0 pts</span>
-                  </div>
-                  <div class="team-slots-list" id="slotsC2"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Modal Pop-Up de Revelação Dramática -->
-          <div class="reveal-banner" id="revealBanner" style="display: none;">
-            <span class="reveal-lbl">SORTEADO NA MESA <span id="revealWheelId">A</span></span>
-            <div class="reveal-body">
-              <span class="reveal-nick" id="revealNick">Jogador</span>
-              <span class="reveal-rank-badge" id="revealRankBadge">MESTRE (10)</span>
-              <span class="reveal-slot" id="revealSlot">→ Time 1 (Vaga 1)</span>
-            </div>
-          </div>
-
-          <footer class="step-footer">
-            <button type="button" class="btn btn-secondary" id="btnBackToStep2">← Voltar às Configurações</button>
-            <button type="button" class="btn btn-primary" id="btnGoToStep4">Concluir e Ver Resultados Oficiais
-              →</button>
-          </footer>
+          </article>
         </div>
-
-        <!-- PASSO 4: Resultado Oficial, Auto-Equilíbrio & Compartilhamento -->
-        <div class="arena-step-pane" id="paneStep4">
-          <header class="step4-header">
-            <div>
-              <h3>Confrontos Definidos & Auditoria</h3>
-              <p>Resultados gerados criptograficamente com verificação de integridade e exportação direta.</p>
-            </div>
-
-            <div class="step4-actions">
-              <button type="button" class="btn btn-secondary btn-sm" id="btnAutoBalanceAll"
-                title="Reorganiza times matematicamente pelo menor desnível de peso">
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path
-                    d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                </svg>
-                Auto-Equilibrar
-              </button>
-
-              <button type="button" class="btn btn-primary btn-sm" id="btnShareWhatsApp">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                  <path
-                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z" />
-                </svg>
-                Copiar para WhatsApp
-              </button>
-
-              <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadCardPng">
-                <svg width="14" height="14" viewBox="0 0 24 24">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                </svg>
-                Baixar Imagem (Card PNG)
-              </button>
-            </div>
-          </header>
-
-          <!-- Grid de Confrontos Finais -->
-          <div class="matches-results-grid" id="matchesResultsGrid"></div>
-
-          <!-- Selo Criptográfico de Auditoria do Sorteio -->
-          <aside class="audit-verification-banner" id="auditVerificationBanner">
-            <div class="audit-meta-row">
-              <div class="audit-meta-item">
-                <span class="audit-lbl">ID DO SORTEIO</span>
-                <strong class="audit-val" id="auditDisplayId">#CCQ-0000</strong>
-              </div>
-              <div class="audit-meta-item">
-                <span class="audit-lbl">SEED CRIPTOGRÁFICA</span>
-                <span class="audit-val-mono" id="auditDisplaySeed">0000000000000000</span>
-              </div>
-              <div class="audit-meta-item">
-                <span class="audit-lbl">HASH SHA-256</span>
-                <span class="audit-val-mono truncate"
-                  id="auditDisplayHash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
-              </div>
-              <div class="audit-meta-item">
-                <span class="audit-status-tag valid">AUDITADO & LIMPO</span>
-              </div>
-            </div>
-          </aside>
-
-          <footer class="step-footer">
-            <button type="button" class="btn btn-secondary" id="btnBackToStep3">← Voltar à Arena de Giro</button>
-            <button type="button" class="btn btn-primary" id="btnStartNewRound">Iniciar Nova Rodada de Sorteio</button>
-          </footer>
-        </div>
-      </div>
-
-      <!-- ════════════ MODO RÁPIDO (PRESERVADO 100%) ════════════ -->
-      <div class="sorteio-wrapper" id="quickSorteioWrapper" style="display: none;">
-        <article class="sorteio-panel">
-          <div class="panel-header-row">
-            <span class="panel-title">Jogadores (Modo Rápido)</span>
-            <span class="panel-hint">Um nome por linha</span>
-          </div>
-          <textarea class="names-textarea" id="namesInput"
-            placeholder="Cole os nomes dos jogadores aqui...&#10;Exemplo:&#10;Guerreiro1&#10;Guerreiro2&#10;Guerreiro3"></textarea>
-
-          <label class="team-size-label" for="customSize">Jogadores por time</label>
-          <div class="size-options">
-            <button type="button" class="size-btn" data-size="2">2</button>
-            <button type="button" class="size-btn" data-size="3">3</button>
-            <button type="button" class="size-btn active" data-size="4">4</button>
-            <button type="button" class="size-btn" data-size="5">5</button>
-          </div>
-          <div class="size-custom">
-            <label for="customSize">Personalizado:</label>
-            <input type="number" class="size-input" id="customSize" min="2" max="50" placeholder="N">
-          </div>
-
-          <div class="sort-info" id="sortInfo"><span class="hl" id="playerCounter">0</span> jogadores detectados</div>
-
-          <div class="sorteio-btns">
-            <button type="button" class="btn btn-primary btn-sort" id="sortBtn">Sortear Times</button>
-            <button type="button" class="btn btn-secondary btn-clear" id="clearBtn">Limpar</button>
-          </div>
-        </article>
-
-        <article class="sorteio-stage" id="sorteioStage">
-          <div class="stage-empty">
-            <svg viewBox="0 0 24 24">
-              <path d="M16 3h5v5" />
-              <path d="M4 20L21 3" />
-              <path d="M21 16v5h-5" />
-              <path d="M15 15l6 6" />
-              <path d="M4 4l5 5" />
-            </svg>
-            <p>Adicione os nomes e clique em sortear para gerar os confrontos da partida</p>
-          </div>
-        </article>
-      </div>
 
       </div>
     </section>
@@ -1203,7 +1209,8 @@ LendaFF (sem patente = padrão)"></textarea>
             <div class="rede-panel-info">
               <h3>Grupos do WhatsApp</h3>
               <p>Dois grupos oficiais e movimentados: <strong>Grupo de Duelos</strong> para agendar partidas imediatas e
-                <strong>Grupo Sorteado do CCQ</strong> para sorteios.</p>
+                <strong>Grupo Sorteado do CCQ</strong> para sorteios.
+              </p>
               <span class="tag-live">Grupos Ativos</span>
               <div class="rede-group">
                 <div class="rede-sub-label">Grupo de Duelos</div>
@@ -1321,7 +1328,8 @@ LendaFF (sem patente = padrão)"></textarea>
         <div class="responsible-gaming-notice">
           <span class="badge-18">18+</span>
           <p>Cacique Apostas &mdash; Todos os direitos reservados. Comunidade dedicada a duelos e entretenimento
-            competitivo. Jogue com responsabilidade. Proibido para menores de 18 anos. Je t'aime, Sile!</p>
+            competitivo. Jogue com responsabilidade. Proibido para menores de 18 anos.
+            Je t'aime, Sile!</p>
         </div>
       </div>
     </div>
@@ -1425,7 +1433,7 @@ LendaFF (sem patente = padrão)"></textarea>
     </div>
   </div>
 
-  <!-- Modal 5: Importar / Exportar Elenco (JSON / CSV) -->
+
   <div class="modal-backdrop" id="modalImportExportBackdrop" style="display: none;">
     <div class="modal-dialog">
       <header class="modal-header">
@@ -1448,7 +1456,7 @@ LendaFF (sem patente = padrão)"></textarea>
     </div>
   </div>
 
-  <!-- ════════════ MODO TELÃO (FULLSCREEN PRESENTATION) ════════════ -->
+
   <div class="telao-overlay" id="telaoOverlay" style="display: none;">
     <header class="telao-topbar">
       <div class="telao-brand">
