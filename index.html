@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cacique Apostas — A Tribo Mais Confiável do Free Fire</title>
   <meta name="description"
-    content="Cacique Apostas: pagamento mais rápido do Brasil, regras claras e uma comunidade ativa com mais de 1000 guerreiros. Entre na Tribo.">
+    content="Cacique Apostas: pagamento mais rápido do Brasil, regras claras, duelos diários, arena de roletas auditada e scanner anti-cheat forense. Entre na Tribo.">
   <meta name="theme-color" content="#0d0e12">
   <link rel="canonical" href="https://enzommds7.github.io/ccq/">
 
@@ -16,80 +16,99 @@
   <meta property="og:locale" content="pt_BR">
   <meta property="og:url" content="https://enzommds7.github.io/ccq/">
   <meta property="og:title" content="Cacique Apostas — A Tribo Mais Confiável do Free Fire">
-  <meta property="og:description" content="Pagamento via Pix na hora, regras claras e mais de 1000 guerreiros. Duelos, sorteios e anti-cheat próprio.">
+  <meta property="og:description" content="Pagamento via Pix na hora, duelos auditados, arena de roletas por patente e scanner forense exclusivo.">
   <meta property="og:image" content="https://enzommds7.github.io/ccq/og-image.jpg">
   <meta property="og:image:width" content="1376">
   <meta property="og:image:height" content="768">
   <meta property="og:image:alt" content="Cacique Apostas">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Cacique Apostas — A Tribo Mais Confiável do Free Fire">
-  <meta name="twitter:description" content="Pagamento via Pix na hora, regras claras e mais de 1000 guerreiros.">
+  <meta name="twitter:description" content="Pagamento via Pix na hora, duelos diários e regras transparentes para mais de 1000 guerreiros.">
   <meta name="twitter:image" content="https://enzommds7.github.io/ccq/og-image.jpg">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="apple-touch-icon" href="logo.webp">
 
+  <!-- Fontes Oficiais: Clash Display + Geist + Geist Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css?v=8">
   <script src="jszip.min.js" defer></script>
 </head>
 
 <body>
 
+  <!-- Barra de Navegação Fixa -->
   <header id="header">
     <nav class="container">
       <a href="#" class="nav-brand" aria-label="Página inicial do Cacique Apostas">
-        <picture>
+        <picture class="nav-brand-picture">
           <source srcset="logo.webp" type="image/webp">
-          <img src="logo.jpg" alt="Logo Cacique Apostas" width="32" height="32" class="nav-logo">
+          <img src="logo.jpg" alt="Logo Cacique Apostas" width="34" height="34" class="nav-logo">
         </picture>
-        <span>Cacique Apostas</span>
+        <span class="nav-brand-title">Cacique Apostas</span>
       </a>
+
       <ul class="nav-links" id="navLinks">
         <li><a href="#sobre">Sobre</a></li>
         <li><a href="#regras">Regras</a></li>
-        <li><a href="#sorteio">Sorteio</a></li>
+        <li><a href="#sorteio">Arena & Sorteio</a></li>
         <li><a href="#scan">Cacique SCAN</a></li>
         <li><a href="#redes">Redes</a></li>
       </ul>
+
       <div class="nav-actions">
         <button class="sound-toggle" id="soundToggle" type="button" aria-label="Alternar sons da interface" aria-pressed="false" title="Sons da interface">
           <svg class="ico-on" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" /></svg>
           <svg class="ico-off" viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4V5z" /><line x1="22" y1="9" x2="16" y2="15" /><line x1="16" y1="9" x2="22" y2="15" /></svg>
         </button>
+
+        <!-- Indicador de Papel / Auth Rápido -->
+        <button class="role-badge" id="roleBadgeBtn" type="button" title="Clique para alternar login de ADM">
+          <span class="role-dot"></span>
+          <span class="role-text" id="roleBadgeText">Visitante</span>
+        </button>
+
         <a href="#redes" class="btn btn-primary btn-sm nav-cta">Entrar na Tribo</a>
       </div>
+
       <button class="nav-toggle" id="navToggle" aria-label="Abrir menu de navegação" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
     </nav>
+
     <div class="mobile-menu" id="mobileMenu">
       <a href="#sobre">Sobre</a>
       <a href="#regras">Regras</a>
-      <a href="#sorteio">Sorteio</a>
-      <a href="#scan">Cacique SCAN</a>
-      <a href="#redes">Redes</a>
-      <a href="#redes" class="cta-link">Entrar na Tribo</a>
+      <a href="#sorteio">Arena de Roletas & Sorteio</a>
+      <a href="#scan">Cacique SCAN (Anti-Cheat)</a>
+      <a href="#redes">Nossas Redes</a>
+      <a href="#redes" class="cta-link">Entrar na Tribo Oficial</a>
     </div>
   </header>
 
   <main>
 
+    <!-- Hero: Arena Competitiva com Canvas Tático e Brasão Original Inteiro -->
     <section class="hero" id="hero">
+      <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
       <div class="container hero-grid">
         <article class="hero-copy">
-          <span class="hero-label">Tribo oficial de apostas Free Fire</span>
+          <div class="hero-badge-wrap">
+            <span class="hero-label">Tribo Oficial de Apostas Free Fire</span>
+            <span class="live-pill"><span class="live-dot"></span>AO VIVO</span>
+          </div>
           <h1>O Cacique <span class="accent">paga.</span><br>Sempre.</h1>
           <p class="hero-desc">Mais de 1000 guerreiros já apostam com a gente todos os dias. Pagamento mais rápido do
-            Brasil, regras claras e justiça para quem joga limpo.</p>
+            Brasil, regras claras, arena de roletas auditada e justiça forense para quem joga limpo.</p>
           <div class="hero-actions">
             <a href="#redes" class="btn btn-primary">Entrar na Tribo</a>
-            <a href="#regras" class="btn btn-secondary">Ver Regras</a>
+            <a href="#sorteio" class="btn btn-secondary">Arena de Roletas</a>
+            <a href="#regras" class="btn btn-outline">Ver Regras</a>
           </div>
           <aside class="hero-stats">
             <div class="stat-item">
@@ -106,19 +125,29 @@
             </div>
           </aside>
         </article>
-        <figure class="hero-emblem">
-          <picture>
-            <source srcset="logo.webp" type="image/webp">
-            <img src="logo.jpg" alt="Brasão Cacique Apostas" width="380" height="380">
-          </picture>
-          <figcaption class="seal-badge">
-            <strong>PAGA</strong>
-            <span>Garantido</span>
-          </figcaption>
+
+        <!-- Brasão oficial preservado 100% inteiro, sem recorte oval/circular, com moldura editorial -->
+        <figure class="hero-emblem-frame">
+          <div class="emblem-card">
+            <div class="emblem-corner top-left"></div>
+            <div class="emblem-corner top-right"></div>
+            <div class="emblem-corner bottom-left"></div>
+            <div class="emblem-corner bottom-right"></div>
+            <picture class="emblem-picture">
+              <source srcset="logo.webp" type="image/webp">
+              <img src="logo.jpg" alt="Brasão Oficial Cacique Apostas" width="380" height="380" class="hero-logo-img">
+            </picture>
+            <figcaption class="seal-badge">
+              <strong>PAGA</strong>
+              <span>Garantido</span>
+            </figcaption>
+          </div>
+          <div class="emblem-subtag">AUTENTICIDADE COMPROVADA · PAGAMENTO VIA PIX</div>
         </figure>
       </div>
     </section>
 
+    <!-- 01: Sobre a Tribo -->
     <section class="sobre" id="sobre">
       <div class="container">
         <header class="section-header">
@@ -172,6 +201,7 @@
       </div>
     </section>
 
+    <!-- 02: Regulamento da Tribo -->
     <section class="regras" id="regras">
       <div class="container">
         <header class="section-header">
@@ -265,18 +295,602 @@
       </div>
     </section>
 
+    <!-- 03: Arena de Roletas & Sorteio Oficial -->
     <section class="sorteio" id="sorteio">
       <div class="container">
         <header class="section-header">
-          <span class="section-label">Ferramenta</span>
-          <h2>Sorteio de Times</h2>
-          <p>Cole a lista de jogadores e gere confrontos aleatórios e equilibrados de forma instantânea.</p>
+          <span class="section-label">Sistema Oficial de Sorteio</span>
+          <h2>Arena de Roletas & Sorteio</h2>
+          <p>Sorteio auditado por patente com 3 roletas simultâneas, equilíbrio matemático de peso e verificação criptográfica.</p>
         </header>
 
-        <div class="sorteio-wrapper">
+        <!-- Barra de Modos e Ferramentas Auxiliares -->
+        <div class="arena-toolbar">
+          <div class="arena-mode-switch">
+            <button type="button" class="mode-tab active" id="tabArenaBtn" data-target="arena">
+              <svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10M12 12l7-7"/></svg>
+              Arena de Roletas (Por Patente)
+            </button>
+            <button type="button" class="mode-tab" id="tabQuickBtn" data-target="quick">
+              <svg width="16" height="16" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              Modo Rápido (1 Clique)
+            </button>
+          </div>
+
+          <div class="arena-tools">
+            <span class="live-status-chip" id="liveStatusChip">
+              <span class="live-dot pulse"></span>
+              <span class="live-text">AO VIVO</span>
+            </span>
+
+            <button type="button" class="btn btn-secondary btn-sm" id="btnTelaoMode" title="Atalho: Tecla T">
+              <svg width="14" height="14" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              Modo Telão
+            </button>
+
+            <button type="button" class="btn btn-secondary btn-sm" id="btnWeightsModal">
+              <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 20v-6M6 20V10M18 20V4"/></svg>
+              Pesos
+            </button>
+
+            <button type="button" class="btn btn-secondary btn-sm" id="btnAuditModal">
+              <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Auditoria
+            </button>
+
+            <button type="button" class="btn btn-secondary btn-sm" id="btnVerifyModal" title="Verificar autenticidade com Seed/Hash">
+              <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 12 2 2 4-4"/></svg>
+              Verificar
+            </button>
+          </div>
+        </div>
+
+        <!-- ════════════ MODO ARENA DE ROLETAS (4 PASSOS) ════════════ -->
+        <div class="arena-container" id="arenaContainer">
+
+          <!-- Stepper Guiado em 4 Passos -->
+          <nav class="arena-stepper" aria-label="Passos da Arena de Roletas">
+            <button type="button" class="step-node active" data-step="1">
+              <span class="step-num">1</span>
+              <span class="step-title">Jogadores</span>
+            </button>
+            <span class="step-line"></span>
+            <button type="button" class="step-node" data-step="2">
+              <span class="step-num">2</span>
+              <span class="step-title">Configurar Roletas</span>
+            </button>
+            <span class="step-line"></span>
+            <button type="button" class="step-node" data-step="3">
+              <span class="step-num">3</span>
+              <span class="step-title">Girar</span>
+            </button>
+            <span class="step-line"></span>
+            <button type="button" class="step-node" data-step="4">
+              <span class="step-num">4</span>
+              <span class="step-title">Resultado & Compartilhar</span>
+            </button>
+          </nav>
+
+          <!-- PASSO 1: Jogadores & Cadastro de Elenco -->
+          <div class="arena-step-pane active" id="paneStep1">
+            <div class="step1-grid">
+              <!-- Caixa de Entrada Livre de Texto -->
+              <article class="step-card glass">
+                <header class="step-card-header">
+                  <div>
+                    <h3>Colar Jogadores & Patentes</h3>
+                    <p>Cole lista em formato livre: <code>Nick - D2</code>, <code>Guerreiro | Platina 1</code>, <code>Lobo M</code>, etc.</p>
+                  </div>
+                  <div class="step-card-actions">
+                    <button type="button" class="btn-text-action" id="btnLoadSampleRoster">Carregar Exemplo</button>
+                    <button type="button" class="btn-text-action" id="btnClearRosterInput">Limpar</button>
+                  </div>
+                </header>
+
+                <textarea class="roster-textarea" id="rosterInput" rows="7" placeholder="Exemplo de lista livre:
+Capitão - Mestre
+SniperX | D1
+BalaFina - Platina 2
+Guerreiro7 D3
+TioSam - Ouro 1
+LendaFF (sem patente = padrão)"></textarea>
+
+                <div class="input-actions-bar">
+                  <div class="default-rank-select">
+                    <label for="defaultRankSelect">Sem patente = </label>
+                    <select id="defaultRankSelect" class="form-select-sm">
+                      <option value="none">Sem Patente (Peso 5)</option>
+                      <option value="o1">Ouro 1 (Peso 3)</option>
+                      <option value="p3">Platina 3 (Peso 4)</option>
+                      <option value="d3">Diamante 3 (Peso 7)</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-primary btn-sm" id="btnParseRoster">
+                    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    Processar e Adicionar ao Elenco
+                  </button>
+                </div>
+              </article>
+
+              <!-- Painel do Elenco Cadastrado -->
+              <article class="step-card glass">
+                <header class="step-card-header">
+                  <div>
+                    <h3>Elenco da Rodada (<span id="rosterTotalCount">0</span> jogadores)</h3>
+                    <p>Filtre, edite patentes, trave jogadores (Pin) ou remova duplicados.</p>
+                  </div>
+                  <div class="step-card-actions">
+                    <button type="button" class="btn-text-action" id="btnImportExportRoster">Importar / Exportar</button>
+                    <button type="button" class="btn-text-action danger" id="btnClearAllRoster">Limpar Tudo</button>
+                  </div>
+                </header>
+
+                <!-- Barra de Busca e Filtros de Patente -->
+                <div class="roster-controls">
+                  <div class="roster-search-wrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                    <input type="text" id="rosterSearch" placeholder="Buscar por nick ou ID..." class="roster-search-input">
+                  </div>
+                  <select id="rosterRankFilter" class="form-select-sm">
+                    <option value="all">Todas as Patentes</option>
+                    <option value="mestre">Mestre (10)</option>
+                    <option value="d1,d2,d3">Diamante (7-9)</option>
+                    <option value="p1,p2,p3">Platina (4-6)</option>
+                    <option value="o1,o2,o3">Ouro (1-3)</option>
+                    <option value="none">Sem Patente</option>
+                  </select>
+                </div>
+
+                <!-- Chips com contagem por patente -->
+                <div class="rank-counters-chips" id="rankCountersChips"></div>
+
+                <!-- Lista / Tabela do Elenco -->
+                <div class="roster-table-wrap">
+                  <div class="roster-empty-state" id="rosterEmptyState">
+                    <svg width="40" height="40" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <p>Nenhum guerreiro no elenco ainda.</p>
+                    <span>Cole a lista acima ou clique em "Carregar Exemplo" para começar.</span>
+                  </div>
+                  <div class="roster-list" id="rosterList"></div>
+                </div>
+
+                <footer class="step-footer">
+                  <div class="roster-alert" id="duplicateAlert" style="display: none;">
+                    <svg width="14" height="14" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span>Nomes duplicados foram detectados e destacados em amarelo.</span>
+                  </div>
+                  <button type="button" class="btn btn-primary" id="btnGoToStep2">
+                    Avançar para Configurar Roletas →
+                  </button>
+                </footer>
+              </article>
+            </div>
+          </div>
+
+          <!-- PASSO 2: Configuração das Roletas (A, B e C) -->
+          <div class="arena-step-pane" id="paneStep2">
+            <div class="step2-header">
+              <div>
+                <h3>Configuração das 3 Roletas Simultâneas</h3>
+                <p>Cada roleta é uma mesa independente (Mesa A, B e C). Configure formatos, limites de patente e equilíbrio de peso.</p>
+              </div>
+              <div class="step2-global-options">
+                <label class="toggle-checkbox" title="Impede que o mesmo jogador seja sorteado em duas mesas diferentes">
+                  <input type="checkbox" id="chkExclusivePlayers" checked>
+                  <span class="toggle-switch"></span>
+                  <span class="toggle-label">Jogador sorteado sai das outras roletas</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Abas e Cards das Roletas A, B e C -->
+            <div class="wheels-config-grid">
+              <!-- Roleta A -->
+              <article class="wheel-config-card glass" id="wheelConfigCardA">
+                <header class="wheel-card-head">
+                  <div class="wheel-id-badge badge-a">MESA A</div>
+                  <label class="toggle-checkbox">
+                    <input type="checkbox" id="whlActiveA" checked>
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-label">Ativa</span>
+                  </label>
+                </header>
+
+                <div class="wheel-config-body">
+                  <div class="config-row">
+                    <label>Formato da Partida:</label>
+                    <select id="whlFormatA" class="form-select">
+                      <option value="4v4_normal">4v4 Normal</option>
+                      <option value="4v4_soco">4v4 Bate-Soco</option>
+                      <option value="2v2_normal">2v2 Normal</option>
+                      <option value="2v2_soco">2v2 Bate-Soco</option>
+                      <option value="1v1">X1 dos Crias</option>
+                      <option value="3v3">3v3</option>
+                      <option value="custom">Personalizado</option>
+                    </select>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Jogadores por Time:</label>
+                    <div class="number-stepper">
+                      <button type="button" class="btn-step" data-action="dec" data-target="whlTeamSizeA">-</button>
+                      <input type="number" id="whlTeamSizeA" value="4" min="1" max="10" class="input-step">
+                      <button type="button" class="btn-step" data-action="inc" data-target="whlTeamSizeA">+</button>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Faixa de Patentes Permitida:</label>
+                    <div class="rank-range-picker">
+                      <select id="whlRankMinA" class="form-select-sm">
+                        <option value="1">Mínimo: Ouro 3</option>
+                        <option value="4">Mínimo: Platina 3</option>
+                        <option value="7">Mínimo: Diamante 3</option>
+                        <option value="10">Mínimo: Mestre</option>
+                      </select>
+                      <span>até</span>
+                      <select id="whlRankMaxA" class="form-select-sm">
+                        <option value="10" selected>Máximo: Mestre</option>
+                        <option value="9">Máximo: Diamante 1</option>
+                        <option value="6">Máximo: Platina 1</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label class="toggle-checkbox">
+                      <input type="checkbox" id="whlBalanceA" checked>
+                      <span class="toggle-switch"></span>
+                      <span class="toggle-label">Equilíbrio Ativo por Peso</span>
+                    </label>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Roleta B -->
+              <article class="wheel-config-card glass" id="wheelConfigCardB">
+                <header class="wheel-card-head">
+                  <div class="wheel-id-badge badge-b">MESA B</div>
+                  <label class="toggle-checkbox">
+                    <input type="checkbox" id="whlActiveB" checked>
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-label">Ativa</span>
+                  </label>
+                </header>
+
+                <div class="wheel-config-body">
+                  <div class="config-row">
+                    <label>Formato da Partida:</label>
+                    <select id="whlFormatB" class="form-select">
+                      <option value="4v4_normal">4v4 Normal</option>
+                      <option value="4v4_soco" selected>4v4 Bate-Soco</option>
+                      <option value="2v2_normal">2v2 Normal</option>
+                      <option value="2v2_soco">2v2 Bate-Soco</option>
+                      <option value="1v1">X1 dos Crias</option>
+                      <option value="3v3">3v3</option>
+                      <option value="custom">Personalizado</option>
+                    </select>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Jogadores por Time:</label>
+                    <div class="number-stepper">
+                      <button type="button" class="btn-step" data-action="dec" data-target="whlTeamSizeB">-</button>
+                      <input type="number" id="whlTeamSizeB" value="4" min="1" max="10" class="input-step">
+                      <button type="button" class="btn-step" data-action="inc" data-target="whlTeamSizeB">+</button>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Faixa de Patentes Permitida:</label>
+                    <div class="rank-range-picker">
+                      <select id="whlRankMinB" class="form-select-sm">
+                        <option value="1">Mínimo: Ouro 3</option>
+                        <option value="4">Mínimo: Platina 3</option>
+                        <option value="7">Mínimo: Diamante 3</option>
+                      </select>
+                      <span>até</span>
+                      <select id="whlRankMaxB" class="form-select-sm">
+                        <option value="10" selected>Máximo: Mestre</option>
+                        <option value="9">Máximo: Diamante 1</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label class="toggle-checkbox">
+                      <input type="checkbox" id="whlBalanceB" checked>
+                      <span class="toggle-switch"></span>
+                      <span class="toggle-label">Equilíbrio Ativo por Peso</span>
+                    </label>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Roleta C -->
+              <article class="wheel-config-card glass" id="wheelConfigCardC">
+                <header class="wheel-card-head">
+                  <div class="wheel-id-badge badge-c">MESA C</div>
+                  <label class="toggle-checkbox">
+                    <input type="checkbox" id="whlActiveC">
+                    <span class="toggle-switch"></span>
+                    <span class="toggle-label">Ativa</span>
+                  </label>
+                </header>
+
+                <div class="wheel-config-body">
+                  <div class="config-row">
+                    <label>Formato da Partida:</label>
+                    <select id="whlFormatC" class="form-select">
+                      <option value="2v2_normal" selected>2v2 Normal</option>
+                      <option value="2v2_soco">2v2 Bate-Soco</option>
+                      <option value="4v4_normal">4v4 Normal</option>
+                      <option value="1v1">X1 dos Crias</option>
+                      <option value="custom">Personalizado</option>
+                    </select>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Jogadores por Time:</label>
+                    <div class="number-stepper">
+                      <button type="button" class="btn-step" data-action="dec" data-target="whlTeamSizeC">-</button>
+                      <input type="number" id="whlTeamSizeC" value="2" min="1" max="10" class="input-step">
+                      <button type="button" class="btn-step" data-action="inc" data-target="whlTeamSizeC">+</button>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label>Faixa de Patentes Permitida:</label>
+                    <div class="rank-range-picker">
+                      <select id="whlRankMinC" class="form-select-sm">
+                        <option value="1">Mínimo: Ouro 3</option>
+                        <option value="4">Mínimo: Platina 3</option>
+                      </select>
+                      <span>até</span>
+                      <select id="whlRankMaxC" class="form-select-sm">
+                        <option value="10" selected>Máximo: Mestre</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="config-row">
+                    <label class="toggle-checkbox">
+                      <input type="checkbox" id="whlBalanceC" checked>
+                      <span class="toggle-switch"></span>
+                      <span class="toggle-label">Equilíbrio Ativo por Peso</span>
+                    </label>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <!-- Parâmetros de Tolerância e Navegação -->
+            <div class="step2-footer-bar glass">
+              <div class="tolerance-box">
+                <label for="balanceTolerance">Tolerância Máxima de Desequilíbrio:</label>
+                <div class="tolerance-input-wrap">
+                  <input type="range" id="balanceTolerance" min="1" max="8" value="3" class="form-range">
+                  <span id="toleranceValDisplay" class="tolerance-val">± 3 pontos</span>
+                </div>
+                <span class="tolerance-hint">A roleta filtrará as fatias para que a diferença final entre os times fique dentro deste limite.</span>
+              </div>
+
+              <div class="step-nav-actions">
+                <button type="button" class="btn btn-secondary" id="btnBackToStep1">← Voltar aos Jogadores</button>
+                <button type="button" class="btn btn-primary" id="btnGoToStep3">Avançar para a Arena de Giro →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PASSO 3: Girar as Roletas (Canvas 2D com Física, Ticks e Montagem em Tempo Real) -->
+          <div class="arena-step-pane" id="paneStep3">
+            <header class="step3-controls-bar glass">
+              <div class="spin-master-actions">
+                <button type="button" class="btn btn-primary btn-lg" id="btnSpinAllWheels">
+                  <svg width="20" height="20" viewBox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  Girar Todas as Roletas Ativas (Espaço)
+                </button>
+                <span class="spin-hint">Giro sincronizado com paradas escalonadas para suspense máximo.</span>
+              </div>
+
+              <div class="step3-quick-tools">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnResetSpins" title="Atalho: Tecla R">
+                  <svg width="14" height="14" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  Resetar Giros (R)
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnGoToStep4From3">
+                  Ver Resultados →
+                </button>
+              </div>
+            </header>
+
+            <!-- Container das 3 Roletas Simultâneas -->
+            <div class="wheels-arena-grid" id="wheelsArenaGrid">
+              <!-- Roleta A Arena Slot -->
+              <div class="wheel-arena-cell" id="wheelCellA">
+                <div class="wheel-cell-header">
+                  <span class="wheel-tag badge-a">MESA A</span>
+                  <span class="wheel-format-pill" id="wheelFormatPillA">4v4 Normal</span>
+                  <button type="button" class="btn-spin-single" id="btnSpinA" title="Girar apenas esta roleta">Girar Mesa A</button>
+                </div>
+
+                <div class="wheel-canvas-wrapper">
+                  <div class="wheel-pointer"></div>
+                  <canvas id="canvasWheelA" width="360" height="360" class="roulette-canvas"></canvas>
+                  <div class="wheel-center-cap">
+                    <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
+                  </div>
+                </div>
+
+                <!-- Montagem dos Times em Tempo Real -->
+                <div class="live-match-builder" id="liveMatchA">
+                  <div class="builder-team team-alpha">
+                    <div class="builder-team-head">
+                      <strong>TIME 1</strong>
+                      <span class="team-force-meter" id="forceMeterA1">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsA1"></div>
+                  </div>
+                  <div class="builder-vs">VS</div>
+                  <div class="builder-team team-beta">
+                    <div class="builder-team-head">
+                      <strong>TIME 2</strong>
+                      <span class="team-force-meter" id="forceMeterA2">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsA2"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Roleta B Arena Slot -->
+              <div class="wheel-arena-cell" id="wheelCellB">
+                <div class="wheel-cell-header">
+                  <span class="wheel-tag badge-b">MESA B</span>
+                  <span class="wheel-format-pill" id="wheelFormatPillB">4v4 Bate-Soco</span>
+                  <button type="button" class="btn-spin-single" id="btnSpinB" title="Girar apenas esta roleta">Girar Mesa B</button>
+                </div>
+
+                <div class="wheel-canvas-wrapper">
+                  <div class="wheel-pointer"></div>
+                  <canvas id="canvasWheelB" width="360" height="360" class="roulette-canvas"></canvas>
+                  <div class="wheel-center-cap">
+                    <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
+                  </div>
+                </div>
+
+                <div class="live-match-builder" id="liveMatchB">
+                  <div class="builder-team team-alpha">
+                    <div class="builder-team-head">
+                      <strong>TIME 1</strong>
+                      <span class="team-force-meter" id="forceMeterB1">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsB1"></div>
+                  </div>
+                  <div class="builder-vs">VS</div>
+                  <div class="builder-team team-beta">
+                    <div class="builder-team-head">
+                      <strong>TIME 2</strong>
+                      <span class="team-force-meter" id="forceMeterB2">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsB2"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Roleta C Arena Slot -->
+              <div class="wheel-arena-cell" id="wheelCellC">
+                <div class="wheel-cell-header">
+                  <span class="wheel-tag badge-c">MESA C</span>
+                  <span class="wheel-format-pill" id="wheelFormatPillC">2v2 Normal</span>
+                  <button type="button" class="btn-spin-single" id="btnSpinC" title="Girar apenas esta roleta">Girar Mesa C</button>
+                </div>
+
+                <div class="wheel-canvas-wrapper">
+                  <div class="wheel-pointer"></div>
+                  <canvas id="canvasWheelC" width="360" height="360" class="roulette-canvas"></canvas>
+                  <div class="wheel-center-cap">
+                    <img src="logo.jpg" alt="Centro" width="44" height="44" class="wheel-hub-img">
+                  </div>
+                </div>
+
+                <div class="live-match-builder" id="liveMatchC">
+                  <div class="builder-team team-alpha">
+                    <div class="builder-team-head">
+                      <strong>TIME 1</strong>
+                      <span class="team-force-meter" id="forceMeterC1">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsC1"></div>
+                  </div>
+                  <div class="builder-vs">VS</div>
+                  <div class="builder-team team-beta">
+                    <div class="builder-team-head">
+                      <strong>TIME 2</strong>
+                      <span class="team-force-meter" id="forceMeterC2">0 pts</span>
+                    </div>
+                    <div class="team-slots-list" id="slotsC2"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Pop-Up de Revelação Dramática -->
+            <div class="reveal-banner" id="revealBanner" style="display: none;">
+              <span class="reveal-lbl">SORTEADO NA MESA <span id="revealWheelId">A</span></span>
+              <div class="reveal-body">
+                <span class="reveal-nick" id="revealNick">Jogador</span>
+                <span class="reveal-rank-badge" id="revealRankBadge">MESTRE (10)</span>
+                <span class="reveal-slot" id="revealSlot">→ Time 1 (Vaga 1)</span>
+              </div>
+            </div>
+
+            <footer class="step-footer">
+              <button type="button" class="btn btn-secondary" id="btnBackToStep2">← Voltar às Configurações</button>
+              <button type="button" class="btn btn-primary" id="btnGoToStep4">Concluir e Ver Resultados Oficiais →</button>
+            </footer>
+          </div>
+
+          <!-- PASSO 4: Resultado Oficial, Auto-Equilíbrio & Compartilhamento -->
+          <div class="arena-step-pane" id="paneStep4">
+            <header class="step4-header">
+              <div>
+                <h3>Confrontos Definidos & Auditoria</h3>
+                <p>Resultados gerados criptograficamente com verificação de integridade e exportação direta.</p>
+              </div>
+
+              <div class="step4-actions">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAutoBalanceAll" title="Reorganiza times matematicamente pelo menor desnível de peso">
+                  <svg width="14" height="14" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                  Auto-Equilibrar
+                </button>
+
+                <button type="button" class="btn btn-primary btn-sm" id="btnShareWhatsApp">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+                  Copiar para WhatsApp
+                </button>
+
+                <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadCardPng">
+                  <svg width="14" height="14" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  Baixar Imagem (Card PNG)
+                </button>
+              </div>
+            </header>
+
+            <!-- Grid de Confrontos Finais -->
+            <div class="matches-results-grid" id="matchesResultsGrid"></div>
+
+            <!-- Selo Criptográfico de Auditoria do Sorteio -->
+            <aside class="audit-verification-banner glass" id="auditVerificationBanner">
+              <div class="audit-meta-row">
+                <div class="audit-meta-item">
+                  <span class="audit-lbl">ID DO SORTEIO</span>
+                  <strong class="audit-val" id="auditDisplayId">#CCQ-0000</strong>
+                </div>
+                <div class="audit-meta-item">
+                  <span class="audit-lbl">SEED CRIPTOGRÁFICA</span>
+                  <span class="audit-val-mono" id="auditDisplaySeed">0000000000000000</span>
+                </div>
+                <div class="audit-meta-item">
+                  <span class="audit-lbl">HASH SHA-256</span>
+                  <span class="audit-val-mono truncate" id="auditDisplayHash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+                </div>
+                <div class="audit-meta-item">
+                  <span class="audit-status-tag valid">AUDITADO & LIMPO</span>
+                </div>
+              </div>
+            </aside>
+
+            <footer class="step-footer">
+              <button type="button" class="btn btn-secondary" id="btnBackToStep3">← Voltar à Arena de Giro</button>
+              <button type="button" class="btn btn-primary" id="btnStartNewRound">Iniciar Nova Rodada de Sorteio</button>
+            </footer>
+          </div>
+        </div>
+
+        <!-- ════════════ MODO RÁPIDO (PRESERVADO 100%) ════════════ -->
+        <div class="sorteio-wrapper" id="quickSorteioWrapper" style="display: none;">
           <article class="sorteio-panel glass">
             <div class="panel-header-row">
-              <span class="panel-title">Jogadores</span>
+              <span class="panel-title">Jogadores (Modo Rápido)</span>
               <span class="panel-hint">Um nome por linha</span>
             </div>
             <textarea class="names-textarea" id="namesInput"
@@ -315,9 +929,11 @@
             </div>
           </article>
         </div>
+
       </div>
     </section>
 
+    <!-- 04: Cacique SCAN (Anti-Cheat Forense) -->
     <section class="scan" id="scan">
       <div class="container">
         <header class="section-header">
@@ -327,6 +943,7 @@
         </header>
 
         <div class="scan-wrapper">
+          <!-- Login Restrito de ADM (com validação SHA-256 no client) -->
           <article class="scan-panel glass" id="scanLoginView">
             <figure class="scan-lock-icon">
               <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2">
@@ -334,13 +951,14 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </figure>
-            <h3>Acesso Restrito</h3>
-            <p class="scan-hint">Faça login com a credencial de ADM para liberar o scanner.</p>
+            <h3>Acesso Restrito ao Scanner</h3>
+            <p class="scan-hint">Faça login com a credencial de ADM para liberar o scanner forense.</p>
             <input type="text" id="scanUser" placeholder="Usuário de ADM" class="scan-input" autocomplete="username">
             <input type="password" id="scanPass" placeholder="Senha de ADM" class="scan-input" autocomplete="current-password">
             <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Desbloquear Scanner</button>
           </article>
 
+          <!-- Dashboard do Scanner Liberado -->
           <article class="scan-dashboard glass" id="scanDashboardView" style="display: none;">
             <header class="scan-dash-header">
               <div class="scan-sys-status">
@@ -375,7 +993,7 @@
                 </figure>
                 <h4 id="scanUploadTitle">Arraste o arquivo .zip aqui</h4>
                 <p id="scanUploadDesc">Bugreport Android (.zip), Sysdiagnose iOS (.tar.gz) ou dump de cheat</p>
-                <div class="scan-upload-badge">Processado no seu navegador · nenhum dado sai da máquina</div>
+                <div class="scan-upload-badge">Processado 100% no seu navegador · nenhum dado sai da máquina</div>
               </div>
 
               <input type="file" id="scanFileInput" accept=".zip,.tar.gz,.tgz,.gz,.tar" hidden>
@@ -419,6 +1037,7 @@
       </div>
     </section>
 
+    <!-- 05: Redes Sociais & Links Oficiais -->
     <section class="redes" id="redes">
       <div class="container">
         <header class="section-header">
@@ -548,6 +1167,7 @@
 
   </main>
 
+  <!-- Rodapé com Aviso 18+ de Jogo Responsável -->
   <footer id="footer">
     <div class="container">
       <div class="footer-top">
@@ -564,20 +1184,156 @@
         <ul class="footer-links">
           <li><a href="#sobre">Sobre</a></li>
           <li><a href="#regras">Regras</a></li>
-          <li><a href="#sorteio">Sorteio</a></li>
+          <li><a href="#sorteio">Arena & Sorteio</a></li>
           <li><a href="#scan">Cacique SCAN</a></li>
           <li><a href="#redes">Redes</a></li>
         </ul>
       </div>
       <div class="footer-bottom">
-        <p>Cacique Apostas &mdash; Todos os direitos reservados. Comunidade dedicada a duelos de entretenimento competitivo. Jogue com responsabilidade.</p>
+        <div class="responsible-gaming-notice">
+          <span class="badge-18">18+</span>
+          <p>Cacique Apostas &mdash; Todos os direitos reservados. Comunidade dedicada a duelos e entretenimento competitivo. Jogue com responsabilidade. Proibido para menores de 18 anos.</p>
+        </div>
       </div>
     </div>
   </footer>
 
+  <!-- ════════════ MODAIS DA ARENA DE ROLETAS ════════════ -->
+
+  <!-- Modal 1: Configuração de Pesos das Patentes -->
+  <div class="modal-backdrop" id="modalWeightsBackdrop" style="display: none;">
+    <div class="modal-dialog glass">
+      <header class="modal-header">
+        <h3>Configuração de Pesos por Patente</h3>
+        <button type="button" class="modal-close" data-close="modalWeightsBackdrop">&times;</button>
+      </header>
+      <div class="modal-body">
+        <p class="modal-desc">Os pesos determinam a força de cada guerreiro no cálculo de equilíbrio dos times. Valores salvos localmente.</p>
+        <div class="weights-editor-grid" id="weightsEditorGrid"></div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnResetWeightsDefault">Restaurar Padrão</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnSaveWeights">Salvar Pesos</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal 2: Auditoria & Histórico de Sorteios -->
+  <div class="modal-backdrop" id="modalAuditBackdrop" style="display: none;">
+    <div class="modal-dialog modal-lg glass">
+      <header class="modal-header">
+        <div>
+          <h3>Histórico de Auditoria & Sorteios</h3>
+          <span class="modal-subtitle">Resultados auditados. Disputas limpas.</span>
+        </div>
+        <button type="button" class="modal-close" data-close="modalAuditBackdrop">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="audit-history-toolbar">
+          <input type="text" id="auditSearchInput" placeholder="Filtrar por ID, data ou jogador..." class="form-input-sm">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnExportAuditCsv">Exportar CSV</button>
+          <button type="button" class="btn btn-secondary btn-sm danger" id="btnClearAuditHistory">Limpar Histórico</button>
+        </div>
+        <div class="audit-history-list" id="auditHistoryList"></div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-close="modalAuditBackdrop">Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal 3: Verificar Sorteio Criptográfico -->
+  <div class="modal-backdrop" id="modalVerifyBackdrop" style="display: none;">
+    <div class="modal-dialog glass">
+      <header class="modal-header">
+        <h3>Verificador Criptográfico de Sorteio</h3>
+        <button type="button" class="modal-close" data-close="modalVerifyBackdrop">&times;</button>
+      </header>
+      <div class="modal-body">
+        <p class="modal-desc">Qualquer pessoa pode auditar e reproduzir matematicamente o sorteio através da Seed e da lista de guerreiros.</p>
+        <div class="verify-form">
+          <label for="verifySeedInput">Seed Criptográfica:</label>
+          <input type="text" id="verifySeedInput" placeholder="Ex: 4a9f1b2c3d4e..." class="scan-input">
+
+          <label for="verifyPlayersInput">Lista de Jogadores (separados por vírgula):</label>
+          <textarea id="verifyPlayersInput" rows="4" class="names-textarea" placeholder="Nick1, Nick2, Nick3..."></textarea>
+
+          <button type="button" class="btn btn-primary" id="btnRunVerification">Verificar Sorteio</button>
+          <div class="verify-output" id="verifyOutput" style="display: none;"></div>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-close="modalVerifyBackdrop">Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal 4: Login Unificado de ADM (Validação SHA-256) -->
+  <div class="modal-backdrop" id="modalAuthBackdrop" style="display: none;">
+    <div class="modal-dialog modal-sm glass">
+      <header class="modal-header">
+        <h3>Painel de Acesso ADM</h3>
+        <button type="button" class="modal-close" data-close="modalAuthBackdrop">&times;</button>
+      </header>
+      <div class="modal-body">
+        <p class="modal-desc">Acesso restrito para operadores e organizadores da Tribo Cacique.</p>
+        <div class="auth-fields">
+          <input type="text" id="authUserInput" placeholder="Usuário ADM" class="scan-input" autocomplete="username">
+          <input type="password" id="authPassInput" placeholder="Senha de Segurança" class="scan-input" autocomplete="current-password">
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnAuthLogout" style="display: none;">Desconectar</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnAuthSubmit">Entrar como ADM</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal 5: Importar / Exportar Elenco (JSON / CSV) -->
+  <div class="modal-backdrop" id="modalImportExportBackdrop" style="display: none;">
+    <div class="modal-dialog glass">
+      <header class="modal-header">
+        <h3>Importar / Exportar Elenco</h3>
+        <button type="button" class="modal-close" data-close="modalImportExportBackdrop">&times;</button>
+      </header>
+      <div class="modal-body">
+        <div class="import-export-tabs">
+          <button type="button" class="subtab-btn active" data-format="json">JSON</button>
+          <button type="button" class="subtab-btn" data-format="csv">CSV</button>
+          <button type="button" class="subtab-btn" data-format="txt">Texto Simples</button>
+        </div>
+        <textarea id="importExportTextarea" rows="8" class="names-textarea" placeholder="Cole ou copie os dados do elenco aqui..."></textarea>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCopyImportExport">Copiar Dados</button>
+        <button type="button" class="btn btn-primary btn-sm" id="btnApplyImportData">Aplicar ao Elenco</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ════════════ MODO TELÃO (FULLSCREEN PRESENTATION) ════════════ -->
+  <div class="telao-overlay" id="telaoOverlay" style="display: none;">
+    <header class="telao-topbar">
+      <div class="telao-brand">
+        <img src="logo.jpg" alt="Logo" width="40" height="40" class="telao-logo">
+        <div>
+          <h2>CACIQUE APOSTAS &mdash; ARENA AO VIVO</h2>
+          <span class="telao-live-pill"><span class="live-dot pulse"></span>DISPUTA EM TEMPO REAL</span>
+        </div>
+      </div>
+      <div class="telao-tools">
+        <button type="button" class="btn btn-primary" id="telaoBtnSpin">GIRAR ROLETAS (Espaço)</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="telaoBtnExit">Sair do Telão (ESC)</button>
+      </div>
+    </header>
+    <div class="telao-content" id="telaoContent"></div>
+  </div>
+
+  <!-- Região de Notificações Toast -->
   <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
 
-  <script src="script.js?v=6" defer></script>
+  <!-- Script Principal com Arquitetura Modular -->
+  <script src="script.js?v=8" defer></script>
 </body>
 
 </html>
