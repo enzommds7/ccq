@@ -2219,7 +2219,7 @@ NinjaFF (sem patente)`;
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 14. CACIQUE SCAN ENGINE v3.1 — FORENSE COMPLETO (PRESERVADO)
+  // 14. CACIQUE SCAN ENGINE v3.1 — FORENSE PROFISSIONAL RESILIENTE
   // ─────────────────────────────────────────────────────────────
   const scanLoginView = document.getElementById('scanLoginView');
   const scanDashboardView = document.getElementById('scanDashboardView');
@@ -2244,6 +2244,7 @@ NinjaFF (sem patente)`;
   const scanProgressFill = document.getElementById('scanProgressFill');
   const scanProgressLabel = document.getElementById('scanProgressLabel');
   const scanProgressPercent = document.getElementById('scanProgressPercent');
+  const terminalStatus = document.getElementById('terminalStatus');
 
   const scanResults = document.getElementById('scanResults');
   const resultSummary = document.getElementById('resultSummary');
@@ -2257,8 +2258,9 @@ NinjaFF (sem patente)`;
   let currentScanReport = null;
   let activeFilterCategory = 'all';
 
-  // Assinaturas Oficiais Forenses (Offsets Coringa & OB40 Weapons)
+  // Assinaturas Oficiais Forenses Completas
   const CHEAT_SIGNATURES = [
+    // Offsets Coringa & Free Fire
     { term: 'd0264a54', name: 'HS Cabeça (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd0264a55', name: 'Aimbot Direto (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd027a2b6', name: 'Aimbot FOV 0 a 180 (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
@@ -2291,16 +2293,211 @@ NinjaFF (sem patente)`;
     { term: 'd1aac608', name: 'Granada Infinita (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd1aac60b', name: 'Ícone Invisível Bypass (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'coringa|', name: 'Injeção Protocolo Coringa Mod Menu', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
+    // OB40 & Weapons
     { term: 'aimlock_head_ob40_', name: 'Aimlock OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'aimbot_head_ob40_', name: 'Aimbot OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'no_recoil_ob40_', name: 'No Recoil OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'aimfov_ob40_', name: 'Aim FOV OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'sensi_ob40_', name: 'Sensi Hack OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'fovbotautogame_regedit', name: 'APK FovBot Auto Regedit', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'regeditruokff', name: 'Regedit Ruok FF Cheat', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'getauxaimhsoffreefiremanager', name: 'Auxiliar de Mira FreeFire Hook', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'aim lock vip ativado', name: 'Aimlock VIP Mod Ativado', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    // Libil2cpp & Injeção
     { term: 'libil2cpp.so', name: 'Hook em Libil2cpp (Free Fire Core)', cat: 'injection', weight: 90, risk: 'Crítico' },
-    { term: 'gameguardian', name: 'Engine de Memória GameGuardian', cat: 'package', weight: 95, risk: 'Ban Direto' },
+    { term: 'memorypatch("libil2cpp.so"', name: 'MemoryPatch em Libil2cpp', cat: 'injection', weight: 100, risk: 'Ban Direto' },
+    { term: 'gameguardian', name: 'Engine de Memória GameGuardian', cat: 'injection', weight: 95, risk: 'Ban Direto' },
     { term: 'frida-server', name: 'Injetor Dinâmico Frida', cat: 'injection', weight: 100, risk: 'Ban Direto' },
-    { term: 'catch_.me_.if_.you_.can_', name: 'Assinatura Root Magisk/Zygisk', cat: 'system', weight: 80, risk: 'Alto' }
+    { term: 'frida-gadget', name: 'Frida Gadget Injected', cat: 'injection', weight: 100, risk: 'Ban Direto' },
+    { term: 'catch_.me_.if_.you_.can_', name: 'Assinatura Root Magisk/Zygisk', cat: 'system', weight: 80, risk: 'Alto' },
+    { term: 'top.johnwu.magisk', name: 'Magisk Root Oficial', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'me.weishu.kernelsu', name: 'KernelSU Root', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'bmax.apatch', name: 'APatch Kernel Root', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'zygisk', name: 'Zygisk Injeção de Processos', cat: 'root_bypass', weight: 90, risk: 'Ban Direto' },
+    { term: 'lsposed', name: 'LSPosed Framework', cat: 'root_bypass', weight: 90, risk: 'Ban Direto' },
+    { term: 'trollstore', name: 'TrollStore Root Helper iOS', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'cydia', name: 'Cydia Jailbreak', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'sileo', name: 'Sileo Jailbreak', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'httpcanary', name: 'HttpCanary Sniffer de Rede', cat: 'proxy_net', weight: 95, risk: 'Ban Direto' }
   ];
+
+  const CATEGORY_NAMES = {
+    all: 'Todas',
+    ff_cheat: '🎯 Cheats Free Fire',
+    ff_offset: '⚡ Offsets de Memória',
+    ff_regedit: '📝 Regedits & Macros',
+    injection: '💉 Injeção & Hooking',
+    root_bypass: '🔓 Root & Bypass',
+    proxy_net: '🌐 Proxy & Rede',
+    system: '⚙️ Sistema Modificado'
+  };
+
+  const BINARY_EXT = /\.(so|dex|dylib|odex|vdex|oat|apk|arsc|db|sqlite|bin|dat)$/i;
+  const ARCHIVE_RE = /\.(zip|tar\.gz|tgz|tar|gz)$/i;
+  const SKIP_EXTENSIONS = [
+    '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico', '.heic',
+    '.mp4', '.mov', '.avi', '.mkv', '.mp3', '.wav', '.ogg', '.m4a',
+    '.ttf', '.otf', '.woff', '.woff2'
+  ];
+
+  function isRelevantEntry(path) {
+    const lower = path.toLowerCase().replace(/\\/g, '/');
+    return !SKIP_EXTENSIONS.some(ext => lower.endsWith(ext));
+  }
+
+  function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  const latin1 = new TextDecoder('latin1');
+  const utf8 = new TextDecoder('utf-8');
+
+  function extractPrintableStrings(bytes, minLen = 5) {
+    const out = [];
+    let start = -1;
+    const len = bytes.length;
+    for (let i = 0; i <= len; i++) {
+      const c = i < len ? bytes[i] : 0;
+      if (c >= 32 && c <= 126) {
+        if (start < 0) start = i;
+      } else if (start >= 0) {
+        if (i - start >= minLen) out.push(latin1.decode(bytes.subarray(start, i)));
+        start = -1;
+      }
+    }
+    return out.join('\n');
+  }
+
+  function extractDeviceInfo(text, deviceInfo) {
+    const mModel = text.match(/ro\.product\.model\s*[:=]\s*([^\r\n]+)/i) ||
+                   text.match(/model\s*[:=]\s*([^\r\n]+)/i);
+    if (mModel && !deviceInfo.model) deviceInfo.model = mModel[1].trim();
+
+    const mBrand = text.match(/ro\.product\.manufacturer\s*[:=]\s*([^\r\n]+)/i) ||
+                   text.match(/ro\.product\.brand\s*[:=]\s*([^\r\n]+)/i);
+    if (mBrand && !deviceInfo.brand) deviceInfo.brand = mBrand[1].trim();
+
+    const mVer = text.match(/ro\.build\.version\.release\s*[:=]\s*([^\r\n]+)/i) ||
+                 text.match(/Android\s+Version\s*[:=]?\s*([0-9.]+)/i);
+    if (mVer && !deviceInfo.osVersion) deviceInfo.osVersion = 'Android ' + mVer[1].trim();
+
+    const mSerial = text.match(/ro\.serialno\s*[:=]\s*([^\r\n]+)/i) ||
+                    text.match(/ro\.boot\.serialno\s*[:=]\s*([^\r\n]+)/i);
+    if (mSerial && !deviceInfo.serial) deviceInfo.serial = mSerial[1].trim();
+
+    const mKernel = text.match(/Linux\s+version\s+([0-9a-zA-Z._\-+]+)/i);
+    if (mKernel && !deviceInfo.kernel) deviceInfo.kernel = 'Linux ' + mKernel[1].trim();
+
+    const mIosProd = text.match(/<key>ProductType<\/key>\s*<string>([^<]+)<\/string>/i);
+    if (mIosProd && !deviceInfo.model) deviceInfo.model = mIosProd[1].trim();
+
+    const mIosVer = text.match(/<key>ProductVersion<\/key>\s*<string>([^<]+)<\/string>/i);
+    if (mIosVer && !deviceInfo.osVersion) deviceInfo.osVersion = 'iOS ' + mIosVer[1].trim();
+
+    const mIosSerial = text.match(/<key>SerialNumber<\/key>\s*<string>([^<]+)<\/string>/i);
+    if (mIosSerial && !deviceInfo.serial) deviceInfo.serial = mIosSerial[1].trim();
+  }
+
+  async function ensureJSZip() {
+    if (typeof JSZip !== 'undefined') return window.JSZip;
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload = () => {
+        if (typeof JSZip !== 'undefined') resolve(window.JSZip);
+        else reject(new Error('JSZip carregado mas não inicializado.'));
+      };
+      s.onerror = () => {
+        const s2 = document.createElement('script');
+        s2.src = 'jszip.min.js';
+        s2.onload = () => {
+          if (typeof JSZip !== 'undefined') resolve(window.JSZip);
+          else reject(new Error('Falha ao inicializar JSZip.'));
+        };
+        s2.onerror = () => reject(new Error('Não foi possível carregar o motor de descompactação JSZip.'));
+        document.head.appendChild(s2);
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function gunzip(file) {
+    if (typeof DecompressionStream === 'undefined') {
+      throw new Error('Navegador não suporta descompressão gzip nativa. Descompacte o arquivo e use "Pasta extraída".');
+    }
+    const stream = file.stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  function parseTar(buf) {
+    if (buf.length < 512 || latin1.decode(buf.subarray(257, 262)) !== 'ustar') return null;
+    const entries = [];
+    const cstr = (b) => latin1.decode(b).replace(/\0[\s\S]*$/, '');
+    let off = 0;
+    let pendingName = null;
+
+    while (off + 512 <= buf.length) {
+      const h = buf.subarray(off, off + 512);
+      if (h[0] === 0 && h.every(b => b === 0)) break;
+
+      let name = cstr(h.subarray(0, 100));
+      const prefix = cstr(h.subarray(345, 500));
+      const size = parseInt(cstr(h.subarray(124, 136)).trim() || '0', 8) || 0;
+      const type = String.fromCharCode(h[156] || 48);
+      const dataStart = off + 512;
+      const data = buf.subarray(dataStart, dataStart + size);
+
+      if (type === 'L') {
+        pendingName = cstr(data);
+      } else if (type === 'x') {
+        const m = utf8.decode(data).match(/\d+ path=([^\n]+)\n/);
+        if (m) pendingName = m[1];
+      } else if (type === '0' || type === '7') {
+        if (pendingName) name = pendingName;
+        else if (prefix) name = prefix + '/' + name;
+        pendingName = null;
+        entries.push({ path: name, bytes: async () => data, text: async () => utf8.decode(data) });
+      } else if (type !== 'g') {
+        pendingName = null;
+      }
+      off = dataStart + Math.ceil(size / 512) * 512;
+    }
+    return entries;
+  }
+
+  async function readTarLike(file) {
+    const lower = file.name.toLowerCase();
+    const raw = lower.endsWith('.tar') ? new Uint8Array(await file.arrayBuffer()) : await gunzip(file);
+    const entries = parseTar(raw);
+    if (entries) return entries;
+    return [{ path: file.name.replace(/\.gz$/i, ''), bytes: async () => raw, text: async () => utf8.decode(raw) }];
+  }
+
+  function scanTextForCheats(text, filePath) {
+    const hits = [];
+    const textLower = text.toLowerCase();
+
+    for (const sig of CHEAT_SIGNATURES) {
+      const idx = textLower.indexOf(sig.term.toLowerCase());
+      if (idx !== -1) {
+        const snippetStart = Math.max(0, idx - 40);
+        const snippetEnd = Math.min(text.length, idx + sig.term.length + 50);
+        const rawSnippet = text.substring(snippetStart, snippetEnd).replace(/\r?\n/g, ' ');
+
+        hits.push({
+          term: sig.term,
+          name: sig.name,
+          category: sig.cat,
+          categoryLabel: CATEGORY_NAMES[sig.cat] || sig.cat,
+          weight: sig.weight,
+          risk: sig.risk,
+          file: filePath,
+          snippet: rawSnippet
+        });
+      }
+    }
+    return hits;
+  }
 
   function unlockScanDashboard() {
     if (scanLoginView && scanDashboardView) {
@@ -2396,90 +2593,182 @@ NinjaFF (sem patente)`;
     }
   });
 
-  // Execução Forense
+  function clearFileInputs() {
+    if (scanFileInput) scanFileInput.value = '';
+    if (scanFolderInput) scanFolderInput.value = '';
+    if (scanLooseInput) scanLooseInput.value = '';
+  }
+
+  // Execução Forense Resiliente
+  let scanBusy = false;
+
   async function processUploadedFiles(fileList) {
+    if (!fileList || fileList.length === 0) return;
+    if (scanBusy) {
+      showToast('info', 'Análise em andamento', 'Aguarde o scan atual terminar.');
+      return;
+    }
+
+    scanBusy = true;
     scanUploadBox.style.display = 'none';
     scanTerminalWrap.style.display = 'block';
     scanResults.style.display = 'none';
     terminalLines.innerHTML = '';
+    if (terminalStatus) {
+      terminalStatus.textContent = 'ANALISANDO';
+      terminalStatus.className = 'terminal-status-indicator';
+    }
 
     logTerminal('SYS', 'Iniciando ccq-forensics engine 3.1...', 'terminal-info');
     logTerminal('IO', `Detectados ${fileList.length} arquivos no buffer de entrada.`, 'terminal-info');
-
     updateScanProgress(10, 'Carregando arquivos para a sandbox de memória...');
+    sfx.start();
 
+    const startTime = performance.now();
     const findings = [];
-    const filesToScan = [];
-
-    // Suporte a descompactação client-side de .ZIP via JSZip se disponível
-    if (fileList.length === 1 && fileList[0].name.endsWith('.zip') && typeof JSZip !== 'undefined') {
-      try {
-        logTerminal('ZIP', 'Descompactando container .zip em memória RAM...', 'terminal-info');
-        const zip = await JSZip.loadAsync(fileList[0]);
-        let zCount = 0;
-        for (const [relPath, zipEntry] of Object.entries(zip.files)) {
-          if (!zipEntry.dir && (relPath.endsWith('.txt') || relPath.endsWith('.log') || relPath.endsWith('.dump') || relPath.includes('bugreport'))) {
-            const content = await zipEntry.async('string');
-            filesToScan.push({ name: relPath, content });
-            zCount++;
-          }
-        }
-        logTerminal('ZIP', `${zCount} arquivos de log extraídos com sucesso.`, 'terminal-info');
-      } catch (err) {
-        logTerminal('ERR', `Falha ao abrir zip: ${err.message}`, 'terminal-err');
-      }
-    } else {
-      for (let i = 0; i < Math.min(fileList.length, 30); i++) {
-        const f = fileList[i];
-        try {
-          const content = await f.text();
-          filesToScan.push({ name: f.name, content });
-        } catch (_) {}
-      }
-    }
-
-    updateScanProgress(40, 'Executando varredura por offsets e injeções il2cpp...');
-
-    // Varredura por assinaturas
+    const seen = new Set();
+    const deviceInfo = { brand: '', model: '', osVersion: '', serial: '', kernel: '' };
+    let analyzedCount = 0;
+    let skippedCount = 0;
     let checkedLines = 0;
-    for (const fileObj of filesToScan) {
-      logTerminal('SCAN', `Analisando: ${fileObj.name}`, 'terminal-info');
-      const lines = fileObj.content.split('\n');
-      checkedLines += lines.length;
+    let osDetected = 'ANDROID';
 
-      for (let idx = 0; idx < lines.length; idx++) {
-        const line = lines[idx];
-        for (const sig of CHEAT_SIGNATURES) {
-          if (line.toLowerCase().includes(sig.term.toLowerCase())) {
-            findings.push({
-              sig: sig,
-              file: fileObj.name,
-              lineNum: idx + 1,
-              snippet: line.trim()
-            });
-            logTerminal('ALERTA', `[${sig.risk.toUpperCase()}] ${sig.name} em ${fileObj.name}:${idx + 1}`, 'terminal-err');
-            sfx.alert(sig.weight === 100);
-            break;
-          }
+    try {
+      const files = Array.from(fileList);
+      const first = files[0];
+      const isArchive = files.length === 1 && ARCHIVE_RE.test(first.name);
+
+      let entries = [];
+
+      if (isArchive) {
+        const lowerName = first.name.toLowerCase();
+        if (lowerName.endsWith('.zip')) {
+          logTerminal('ZIP', `Carregando container ${first.name} (${(first.size / 1024 / 1024).toFixed(1)} MB)...`, 'terminal-info');
+          updateScanProgress(15, 'Inicializando descompactador JSZip em RAM...');
+          const jszipInstance = await ensureJSZip();
+          logTerminal('ZIP', 'Descompactando container .zip em memória RAM...', 'terminal-info');
+          const zip = await jszipInstance.loadAsync(first);
+          entries = Object.values(zip.files).filter(e => !e.dir).map(e => ({
+            path: e.name,
+            bytes: () => e.async('uint8array'),
+            text: () => e.async('string')
+          }));
+        } else {
+          logTerminal('TAR', `Descomprimindo ${first.name} (${(first.size / 1024 / 1024).toFixed(1)} MB)...`, 'terminal-info');
+          updateScanProgress(15, 'Descomprimindo fluxo gzip/tar em memória...');
+          entries = await readTarLike(first);
         }
+      } else {
+        entries = files.map(f => ({
+          path: f.webkitRelativePath || f.name,
+          bytes: async () => new Uint8Array(await f.arrayBuffer()),
+          text: () => f.text()
+        }));
       }
+
+      const totalRaw = entries.length;
+      if (entries.some(e => /sysdiagnose|\.plist$|\.ips$/i.test(e.path))) osDetected = 'IOS';
+      entries = entries.filter(e => isRelevantEntry(e.path));
+      logTerminal('IO', `Estrutura indexada: ${totalRaw} entradas, ${entries.length} relevantes para perícia.`, 'terminal-info');
+
+      if (!entries.length) {
+        throw new Error('Nenhum arquivo de log ou dump analisável foi encontrado no pacote.');
+      }
+
+      logTerminal('SYS', `Sistema alvo: ${osDetected === 'IOS' ? 'iOS (sysdiagnose)' : 'Android (bugreport/dump)'}`, 'terminal-info');
+      updateScanProgress(30, 'Executando varredura por offsets e injeções il2cpp...');
+
+      const total = entries.length;
+      for (let i = 0; i < total; i++) {
+        const entry = entries[i];
+        const name = entry.path.split('/').pop() || entry.path;
+
+        if (i % 3 === 0 || i === total - 1) {
+          const pct = 30 + Math.round(((i + 1) / total) * 55);
+          updateScanProgress(pct, `Analisando: ${name} (${i + 1}/${total})`);
+        }
+
+        try {
+          let text = '';
+          if (BINARY_EXT.test(entry.path)) {
+            const bytes = await entry.bytes();
+            if (bytes.length <= 25 * 1024 * 1024) {
+              text = extractPrintableStrings(bytes);
+            }
+          } else {
+            text = await entry.text();
+          }
+
+          if (!text) {
+            skippedCount++;
+            continue;
+          }
+
+          checkedLines += Math.min(text.length / 50, 50000);
+          extractDeviceInfo(text, deviceInfo);
+
+          const hits = scanTextForCheats(text, entry.path);
+          for (const h of hits) {
+            const key = h.name + '|' + h.file;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            findings.push(h);
+            logTerminal('ALERTA', `[${h.risk.toUpperCase()}] ${h.name} em ${name}`, 'terminal-err');
+            sfx.alert(h.weight === 100);
+          }
+
+          analyzedCount++;
+        } catch (fileErr) {
+          skippedCount++;
+        }
+
+        // Permite ao navegador atualizar a tela a cada 5 arquivos
+        if (i % 5 === 0) await sleep(0);
+      }
+
+      updateScanProgress(90, 'Compilando relatório pericial forense...');
+      await sleep(200);
+
+      const durationSec = ((performance.now() - startTime) / 1000).toFixed(1);
+      updateScanProgress(100, `Varredura concluída em ${durationSec}s`);
+      logTerminal('SYS', `Análise finalizada: ${analyzedCount} arquivos examinados, ${findings.length} ameaças encontradas.`, 'terminal-info');
+
+      if (terminalStatus) {
+        terminalStatus.textContent = 'CONCLUÍDO';
+        terminalStatus.className = 'terminal-status-indicator is-done';
+      }
+
+      sfx.done();
+
+      currentScanReport = {
+        findings,
+        checkedLines: Math.round(checkedLines),
+        analyzedCount,
+        skippedCount,
+        durationSec,
+        osDetected,
+        deviceInfo,
+        timestamp: new Date().toLocaleString('pt-BR'),
+        score: findings.length === 0 ? 100 : Math.max(0, 100 - findings.length * 25)
+      };
+
+      displayScanResults(currentScanReport);
+      showToast(findings.length === 0 ? 'success' : 'error', 'Análise Finalizada',
+        findings.length === 0 ? 'Dispositivo 100% limpo e aprovado.' : `${findings.length} ameaça(s) encontrada(s)!`);
+
+    } catch (err) {
+      logTerminal('ERR', `Falha no scanner: ${err.message || String(err)}`, 'terminal-err');
+      updateScanProgress(0, 'Falha no processamento');
+      if (terminalStatus) {
+        terminalStatus.textContent = 'FALHOU';
+        terminalStatus.className = 'terminal-status-indicator is-error';
+      }
+      sfx.error();
+      showToast('error', 'Erro no Scanner', err.message || 'Falha ao processar arquivo.');
+    } finally {
+      scanBusy = false;
+      clearFileInputs();
     }
-
-    updateScanProgress(85, 'Compilando relatório pericial forense...');
-    await new Promise(r => setTimeout(r, 600));
-
-    updateScanProgress(100, 'Varredura pericial concluída.');
-    logTerminal('SYS', `Análise finalizada: ${checkedLines} linhas verificadas, ${findings.length} ameaças encontradas.`, 'terminal-info');
-
-    sfx.done();
-    currentScanReport = {
-      findings,
-      checkedLines,
-      timestamp: new Date().toLocaleString('pt-BR'),
-      score: findings.length === 0 ? 100 : Math.max(0, 100 - findings.length * 25)
-    };
-
-    displayScanResults(currentScanReport);
   }
 
   function logTerminal(prefix, msg, cssClass = '') {
@@ -2497,6 +2786,17 @@ NinjaFF (sem patente)`;
     if (scanProgressLabel) scanProgressLabel.textContent = label;
   }
 
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[m]);
+  }
+
   function displayScanResults(report) {
     if (!scanResults) return;
     scanResults.style.display = 'block';
@@ -2511,21 +2811,91 @@ NinjaFF (sem patente)`;
         ${isClean ? 'Nenhum mod menu, offset il2cpp ou bypass foi identificado nos logs examinados.' : `Foram encontradas ${report.findings.length} evidências de trapaça ou modificações não autorizadas.`}
       </p>
       <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-3); margin-top: 10px;">
-        Pontuação de Integridade: <strong style="color: #fff;">${report.score}/100</strong> · Linhas analisadas: ${report.checkedLines}
+        Pontuação de Integridade: <strong style="color: #fff;">${report.score}/100</strong> · Arquivos examinados: ${report.analyzedCount} · Tempo: ${report.durationSec}s
       </div>
     `;
 
-    resultDetails.innerHTML = report.findings.map(f => `
+    const dev = report.deviceInfo;
+    const hasDev = dev && (dev.brand || dev.model || dev.osVersion || dev.serial || dev.kernel);
+    if (scanDeviceCard) {
+      if (hasDev) {
+        scanDeviceCard.style.display = 'block';
+        const modelStr = [dev.brand, dev.model].filter(Boolean).join(' ') || 'Não identificado';
+        scanDeviceCard.innerHTML = `
+          <strong style="display:block; margin-bottom:8px; color:#fff;">📱 Dispositivo Analisado: ${escapeHtml(modelStr)}</strong>
+          <div style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-3); line-height:1.6;">
+            Sistema: <strong style="color:#fff;">${escapeHtml(dev.osVersion || report.osDetected)}</strong>
+            ${dev.serial ? ` · Serial: <strong style="color:#fff;">${escapeHtml(dev.serial)}</strong>` : ''}
+            ${dev.kernel ? `<br>Kernel: ${escapeHtml(dev.kernel)}` : ''}
+          </div>
+        `;
+      } else {
+        scanDeviceCard.style.display = 'none';
+      }
+    }
+
+    if (scanFilters) {
+      if (isClean) {
+        scanFilters.style.display = 'none';
+      } else {
+        scanFilters.style.display = 'flex';
+        const cats = Array.from(new Set(report.findings.map(f => f.category)));
+        scanFilters.innerHTML = `
+          <button type="button" class="scan-filter-chip ${activeFilterCategory === 'all' ? 'active' : ''}" data-cat="all">Todas (${report.findings.length})</button>
+          ${cats.map(c => `
+            <button type="button" class="scan-filter-chip ${activeFilterCategory === c ? 'active' : ''}" data-cat="${c}">
+              ${CATEGORY_NAMES[c] || c} (${report.findings.filter(f => f.category === c).length})
+            </button>
+          `).join('')}
+        `;
+
+        scanFilters.querySelectorAll('.scan-filter-chip').forEach(btn => {
+          btn.addEventListener('click', () => {
+            activeFilterCategory = btn.dataset.cat;
+            scanFilters.querySelectorAll('.scan-filter-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderThreatList(report.findings, activeFilterCategory);
+            sfx.tick(900);
+          });
+        });
+      }
+    }
+
+    renderThreatList(report.findings, activeFilterCategory);
+  }
+
+  function renderThreatList(findings, categoryFilter) {
+    if (!resultDetails) return;
+    const filtered = (categoryFilter === 'all')
+      ? findings
+      : findings.filter(f => f.category === categoryFilter);
+
+    if (filtered.length === 0 && findings.length > 0) {
+      resultDetails.innerHTML = `<p style="color:var(--text-3); padding:16px 0;">Nenhuma ameaça nesta categoria.</p>`;
+      return;
+    }
+
+    if (findings.length === 0) {
+      resultDetails.innerHTML = `
+        <div class="result-card" style="border-left-color: var(--live-green);">
+          <strong style="color: var(--live-green);">Integridade Confirmada</strong>
+          <p style="color: var(--text-2); font-size: 0.88rem; margin-top: 4px;">Nenhum rastro de trapaça ou modificação ilegal detectado.</p>
+        </div>
+      `;
+      return;
+    }
+
+    resultDetails.innerHTML = filtered.map(f => `
       <div class="result-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <strong style="color: #fff;">${f.sig.name}</strong>
-          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--red); background: rgba(229,72,77,0.15); padding: 2px 8px; border-radius: 4px;">${f.sig.risk}</span>
+          <strong style="color: #fff;">${escapeHtml(f.name)}</strong>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--red); background: rgba(229,72,77,0.15); padding: 2px 8px; border-radius: 4px;">${escapeHtml(f.risk)}</span>
         </div>
         <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-3); margin-bottom: 6px;">
-          Arquivo: ${f.file} (linha ${f.lineNum})
+          Arquivo: ${escapeHtml(f.file)}
         </div>
         <code style="display: block; word-break: break-all; color: #ff8a80; background: #000; padding: 6px 10px; border-radius: 4px;">
-          ${f.snippet.slice(0, 180)}
+          ${escapeHtml(f.snippet.slice(0, 180))}
         </code>
       </div>
     `).join('');
@@ -2537,14 +2907,17 @@ NinjaFF (sem patente)`;
       let rep = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v3.1* 🛡️\n`;
       rep += `📅 Data: ${currentScanReport.timestamp}\n`;
       rep += `🎯 Score de Integridade: ${currentScanReport.score}/100\n`;
-      rep += `🔍 Linhas Verificadas: ${currentScanReport.checkedLines}\n`;
+      rep += `⏱️ Duração: ${currentScanReport.durationSec}s (${currentScanReport.analyzedCount} arquivos examinados)\n`;
+      if (currentScanReport.deviceInfo && currentScanReport.deviceInfo.model) {
+        rep += `📱 Dispositivo: ${currentScanReport.deviceInfo.brand} ${currentScanReport.deviceInfo.model} (${currentScanReport.deviceInfo.osVersion || currentScanReport.osDetected})\n`;
+      }
       rep += `⚠️ Ameaças Encontradas: ${currentScanReport.findings.length}\n\n`;
 
       if (currentScanReport.findings.length === 0) {
         rep += `✅ NENHUMA IRREGULARIDADE DETECTADA. JOGADOR APROVADO.\n`;
       } else {
         currentScanReport.findings.forEach((f, idx) => {
-          rep += `${idx + 1}. [${f.sig.risk}] ${f.sig.name}\n   Arquivo: ${f.file}:${f.lineNum}\n   Snippet: ${f.snippet.slice(0, 80)}\n\n`;
+          rep += `${idx + 1}. [${f.risk}] ${f.name}\n   Arquivo: ${f.file}\n   Trecho: ${f.snippet.slice(0, 80)}\n\n`;
         });
       }
       rep += `----------------------------------\n`;
@@ -2559,11 +2932,11 @@ NinjaFF (sem patente)`;
       scanUploadBox.style.display = 'block';
       scanTerminalWrap.style.display = 'none';
       scanResults.style.display = 'none';
+      clearFileInputs();
       sfx.tick(700);
     });
   }
 
-  // ─────────────────────────────────────────────────────────────
   // 15. REDES SOCIAIS: Abas & Cópia de Links Oficiais
   // ─────────────────────────────────────────────────────────────
   const redeTabBtns = document.querySelectorAll('.rede-tab-btn');
