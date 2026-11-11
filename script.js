@@ -194,8 +194,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const sfx = new SoundController();
 
   // ─────────────────────────────────────────────────────────────
-  // 2. Sistema de Notificações Toast
+  // 2. Utilitário Global Anti-XSS & Sistema de Notificações Toast
   // ─────────────────────────────────────────────────────────────
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[m]);
+  }
+
   const toastRegion = document.getElementById('toastRegion');
 
   function showToast(type, title, message, duration = 3200) {
@@ -219,8 +230,8 @@ document.addEventListener('DOMContentLoaded', () => {
     toast.innerHTML = `
       ${iconSvg}
       <div class="toast-body">
-        <strong>${title}</strong>
-        <span>${message}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(message)}</span>
       </div>
     `;
 
@@ -502,6 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch (_) {}
 
   let isAdmAuthenticated = false;
+  let adminSessionToken = null;
 
   const roleBadgeBtn = document.getElementById('roleBadgeBtn');
   const roleBadgeText = document.getElementById('roleBadgeText');
@@ -540,24 +552,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanUser = (userVal || '').trim().toUpperCase();
     const cleanPass = (passVal || '').trim();
 
+    if (!cleanUser || !cleanPass) {
+      sfx.error();
+      showToast('error', 'Campos Vazios', 'Preencha usuário e senha de ADM.');
+      return false;
+    }
+
     let isMatch = false;
 
-    // 1. Tentar validação via API Backend (se estiver rodando)
+    // 1. Tentar validação via API Backend (com proteção anti-força bruta e emissão de Bearer Token)
     try {
       const resp = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user: cleanUser, pass: cleanPass })
       });
+
+      if (resp.status === 429) {
+        const errData = await resp.json().catch(() => ({}));
+        sfx.error();
+        showToast('error', 'Bloqueio de Segurança', errData.message || 'Muitas tentativas. IP temporariamente bloqueado.');
+        return false;
+      }
+
       if (resp.ok) {
         const data = await resp.json();
         if (data && data.status === 'success') {
           isMatch = true;
+          adminSessionToken = data.token || null;
         }
       }
     } catch (_) {}
 
-    // 2. Validação client-side puramente criptográfica (apenas comparação de hash SHA-256)
+    // 2. Validação client-side puramente criptográfica (apenas comparação de hash SHA-256 para GitHub Pages/offline)
     if (!isMatch) {
       try {
         const userH = await sha256Hex(cleanUser);
@@ -572,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
       isAdmAuthenticated = true;
       updateAuthUI();
       sfx.done();
-      showToast('success', 'Acesso Autorizado', 'Modo Operador ADM da Tribo ativado.');
+      showToast('success', 'Acesso Autorizado', 'Modo Operador ADM da Tribo ativado com sucesso.');
       if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
       if (authPassInput) authPassInput.value = '';
       unlockScanDashboard();
@@ -582,6 +609,34 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('error', 'Acesso Negado', 'Usuário ou senha de ADM incorretos.');
       return false;
     }
+  }
+
+  async function performAdminLogout() {
+    if (adminSessionToken) {
+      try {
+        await fetch('/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${adminSessionToken}`
+          }
+        });
+      } catch (_) {}
+    }
+
+    adminSessionToken = null;
+    isAdmAuthenticated = false;
+
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (_) {}
+
+    updateAuthUI();
+    lockScanDashboard();
+    sfx.tick(600);
+    showToast('info', 'Desconectado', 'Sessão de ADM encerrada e invalidada.');
+    if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
   }
 
   if (btnAuthSubmit) {
@@ -602,14 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   if (btnAuthLogout) {
-    btnAuthLogout.addEventListener('click', () => {
-      isAdmAuthenticated = false;
-      updateAuthUI();
-      lockScanDashboard();
-      sfx.tick(600);
-      showToast('info', 'Desconectado', 'Sessão de ADM encerrada.');
-      if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
-    });
+    btnAuthLogout.addEventListener('click', performAdminLogout);
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -872,10 +920,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <div class="roster-item ${isDup ? 'duplicate' : ''}" data-player-id="${p.id}">
             <div class="roster-item-info">
-              <span class="roster-nick" title="${p.nick}">${p.nick}</span>
-              ${p.gameId ? `<code class="player-id-tag">#${p.gameId}</code>` : ''}
+              <span class="roster-nick" title="${escapeHtml(p.nick)}">${escapeHtml(p.nick)}</span>
+              ${p.gameId ? `<code class="player-id-tag">#${escapeHtml(p.gameId)}</code>` : ''}
               <select class="form-select-sm player-rank-inline" data-player-id="${p.id}" style="color: ${rankObj.color};">
-                ${ranks.map(r => `<option value="${r.id}" ${r.id === p.rankId ? 'selected' : ''}>${r.name} (${r.weight}pts)</option>`).join('')}
+                ${ranks.map(r => `<option value="${r.id}" ${r.id === p.rankId ? 'selected' : ''}>${escapeHtml(r.name)} (${r.weight}pts)</option>`).join('')}
               </select>
             </div>
             <div class="roster-item-actions">
@@ -1354,8 +1402,8 @@ NinjaFF (sem patente)`;
           const r = getRankById(p.rankId);
           return `
             <div class="team-slot filled ${p.id === newPlayer.id ? 'just-added' : ''}">
-              <strong style="color: #fff;">${p.nick}</strong>
-              <span style="color: ${r.color}; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;">${r.abbr} (${r.weight}pts)</span>
+              <strong style="color: #fff;">${escapeHtml(p.nick)}</strong>
+              <span style="color: ${r.color}; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700;">${escapeHtml(r.abbr)} (${r.weight}pts)</span>
             </div>
           `;
         }).join('');
@@ -1700,8 +1748,8 @@ NinjaFF (sem patente)`;
                     const r = getRankById(p.rankId);
                     return `
                       <div class="showdown-player-row">
-                        <span class="p-nick">${p.nick}</span>
-                        <span style="color: ${r.color}; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;">${r.abbr} (${r.weight})</span>
+                        <span class="p-nick">${escapeHtml(p.nick)}</span>
+                        <span style="color: ${r.color}; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;">${escapeHtml(r.abbr)} (${r.weight})</span>
                       </div>
                     `;
                   }).join('')}
@@ -1723,8 +1771,8 @@ NinjaFF (sem patente)`;
                     const r = getRankById(p.rankId);
                     return `
                       <div class="showdown-player-row">
-                        <span class="p-nick">${p.nick}</span>
-                        <span style="color: ${r.color}; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;">${r.abbr} (${r.weight})</span>
+                        <span class="p-nick">${escapeHtml(p.nick)}</span>
+                        <span style="color: ${r.color}; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700;">${escapeHtml(r.abbr)} (${r.weight})</span>
                       </div>
                     `;
                   }).join('')}
@@ -2015,14 +2063,14 @@ NinjaFF (sem patente)`;
     auditHistoryList.innerHTML = filtered.map(item => `
       <div class="audit-entry-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <strong style="color: var(--gold); font-family: var(--font-mono);">${item.id}</strong>
-          <span style="font-size: 0.75rem; color: var(--text-3);">${item.date}</span>
+          <strong style="color: var(--gold); font-family: var(--font-mono);">${escapeHtml(item.id)}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-3);">${escapeHtml(item.date)}</span>
         </div>
         <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-2); margin-bottom: 4px;">
-          SEED: <code>${item.seed}</code>
+          SEED: <code>${escapeHtml(item.seed)}</code>
         </div>
         <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-3); word-break: break-all;">
-          HASH SHA-256: ${item.hash}
+          HASH SHA-256: ${escapeHtml(item.hash)}
         </div>
       </div>
     `).join('');
@@ -2113,7 +2161,7 @@ NinjaFF (sem patente)`;
       verifyOutput.innerHTML = `
         <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--live-green); padding: 14px; border-radius: 6px; margin-top: 14px;">
           <strong style="color: var(--live-green); display: block; margin-bottom: 4px;">VERIFICAÇÃO CONCLUÍDA — 100% REPRODUZÍVEL</strong>
-          <span style="font-size: 0.84rem; color: #fff;">Guerreiro Sorteado: <strong>${players[winningIdx]}</strong> (Índice ${winningIdx} de ${players.length})</span>
+          <span style="font-size: 0.84rem; color: #fff;">Guerreiro Sorteado: <strong>${escapeHtml(players[winningIdx])}</strong> (Índice ${winningIdx} de ${players.length})</span>
         </div>
       `;
       sfx.done();
@@ -2317,7 +2365,7 @@ NinjaFF (sem patente)`;
       html += `
         <div class="showdown-team-box" style="padding: 14px;">
           <strong style="color: var(--red); display: block; margin-bottom: 8px;">TIME ${i + 1}</strong>
-          ${teamPlayers.map(p => `<div style="font-size: 0.84rem; padding: 3px 0; color: #fff;">• ${p}</div>`).join('')}
+          ${teamPlayers.map(p => `<div style="font-size: 0.84rem; padding: 3px 0; color: #fff;">• ${escapeHtml(p)}</div>`).join('')}
         </div>
       `;
     }
@@ -2327,7 +2375,7 @@ NinjaFF (sem patente)`;
       html += `
         <div class="showdown-team-box" style="border-color: rgba(245, 158, 11, 0.3);">
           <strong style="color: var(--amber); display: block; margin-bottom: 8px;">RESERVAS (${leftovers})</strong>
-          ${remaining.map(p => `<div style="font-size: 0.84rem; padding: 3px 0; color: var(--text-2);">• ${p}</div>`).join('')}
+          ${remaining.map(p => `<div style="font-size: 0.84rem; padding: 3px 0; color: var(--text-2);">• ${escapeHtml(p)}</div>`).join('')}
         </div>
       `;
     }
@@ -2988,17 +3036,7 @@ NinjaFF (sem patente)`;
   }
 
   if (scanBtnLogout) {
-    scanBtnLogout.addEventListener('click', () => {
-      isAdmAuthenticated = false;
-      try {
-        localStorage.removeItem(AUTH_STORAGE_KEY);
-        sessionStorage.removeItem(AUTH_STORAGE_KEY);
-      } catch (e) {}
-      updateAuthUI();
-      lockScanDashboard();
-      sfx.tick(600);
-      showToast('info', 'Desconectado', 'Scanner bloqueado com segurança.');
-    });
+    scanBtnLogout.addEventListener('click', performAdminLogout);
   }
 
   // Modos de Análise
@@ -3319,17 +3357,6 @@ NinjaFF (sem patente)`;
     if (scanProgressFill) scanProgressFill.style.width = pct + '%';
     if (scanProgressPercent) scanProgressPercent.textContent = pct + '%';
     if (scanProgressLabel) scanProgressLabel.textContent = label;
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[m]);
   }
 
   function displayScanResults(report) {
