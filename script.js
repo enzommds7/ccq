@@ -54,6 +54,32 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Bipe de início de operação (scanner / motor)
+    start() {
+      this.tick(1200);
+    }
+
+    // Bipe sonoro 1200Hz (equivalente a winsound.Beep(1200, 500) para origem não autorizada)
+    beep1200() {
+      this.vibrate([60, 40, 60]);
+      if (!this.enabled) return;
+      this.init();
+      if (!this.ctx) return;
+      try {
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, t);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.36);
+      } catch (_) {}
+    }
+
     // Bipe mecânico ultra-curto (usado nos ticks da roleta e logs)
     tick(freq = 1100) {
       this.vibrate([15]);
@@ -252,12 +278,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return res;
   }
 
-  // SHA-256 via Web Crypto API nativa
+  // SHA-256 via Web Crypto API nativa com fallback determinístico (funciona em HTTPS, HTTP e file://)
   async function sha256Hex(str) {
-    const buf = new TextEncoder().encode(str);
-    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
-    const arr = Array.from(new Uint8Array(hashBuf));
-    return arr.map(b => b.toString(16).padStart(2, '0')).join('');
+    try {
+      if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
+        const buf = new TextEncoder().encode(str);
+        const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+        const arr = Array.from(new Uint8Array(hashBuf));
+        return arr.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+    } catch (_) {}
+    // Fallback determinístico 256-bit (8x32-bit FNV-1a mix) quando crypto.subtle não está disponível
+    const seeds = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35, 0x27d4eb2f, 0x165667b1, 0xd3a2646c, 0xfd7046c5];
+    for (let i = 0; i < str.length; i++) {
+      const c = str.charCodeAt(i);
+      for (let s = 0; s < 8; s++) {
+        seeds[s] ^= c + s * 31;
+        seeds[s] = Math.imul(seeds[s], 0x01000193) >>> 0;
+      }
+    }
+    return seeds.map(h => h.toString(16).padStart(8, '0')).join('');
   }
 
   function generateRandomSeedHex() {
@@ -386,19 +426,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 6. Autenticação Unificada de ADM (Validação SHA-256 no Client)
+  // 6. Autenticação Unificada de ADM (Sempre Exige Login ao Entrar)
   // ─────────────────────────────────────────────────────────────
-  /*
-   * NOTA FORENSE DE SEGURANÇA:
-   * Por se tratar de uma SPA 100% estática (GitHub Pages sem backend),
-   * a credencial é validada comparando o hash SHA-256 da entrada com o hash
-   * autorizado da liderança da Tribo Cacique. Nenhuma senha trafega em texto puro.
-   */
+  const ADMIN_USER_VAL = 'CACIQUE';
+  const ADMIN_PASS_VAL = 'g.indiopatrocina777';
   const ADMIN_USER_HASH = '3680593c420bee400f624c81661151f3141f3271ed3f80121738da69f456cace'; // 'CACIQUE'
   const ADMIN_PASS_HASH = 'e0112dd9dc3f248b7a9e78bda4d522999d68636989c772137e7f644d32caf443'; // 'g.indiopatrocina777'
   const AUTH_STORAGE_KEY = 'cacique_unified_adm_auth';
 
-  let isAdmAuthenticated = localStorage.getItem(AUTH_STORAGE_KEY) === 'true';
+  // Remove qualquer sessão antiga salva no navegador para NUNCA iniciar logado automaticamente
+  try {
+    localStorage.removeItem('cacique_unified_adm_auth');
+    localStorage.removeItem('cacique_scan_authenticated');
+    sessionStorage.removeItem('cacique_unified_adm_auth');
+  } catch (_) {}
+
+  let isAdmAuthenticated = false;
 
   const roleBadgeBtn = document.getElementById('roleBadgeBtn');
   const roleBadgeText = document.getElementById('roleBadgeText');
@@ -434,18 +477,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function handleAdminLogin(userVal, passVal) {
-    const userH = await sha256Hex(userVal.trim().toUpperCase());
-    const passH = await sha256Hex(passVal.trim());
+    const cleanUser = (userVal || '').trim().toUpperCase();
+    const cleanPass = (passVal || '').trim();
 
-    if (userH === ADMIN_USER_HASH && passH === ADMIN_PASS_HASH) {
+    let isMatch = (cleanUser === ADMIN_USER_VAL && (cleanPass === ADMIN_PASS_VAL || cleanPass.toLowerCase() === ADMIN_PASS_VAL.toLowerCase()));
+
+    if (!isMatch && typeof crypto !== 'undefined' && crypto.subtle) {
+      try {
+        const userH = await sha256Hex(cleanUser);
+        const passH = await sha256Hex(cleanPass);
+        if (userH === ADMIN_USER_HASH && passH === ADMIN_PASS_HASH) {
+          isMatch = true;
+        }
+      } catch (_) {}
+    }
+
+    if (isMatch) {
       isAdmAuthenticated = true;
-      localStorage.setItem(AUTH_STORAGE_KEY, 'true');
       updateAuthUI();
       sfx.done();
       showToast('success', 'Acesso Autorizado', 'Modo Operador ADM da Tribo ativado.');
       if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
-
-      // Se o SCAN estiver aberto no login, desbloqueia o dashboard
+      if (authPassInput) authPassInput.value = '';
       unlockScanDashboard();
       return true;
     } else {
@@ -457,15 +510,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnAuthSubmit) {
     btnAuthSubmit.addEventListener('click', () => {
-      handleAdminLogin(authUserInput.value, authPassInput.value);
+      handleAdminLogin(authUserInput ? authUserInput.value : '', authPassInput ? authPassInput.value : '');
     });
   }
+
+  [authUserInput, authPassInput].forEach(inp => {
+    if (inp) {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAdminLogin(authUserInput ? authUserInput.value : '', authPassInput ? authPassInput.value : '');
+        }
+      });
+    }
+  });
 
   if (btnAuthLogout) {
     btnAuthLogout.addEventListener('click', () => {
       isAdmAuthenticated = false;
-      localStorage.removeItem(AUTH_STORAGE_KEY);
       updateAuthUI();
+      lockScanDashboard();
       sfx.tick(600);
       showToast('info', 'Desconectado', 'Sessão de ADM encerrada.');
       if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
@@ -2219,7 +2283,7 @@ NinjaFF (sem patente)`;
   }
 
   // ─────────────────────────────────────────────────────────────
-  // 14. CACIQUE SCAN ENGINE v3.1 — FORENSE PROFISSIONAL RESILIENTE
+  // 14. CACIQUE SCAN ENGINE v3.2 — FORENSE PROFISSIONAL RESILIENTE
   // ─────────────────────────────────────────────────────────────
   const scanLoginView = document.getElementById('scanLoginView');
   const scanDashboardView = document.getElementById('scanDashboardView');
@@ -2258,9 +2322,14 @@ NinjaFF (sem patente)`;
   let currentScanReport = null;
   let activeFilterCategory = 'all';
 
+  // Domínios autorizados de origem de instalação (Detector de Origem de Instalação)
+  const DOMINIOS_AUTORIZADOS = [
+    'com.android.vending'
+  ];
+
   // Assinaturas Oficiais Forenses Completas
   const CHEAT_SIGNATURES = [
-    // Offsets Coringa & Free Fire
+    // ── Offsets Coringa & Free Fire ──
     { term: 'd0264a54', name: 'HS Cabeça (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd0264a55', name: 'Aimbot Direto (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd027a2b6', name: 'Aimbot FOV 0 a 180 (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
@@ -2293,7 +2362,13 @@ NinjaFF (sem patente)`;
     { term: 'd1aac608', name: 'Granada Infinita (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'd1aac60b', name: 'Ícone Invisível Bypass (Coringa Offset)', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
     { term: 'coringa|', name: 'Injeção Protocolo Coringa Mod Menu', cat: 'ff_offset', weight: 100, risk: 'Ban Direto' },
-    // OB40 & Weapons
+
+    // ── Overlays & Proxy Cheats Free Fire ──
+    { term: 'dripwire.cc', name: 'Janela Sobrepondo Free Fire (dripwire.cc)', cat: 'overlay', weight: 100, risk: 'Alto (Verificar contexto)' },
+    { term: 'TYPE_APPLICATION_OVERLAY', name: 'Janela Sobrepondo Free Fire (TYPE_APPLICATION_OVERLAY)', cat: 'overlay', weight: 60, risk: 'Médio (Verificar contexto)' },
+    { term: 'LetuniaProxy.ff', name: 'Proxy/Modificação Free Fire (LetuniaProxy)', cat: 'ff_cheat', weight: 100, risk: 'Alto (Verificar contexto)' },
+
+    // ── OB40 & Weapons / Regedits ──
     { term: 'aimlock_head_ob40_', name: 'Aimlock OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'aimbot_head_ob40_', name: 'Aimbot OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'no_recoil_ob40_', name: 'No Recoil OB40 por Arma', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
@@ -2303,7 +2378,8 @@ NinjaFF (sem patente)`;
     { term: 'regeditruokff', name: 'Regedit Ruok FF Cheat', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
     { term: 'getauxaimhsoffreefiremanager', name: 'Auxiliar de Mira FreeFire Hook', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
     { term: 'aim lock vip ativado', name: 'Aimlock VIP Mod Ativado', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
-    // Libil2cpp & Injeção
+
+    // ── Libil2cpp & Injeção / Root / Jailbreak ──
     { term: 'libil2cpp.so', name: 'Hook em Libil2cpp (Free Fire Core)', cat: 'injection', weight: 90, risk: 'Crítico' },
     { term: 'memorypatch("libil2cpp.so"', name: 'MemoryPatch em Libil2cpp', cat: 'injection', weight: 100, risk: 'Ban Direto' },
     { term: 'gameguardian', name: 'Engine de Memória GameGuardian', cat: 'injection', weight: 95, risk: 'Ban Direto' },
@@ -2318,31 +2394,180 @@ NinjaFF (sem patente)`;
     { term: 'trollstore', name: 'TrollStore Root Helper iOS', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
     { term: 'cydia', name: 'Cydia Jailbreak', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
     { term: 'sileo', name: 'Sileo Jailbreak', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
-    { term: 'httpcanary', name: 'HttpCanary Sniffer de Rede', cat: 'proxy_net', weight: 95, risk: 'Ban Direto' }
-  ];
+    { term: 'httpcanary', name: 'HttpCanary Sniffer de Rede', cat: 'proxy_net', weight: 95, risk: 'Ban Direto' },
+
+    // ── Proxy / Android Bug Report / Network Interception ──
+    { term: 'global_http_proxy_host', name: 'Proxy Android Configurado (global_http_proxy_host)', cat: 'proxy_net', weight: 65, risk: 'Médio (Verificar contexto)' },
+    { term: 'global_http_proxy_port', name: 'Porta de Proxy Android (global_http_proxy_port)', cat: 'proxy_net', weight: 50, risk: 'Médio' },
+    { term: 'http_proxy', name: 'Configuração HTTP Proxy (http_proxy)', cat: 'proxy_net', weight: 45, risk: 'Médio' },
+    { term: 'proxy_host', name: 'Proxy Host (proxy_host)', cat: 'proxy_net', weight: 40, risk: 'Médio' },
+    { term: 'proxy_port', name: 'Proxy Port (proxy_port)', cat: 'proxy_net', weight: 40, risk: 'Médio' },
+    { term: 'settings get global http_proxy', name: 'Consulta de Proxy Android (settings get global http_proxy)', cat: 'proxy_net', weight: 65, risk: 'Médio' },
+    { term: 'dumpsys connectivity', name: 'Inspeção de Conectividade (dumpsys connectivity)', cat: 'proxy_net', weight: 35, risk: 'Médio' },
+    { term: 'VpnService', name: 'Serviço VPN Android (VpnService)', cat: 'proxy_net', weight: 35, risk: 'Médio' },
+    { term: 'tun0', name: 'Interface de Rede VPN (tun0)', cat: 'proxy_net', weight: 35, risk: 'Médio' },
+    { term: '127.0.0.1:8888', name: 'Proxy Local Charles/Fiddler (127.0.0.1:8888)', cat: 'proxy_net', weight: 75, risk: 'Médio' },
+    { term: '127.0.0.1:8080', name: 'Proxy Local HTTP (127.0.0.1:8080)', cat: 'proxy_net', weight: 65, risk: 'Médio' },
+    { term: 'mitmproxy', name: 'Interceptação de Tráfego (mitmproxy)', cat: 'proxy_net', weight: 90, risk: 'Alto (Verificar contexto)' },
+    { term: 'httptoolkit', name: 'HTTP Toolkit (httptoolkit)', cat: 'proxy_net', weight: 90, risk: 'Alto (Verificar contexto)' },
+    { term: 'pcapdroid', name: 'Captura de Pacotes (pcapdroid)', cat: 'proxy_net', weight: 85, risk: 'Alto (Verificar contexto)' },
+    { term: 'network_security_config', name: 'Configuração de Segurança de Rede (network_security_config)', cat: 'proxy_net', weight: 35, risk: 'Médio' },
+    { term: 'ssl_unpinning', name: 'Possível Remoção de SSL Pinning (ssl_unpinning)', cat: 'proxy_net', weight: 90, risk: 'Alto' },
+    { term: 'burp', name: 'Ferramenta de Interceptação (burp)', cat: 'proxy_net', weight: 75, risk: 'Médio' },
+
+    // ── Logs External (ADB, Input Injection, Rede, Root & Certificados) ──
+    { term: 'rmnet data active', name: 'Logs External: rmnet data active', cat: 'external_log', weight: 35, risk: 'Médio (Verificar contexto)' },
+    { term: 'InputDispatcher', name: 'Logs External: InputDispatcher', cat: 'external_log', weight: 40, risk: 'Médio (Verificar contexto)' },
+    { term: 'shell input swipe', name: 'Logs External: Injeção ADB (shell input swipe)', cat: 'external_log', weight: 85, risk: 'Alto (Automação/Macro ADB)' },
+    { term: 'adbd daemon started successfully', name: 'Logs External: adbd daemon started successfully', cat: 'external_log', weight: 70, risk: 'Alto (ADB Ativo)' },
+    { term: '10.x.x.x assigned', name: 'Logs External: IP Privado 10.x.x.x assigned', cat: 'external_log', weight: 35, risk: 'Médio (Verificar contexto)' },
+    { term: 'cert verify failed', name: 'Logs External: Falha de Certificado (cert verify failed)', cat: 'external_log', weight: 75, risk: 'Alto (Possível MITM/Proxy)' },
+    { term: 'shell input tap', name: 'Logs External: Injeção ADB (shell input tap)', cat: 'external_log', weight: 85, risk: 'Alto (Automação/Macro ADB)' },
+    { term: 'localhost connection established', name: 'Logs External: localhost connection established', cat: 'external_log', weight: 60, risk: 'Médio (Túnel Local)' },
+    { term: 'InputFlinger', name: 'Logs External: InputFlinger', cat: 'external_log', weight: 40, risk: 'Médio (Verificar contexto)' },
+    { term: 'cmd activity start', name: 'Logs External: Execução Shell (cmd activity start)', cat: 'external_log', weight: 65, risk: 'Médio (Verificar contexto)' },
+    { term: 'root access granted', name: 'Logs External: Acesso Root Concedido (root access granted)', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'tun0 up', name: 'Logs External: Túnel VPN Ativo (tun0 up)', cat: 'proxy_net', weight: 55, risk: 'Médio (VPN/Proxy)' },
+    { term: 'keyevent injected', name: 'Logs External: Evento de Tecla Injetado (keyevent injected)', cat: 'external_log', weight: 80, risk: 'Alto (Injeção de Input)' },
+    { term: 'SSLHandshakeException', name: 'Logs External: Exceção SSL (SSLHandshakeException)', cat: 'proxy_net', weight: 65, risk: 'Médio (Possível Interceptação SSL)' },
+    { term: 'wlan0 up', name: 'Logs External: Interface Wi-Fi (wlan0 up)', cat: 'external_log', weight: 25, risk: 'Baixo (Verificar contexto)' },
+    { term: 'permission elevated', name: 'Logs External: Elevação de Permissão (permission elevated)', cat: 'root_bypass', weight: 90, risk: 'Alto (Elevação de Privilégio)' },
+    { term: 'forwarding port', name: 'Logs External: Redirecionamento de Porta (forwarding port)', cat: 'proxy_net', weight: 75, risk: 'Alto (Port Forwarding)' },
+    { term: 'zygisk initialized', name: 'Logs External: Zygisk Inicializado (zygisk initialized)', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'adbd auth confirmed', name: 'Logs External: Autenticação ADB Confirmada (adbd auth confirmed)', cat: 'external_log', weight: 70, risk: 'Alto (Depuração ADB)' },
+    { term: 'gateway set', name: 'Logs External: Configuração de Gateway (gateway set)', cat: 'external_log', weight: 35, risk: 'Médio (Verificar contexto)' },
+    { term: 'proxySelector', name: 'Logs External: Seletor de Proxy (proxySelector)', cat: 'proxy_net', weight: 55, risk: 'Médio (Verificar contexto)' },
+    { term: 'am startservice', name: 'Logs External: Inicialização de Serviço via Shell (am startservice)', cat: 'external_log', weight: 65, risk: 'Médio (Verificar contexto)' },
+    { term: 'VPN connected', name: 'Logs External: VPN Conectada (VPN connected)', cat: 'proxy_net', weight: 55, risk: 'Médio (VPN Ativa)' },
+    { term: 'socket opened on 5037', name: 'Logs External: Porta Padrão ADB (socket opened on 5037)', cat: 'external_log', weight: 85, risk: 'Alto (Servidor ADB 5037)' },
+    { term: 'Shell command executed', name: 'Logs External: Comando Shell Executado (Shell command executed)', cat: 'external_log', weight: 70, risk: 'Alto (Verificar contexto)' },
+    { term: 'Burp Suite certificate', name: 'Logs External: Certificado Burp Suite (Burp Suite certificate)', cat: 'proxy_net', weight: 95, risk: 'Alto (Interceptação Burp)' },
+    { term: 'ADB bridge active', name: 'Logs External: Ponte ADB Ativa (ADB bridge active)', cat: 'external_log', weight: 80, risk: 'Alto (ADB Ativo)' },
+    { term: 'ActivityManager: Start proc', name: 'Logs External: ActivityManager: Start proc', cat: 'external_log', weight: 35, risk: 'Médio (Verificar contexto)' },
+    { term: 'HTTP proxy set', name: 'Logs External: Proxy HTTP Configurado (HTTP proxy set)', cat: 'proxy_net', weight: 70, risk: 'Alto (Proxy Ativo)' },
+    { term: 'device authorized for debugging', name: 'Logs External: Dispositivo Autorizado para Debug', cat: 'external_log', weight: 70, risk: 'Alto (USB/Wireless Debugging)' },
+    { term: 'ppp0 interface up', name: 'Logs External: Interface Ponto-a-Ponto (ppp0 interface up)', cat: 'proxy_net', weight: 50, risk: 'Médio (Túnel PPP/VPN)' },
+    { term: 'USB connected', name: 'Logs External: Conexão USB Detectada (USB connected)', cat: 'external_log', weight: 40, risk: 'Médio (Verificar contexto)' },
+    { term: 'USB debugging connected', name: 'Logs External: Depuração USB Conectada (USB debugging connected)', cat: 'external_log', weight: 75, risk: 'Alto (ADB USB Ativo)' },
+    { term: 'dispatchPointer', name: 'Logs External: Evento de Ponteiro (dispatchPointer)', cat: 'external_log', weight: 45, risk: 'Médio (Verificar contexto)' },
+    { term: '192.168.x.x assigned', name: 'Logs External: IP Local 192.168.x.x assigned', cat: 'external_log', weight: 30, risk: 'Baixo (Verificar contexto)' },
+    { term: 'InputReader', name: 'Logs External: Leitor de Input (InputReader)', cat: 'external_log', weight: 40, risk: 'Médio (Verificar contexto)' },
+    { term: 'adb reverse', name: 'Logs External: Túnel Reverso ADB (adb reverse)', cat: 'external_log', weight: 85, risk: 'Alto (Túnel ADB Reverso)' },
+    { term: 'routing table changed', name: 'Logs External: Tabela de Roteamento Alterada (routing table changed)', cat: 'proxy_net', weight: 50, risk: 'Médio (Desvio de Rota/VPN)' },
+    { term: 'HTTPS proxy configured', name: 'Logs External: Proxy HTTPS Configurado (HTTPS proxy configured)', cat: 'proxy_net', weight: 75, risk: 'Alto (Proxy HTTPS)' },
+    { term: 'adb forward', name: 'Logs External: Encaminhamento ADB (adb forward)', cat: 'external_log', weight: 85, risk: 'Alto (Port Forward ADB)' },
+    { term: 'mitmproxy connection', name: 'Logs External: Conexão mitmproxy (mitmproxy connection)', cat: 'proxy_net', weight: 95, risk: 'Alto (Interceptação MITM)' },
+    { term: 'localhost 127.0.0.1:', name: 'Logs External: Conexão Localhost (localhost 127.0.0.1:)', cat: 'proxy_net', weight: 60, risk: 'Médio (Serviço Local/Proxy)' },
+    { term: 'injectInputEvent', name: 'Logs External: Injeção de Evento de Toque (injectInputEvent)', cat: 'external_log', weight: 85, risk: 'Alto (Automação/Injeção de Mira)' },
+    { term: 'Charles Proxy active', name: 'Logs External: Charles Proxy Ativo (Charles Proxy active)', cat: 'proxy_net', weight: 95, risk: 'Alto (Interceptação Charles)' },
+    { term: 'adbd started', name: 'Logs External: Daemon ADB Iniciado (adbd started)', cat: 'external_log', weight: 70, risk: 'Alto (ADB Ativo)' },
+    { term: 'default route via tun0', name: 'Logs External: Rota Padrão via VPN (default route via tun0)', cat: 'proxy_net', weight: 60, risk: 'Médio (Tráfego via Túnel VPN)' },
+    { term: 'neighbor discovered', name: 'Logs External: Descoberta de Vizinho ARP/NDP (neighbor discovered)', cat: 'external_log', weight: 30, risk: 'Baixo (Verificar contexto)' },
+    { term: 'magisk daemon started', name: 'Logs External: Daemon Magisk Iniciado (magisk daemon started)', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'certificate unknown', name: 'Logs External: Certificado Desconhecido (certificate unknown)', cat: 'proxy_net', weight: 70, risk: 'Alto (Possível Proxy MITM)' },
+    { term: 'cmd package install', name: 'Logs External: Instalação via Linha de Comando (cmd package install)', cat: 'external_log', weight: 75, risk: 'Alto (Sideload ADB/Shell)' },
+    { term: 'DHCP lease obtained', name: 'Logs External: Concessão DHCP Obtida (DHCP lease obtained)', cat: 'external_log', weight: 25, risk: 'Baixo (Verificar contexto)' },
+    { term: 'Sending intent', name: 'Logs External: Disparo de Intent (Sending intent)', cat: 'external_log', weight: 40, risk: 'Médio (Verificar contexto)' },
+    { term: 'SELinux permissive', name: 'Logs External: SELinux em Modo Permissivo (SELinux permissive)', cat: 'root_bypass', weight: 95, risk: 'Ban Direto (Segurança Desativada)' },
+    { term: 'eth0 link up', name: 'Logs External: Interface Ethernet Ativa (eth0 link up)', cat: 'external_log', weight: 45, risk: 'Médio (Possível Emulador/Adaptador)' },
+    { term: 'ADB TCP service started', name: 'Logs External: Serviço ADB via TCP (ADB TCP service started)', cat: 'external_log', weight: 85, risk: 'Alto (ADB Wireless/Remoto)' },
+    { term: 'lsposed framework loaded', name: 'Logs External: LSPosed Carregado (lsposed framework loaded)', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: '172.16.x.x - 172.31.x.x', name: 'Logs External: Faixa IP Privada 172.16-31', cat: 'external_log', weight: 35, risk: 'Médio (Verificar contexto)' },
+    { term: 'am start', name: 'Logs External: Inicialização Activity via Shell (am start)', cat: 'external_log', weight: 60, risk: 'Médio (Verificar contexto)' },
+    { term: 'listening on tcp:5555', name: 'Logs External: ADB Escutando na Porta 5555 (listening on tcp:5555)', cat: 'external_log', weight: 90, risk: 'Alto (ADB Remoto TCP 5555)' },
+    { term: 'su binary detected', name: 'Logs External: Binário SU Detectado (su binary detected)', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'ARP table entry', name: 'Logs External: Entrada na Tabela ARP (ARP table entry)', cat: 'external_log', weight: 30, risk: 'Baixo (Verificar contexto)' },
+
+    // ── ETAPA 1 — SUPRESSÃO DE LOGS ──
+    { term: 'suppression', name: 'Etapa 1 (Supressão de Logs): suppression', cat: 'log_audit', weight: 45, risk: 'Auditoria Etapa 1 (Verificar contexto)' },
+    { term: 'suppressed', name: 'Etapa 1 (Supressão de Logs): suppressed / SUPPRESSED', cat: 'log_audit', weight: 45, risk: 'Auditoria Etapa 1 (Verificar contexto)' },
+    { term: 'suppress', name: 'Etapa 1 (Supressão de Logs): suppress / SUPPRESS', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 1 (Verificar contexto)' },
+
+    // ── ETAPA 2 — AGRUPAMENTO DE MENSAGENS ──
+    { term: 'chatty', name: 'Etapa 2 (Agrupamento de Mensagens): chatty', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 2 (Verificar contexto)' },
+    { term: 'CHATTER', name: 'Etapa 2 (Agrupamento de Mensagens): CHATTER', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 2 (Verificar contexto)' },
+    { term: 'LogBufferElement', name: 'Etapa 2 (Agrupamento de Mensagens): LogBufferElement', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 2 (Verificar contexto)' },
+
+    // ── ETAPA 3 — DESCARTE E PERDA DE REGISTROS ──
+    { term: 'dropped logs', name: 'Etapa 3 (Descarte/Perda de Registros): dropped logs', cat: 'log_audit', weight: 55, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+    { term: 'drop count', name: 'Etapa 3 (Descarte/Perda de Registros): drop count', cat: 'log_audit', weight: 50, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+    { term: 'log_overrun', name: 'Etapa 3 (Descarte/Perda de Registros): log_overrun', cat: 'log_audit', weight: 55, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+    { term: 'dropped', name: 'Etapa 3 (Descarte/Perda de Registros): dropped', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+    { term: 'overrun', name: 'Etapa 3 (Descarte/Perda de Registros): overrun', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+    { term: 'overflow', name: 'Etapa 3 (Descarte/Perda de Registros): overflow', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+    { term: 'pruned', name: 'Etapa 3 (Descarte/Perda de Registros): pruned', cat: 'log_audit', weight: 45, risk: 'Auditoria Etapa 3 (Verificar contexto)' },
+
+    // ── ETAPA 4 — FILTRAGEM DE MENSAGENS ──
+    { term: 'filtered', name: 'Etapa 4 (Filtragem de Mensagens): filtered', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'filter', name: 'Etapa 4 (Filtragem de Mensagens): filter', cat: 'log_audit', weight: 25, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'excluded', name: 'Etapa 4 (Filtragem de Mensagens): excluded', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'exclude', name: 'Etapa 4 (Filtragem de Mensagens): exclude', cat: 'log_audit', weight: 30, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'skipped', name: 'Etapa 4 (Filtragem de Mensagens): skipped', cat: 'log_audit', weight: 25, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'skip', name: 'Etapa 4 (Filtragem de Mensagens): skip', cat: 'log_audit', weight: 20, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'ignored', name: 'Etapa 4 (Filtragem de Mensagens): ignored', cat: 'log_audit', weight: 25, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+    { term: 'ignore', name: 'Etapa 4 (Filtragem de Mensagens): ignore', cat: 'log_audit', weight: 20, risk: 'Auditoria Etapa 4 (Verificar contexto)' },
+
+    // ── ETAPA 5 — LIMITES E TRUNCAMENTO ──
+    { term: 'truncation', name: 'Etapa 5 (Limites e Truncamento): truncation', cat: 'log_audit', weight: 45, risk: 'Auditoria Etapa 5 (Verificar contexto)' },
+    { term: 'truncated', name: 'Etapa 5 (Limites e Truncamento): truncated', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 5 (Verificar contexto)' },
+    { term: 'buffer full', name: 'Etapa 5 (Limites e Truncamento): buffer full', cat: 'log_audit', weight: 50, risk: 'Auditoria Etapa 5 (Verificar contexto)' },
+    { term: 'max entry', name: 'Etapa 5 (Limites e Truncamento): max entry', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 5 (Verificar contexto)' },
+    { term: 'limit exceeded', name: 'Etapa 5 (Limites e Truncamento): limit exceeded', cat: 'log_audit', weight: 45, risk: 'Auditoria Etapa 5 (Verificar contexto)' },
+    { term: 'rate limit', name: 'Etapa 5 (Limites e Truncamento): rate limit', cat: 'log_audit', weight: 40, risk: 'Auditoria Etapa 5 (Verificar contexto)' },
+
+    // ── ETAPA 6 — COMPONENTES DE LOGGING ──
+    { term: 'logd', name: 'Etapa 6 (Componentes de Logging): logd', cat: 'log_audit', weight: 30, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
+    { term: 'LogBuffer', name: 'Etapa 6 (Componentes de Logging): LogBuffer', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
+    { term: 'Logcat', name: 'Etapa 6 (Componentes de Logging): Logcat', cat: 'log_audit', weight: 30, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
+    { term: 'liblog', name: 'Etapa 6 (Componentes de Logging): liblog', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' }
+  ].map(s => ({ ...s, termLower: s.term.toLowerCase() }));
 
   const CATEGORY_NAMES = {
     all: 'Todas',
     ff_cheat: '🎯 Cheats Free Fire',
     ff_offset: '⚡ Offsets de Memória',
     ff_regedit: '📝 Regedits & Macros',
+    overlay: '🪟 Janelas Sobrepostas (Overlay)',
     injection: '💉 Injeção & Hooking',
     root_bypass: '🔓 Root & Bypass',
-    proxy_net: '🌐 Proxy & Rede',
+    proxy_net: '🌐 Proxy & Interceptação',
+    external_log: '📡 Logs External & ADB',
+    installer_origin: '📦 Origem de Instalação',
+    log_audit: '🔎 Auditoria de Logs (Etapas 1-7)',
     system: '⚙️ Sistema Modificado'
   };
 
-  const BINARY_EXT = /\.(so|dex|dylib|odex|vdex|oat|apk|arsc|db|sqlite|bin|dat)$/i;
+  // Allowlist estrita de arquivos relevantes para evitar travamentos em protobufs (.pb), vídeos, imagens ou traces gigantes
+  const TEXT_EXT_RE = /\.(txt|log|prop|plist|xml|json|csv|conf|cfg|properties|yaml|yml|html|htm|js|sh|py|smali|reg|ini|md)$/i;
+  const BIN_EXT_RE = /\.(so|dex|dylib|bin|elf)$/i;
+  const NO_EXT_ALLOW = new Set([
+    'packages', 'services', 'dumpsys', 'logcat',
+    'procrank', 'processes', 'bugreport', 'meminfo',
+    'cpuinfo', 'batterystats', 'usage_stats'
+  ]);
   const ARCHIVE_RE = /\.(zip|tar\.gz|tgz|tar|gz)$/i;
-  const SKIP_EXTENSIONS = [
-    '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico', '.heic',
-    '.mp4', '.mov', '.avi', '.mkv', '.mp3', '.wav', '.ogg', '.m4a',
-    '.ttf', '.otf', '.woff', '.woff2'
-  ];
 
-  function isRelevantEntry(path) {
-    const lower = path.toLowerCase().replace(/\\/g, '/');
-    return !SKIP_EXTENSIONS.some(ext => lower.endsWith(ext));
+  function classifyScanEntry(path) {
+    const clean = path.replace(/\\/g, '/');
+    const lower = clean.toLowerCase();
+    // Ignorar pastas de mídia, fontes, imagens, proto, perfetto-trace e zips aninhados
+    if (/\.(png|jpg|jpeg|gif|bmp|webp|ico|heic|mp4|mov|avi|mkv|mp3|wav|ogg|m4a|ttf|otf|woff|woff2|pb|perfetto-trace|hprof|apk|arsc|vdex|odex|oat|zip|gz|tar)$/i.test(lower)) {
+      return null;
+    }
+    if (TEXT_EXT_RE.test(lower)) return 'text';
+    if (BIN_EXT_RE.test(lower)) return 'binary';
+    const base = lower.split('/').pop() || '';
+    if (!base.includes('.')) {
+      for (const allowed of NO_EXT_ALLOW) {
+        if (base === allowed || base.startsWith('bugreport') || base.startsWith('logcat') || base.startsWith('dumpsys')) {
+          return 'text';
+        }
+      }
+    }
+    if (lower.includes('bugreport') || lower.includes('logcat') || lower.includes('sysdiagnose')) {
+      return 'text';
+    }
+    return null;
   }
 
   function sleep(ms) {
@@ -2350,12 +2575,13 @@ NinjaFF (sem patente)`;
   }
 
   const latin1 = new TextDecoder('latin1');
-  const utf8 = new TextDecoder('utf-8');
+  const utf8 = new TextDecoder('utf-8', { fatal: false });
 
-  function extractPrintableStrings(bytes, minLen = 5) {
+  function extractPrintableStrings(bytes, minLen = 6) {
     const out = [];
     let start = -1;
-    const len = bytes.length;
+    // Limitar leitura de binários a no máximo 8 MB para não congelar a thread principal
+    const len = Math.min(bytes.length, 8 * 1024 * 1024);
     for (let i = 0; i <= len; i++) {
       const c = i < len ? bytes[i] : 0;
       if (c >= 32 && c <= 126) {
@@ -2369,33 +2595,141 @@ NinjaFF (sem patente)`;
   }
 
   function extractDeviceInfo(text, deviceInfo) {
-    const mModel = text.match(/ro\.product\.model\s*[:=]\s*([^\r\n]+)/i) ||
-                   text.match(/model\s*[:=]\s*([^\r\n]+)/i);
-    if (mModel && !deviceInfo.model) deviceInfo.model = mModel[1].trim();
+    // Analisar apenas o cabeçalho (primeiros 400 KB) para velocidade instantânea
+    const head = text.length > 400000 ? text.slice(0, 400000) : text;
+    if (!deviceInfo.model) {
+      const mModel = head.match(/ro\.product\.model\s*[:=]\s*\[?([^\r\n\]]+)/i) ||
+                     head.match(/Build\s+fingerprint:.*\/([^/:]+):/i);
+      if (mModel) deviceInfo.model = mModel[1].trim();
+    }
+    if (!deviceInfo.brand) {
+      const mBrand = head.match(/ro\.product\.manufacturer\s*[:=]\s*\[?([^\r\n\]]+)/i) ||
+                     head.match(/ro\.product\.brand\s*[:=]\s*\[?([^\r\n\]]+)/i);
+      if (mBrand) deviceInfo.brand = mBrand[1].trim();
+    }
+    if (!deviceInfo.osVersion) {
+      const mVer = head.match(/ro\.build\.version\.release\s*[:=]\s*\[?([^\r\n\]]+)/i) ||
+                   head.match(/Android\s+Version\s*[:=]?\s*([0-9.]+)/i);
+      if (mVer) deviceInfo.osVersion = 'Android ' + mVer[1].trim();
+    }
+    if (!deviceInfo.serial) {
+      const mSerial = head.match(/ro\.serialno\s*[:=]\s*\[?([^\r\n\]]+)/i) ||
+                      head.match(/ro\.boot\.serialno\s*[:=]\s*\[?([^\r\n\]]+)/i);
+      if (mSerial) deviceInfo.serial = mSerial[1].trim();
+    }
+    if (!deviceInfo.kernel) {
+      const mKernel = head.match(/Linux\s+version\s+([0-9a-zA-Z._\-+]+)/i);
+      if (mKernel) deviceInfo.kernel = 'Linux ' + mKernel[1].trim();
+    }
+    if (!deviceInfo.model) {
+      const mIosProd = head.match(/<key>ProductType<\/key>\s*<string>([^<]+)<\/string>/i);
+      if (mIosProd) deviceInfo.model = mIosProd[1].trim();
+    }
+    if (!deviceInfo.osVersion) {
+      const mIosVer = head.match(/<key>ProductVersion<\/key>\s*<string>([^<]+)<\/string>/i);
+      if (mIosVer) deviceInfo.osVersion = 'iOS ' + mIosVer[1].trim();
+    }
+    if (!deviceInfo.serial) {
+      const mIosSerial = head.match(/<key>SerialNumber<\/key>\s*<string>([^<]+)<\/string>/i);
+      if (mIosSerial) deviceInfo.serial = mIosSerial[1].trim();
+    }
+  }
 
-    const mBrand = text.match(/ro\.product\.manufacturer\s*[:=]\s*([^\r\n]+)/i) ||
-                   text.match(/ro\.product\.brand\s*[:=]\s*([^\r\n]+)/i);
-    if (mBrand && !deviceInfo.brand) deviceInfo.brand = mBrand[1].trim();
+  // ETAPA 7 — ANÁLISE DOS RESULTADOS (Extrator de Contexto: Linha Anterior, Atual, Posterior, Timestamp e Tag)
+  function extractLineContext(text, matchIdx) {
+    let lineStart = text.lastIndexOf('\n', matchIdx);
+    lineStart = lineStart === -1 ? 0 : lineStart + 1;
+    let lineEnd = text.indexOf('\n', matchIdx);
+    if (lineEnd === -1) lineEnd = text.length;
 
-    const mVer = text.match(/ro\.build\.version\.release\s*[:=]\s*([^\r\n]+)/i) ||
-                 text.match(/Android\s+Version\s*[:=]?\s*([0-9.]+)/i);
-    if (mVer && !deviceInfo.osVersion) deviceInfo.osVersion = 'Android ' + mVer[1].trim();
+    const currentLine = text.slice(lineStart, lineEnd).replace(/\r$/, '').slice(0, 240);
 
-    const mSerial = text.match(/ro\.serialno\s*[:=]\s*([^\r\n]+)/i) ||
-                    text.match(/ro\.boot\.serialno\s*[:=]\s*([^\r\n]+)/i);
-    if (mSerial && !deviceInfo.serial) deviceInfo.serial = mSerial[1].trim();
+    let prevLine = '';
+    if (lineStart > 1) {
+      let prevStart = text.lastIndexOf('\n', lineStart - 2);
+      prevStart = prevStart === -1 ? 0 : prevStart + 1;
+      prevLine = text.slice(prevStart, lineStart - 1).replace(/\r$/, '').slice(0, 200);
+    }
 
-    const mKernel = text.match(/Linux\s+version\s+([0-9a-zA-Z._\-+]+)/i);
-    if (mKernel && !deviceInfo.kernel) deviceInfo.kernel = 'Linux ' + mKernel[1].trim();
+    let nextLine = '';
+    if (lineEnd < text.length - 1) {
+      let nextEnd = text.indexOf('\n', lineEnd + 1);
+      if (nextEnd === -1) nextEnd = text.length;
+      nextLine = text.slice(lineEnd + 1, nextEnd).replace(/\r$/, '').slice(0, 200);
+    }
 
-    const mIosProd = text.match(/<key>ProductType<\/key>\s*<string>([^<]+)<\/string>/i);
-    if (mIosProd && !deviceInfo.model) deviceInfo.model = mIosProd[1].trim();
+    // Extrair Timestamp, Tag e Componente no padrão Logcat Android (ex: "11-10 09:47:12.345  1000  1234 I ActivityManager: ...")
+    let meta = '';
+    const logcatMatch = currentLine.match(/^(\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3})\s+(?:\S+\s+)?(\d+)\s+(\d+)\s+([VDIWEFS])\s+([^:]+):/);
+    if (logcatMatch) {
+      meta = `Timestamp: ${logcatMatch[1]} | PID/TID: ${logcatMatch[2]}/${logcatMatch[3]} | Nível: ${logcatMatch[4]} | Tag/Componente: ${logcatMatch[5].trim()}`;
+    }
 
-    const mIosVer = text.match(/<key>ProductVersion<\/key>\s*<string>([^<]+)<\/string>/i);
-    if (mIosVer && !deviceInfo.osVersion) deviceInfo.osVersion = 'iOS ' + mIosVer[1].trim();
+    return {
+      prevLine,
+      currentLine,
+      nextLine,
+      meta
+    };
+  }
 
-    const mIosSerial = text.match(/<key>SerialNumber<\/key>\s*<string>([^<]+)<\/string>/i);
-    if (mIosSerial && !deviceInfo.serial) deviceInfo.serial = mIosSerial[1].trim();
+  // ── Detector de Origem de Instalação (equivalente a verificar_origem_instalacao em Python) ──
+  function verificarOrigemInstalacao(text, filePath, seenInstallers) {
+    const encontrados = [];
+    // Procura blocos "Package [nome.do.pacote]" seguidos em até 1800 caracteres por "installerPackageName=..."
+    const pkgRegex = /Package\s+\[([a-zA-Z0-9_.]+)\]/g;
+    let match;
+    let beeped = false;
+
+    while ((match = pkgRegex.exec(text)) !== null) {
+      const aplicativo = match[1];
+      const windowEnd = Math.min(text.length, match.index + 1800);
+      const block = text.slice(match.index, windowEnd);
+      // Limitar até o próximo "Package [" caso apareça antes
+      const nextPkgIdx = block.indexOf('Package [', 10);
+      const safeBlock = nextPkgIdx !== -1 ? block.slice(0, nextPkgIdx) : block;
+
+      const instMatch = safeBlock.match(/installerPackageName=([^\s,}]+)/);
+      if (!instMatch) continue;
+
+      const instalador = instMatch[1].trim();
+      if (DOMINIOS_AUTORIZADOS.includes(instalador)) {
+        continue;
+      }
+
+      // Ignorar pacotes nativos de sistema sem instalador ("null") apenas se forem com.android.* / android,
+      // mas alertar fortemente Free Fire ou apps de terceiros instalados fora da Play Store!
+      const isFreeFire = /freefire/i.test(aplicativo);
+      const isSuspiciousApp = isFreeFire || !(/^(com\.android\.|android$|com\.google\.android\.|com\.qualcomm\.|com\.samsung\.|com\.sec\.|com\.miui\.|com\.xiaomi\.|com\.motorola\.|com\.mediatek\.)/i.test(aplicativo) && instalador === 'null');
+
+      if (!isSuspiciousApp) continue;
+
+      const uniqueKey = `${aplicativo}|${instalador}`;
+      if (seenInstallers.has(uniqueKey)) continue;
+      seenInstallers.add(uniqueKey);
+
+      const ctx = extractLineContext(text, match.index);
+      encontrados.push({
+        term: `installerPackageName=${instalador}`,
+        name: isFreeFire
+          ? `⚠️ Free Fire Instalado Fora da Play Store (${aplicativo} via ${instalador})`
+          : `Origem de Instalação Não Autorizada: ${aplicativo} (Instalador: ${instalador})`,
+        category: 'installer_origin',
+        categoryLabel: CATEGORY_NAMES.installer_origin,
+        weight: isFreeFire ? 100 : 70,
+        risk: isFreeFire ? 'Alto (Free Fire Mod/APK Externo)' : 'Origem não autorizada ou desconhecida',
+        file: filePath,
+        snippet: `Package [${aplicativo}] -> installerPackageName=${instalador}`,
+        context: ctx
+      });
+
+      if (!beeped) {
+        beeped = true;
+        sfx.beep1200();
+      }
+    }
+
+    return encontrados;
   }
 
   async function ensureJSZip() {
@@ -2456,7 +2790,12 @@ NinjaFF (sem patente)`;
         if (pendingName) name = pendingName;
         else if (prefix) name = prefix + '/' + name;
         pendingName = null;
-        entries.push({ path: name, bytes: async () => data, text: async () => utf8.decode(data) });
+        entries.push({
+          path: name,
+          size,
+          bytes: async () => data,
+          text: async () => utf8.decode(data)
+        });
       } else if (type !== 'g') {
         pendingName = null;
       }
@@ -2470,63 +2809,115 @@ NinjaFF (sem patente)`;
     const raw = lower.endsWith('.tar') ? new Uint8Array(await file.arrayBuffer()) : await gunzip(file);
     const entries = parseTar(raw);
     if (entries) return entries;
-    return [{ path: file.name.replace(/\.gz$/i, ''), bytes: async () => raw, text: async () => utf8.decode(raw) }];
+    return [{
+      path: file.name.replace(/\.gz$/i, ''),
+      size: raw.length,
+      bytes: async () => raw,
+      text: async () => utf8.decode(raw)
+    }];
   }
 
-  function scanTextForCheats(text, filePath) {
+  // Varredura assíncrona em blocos (chunks) para nunca travar em arquivos grandes (ex: bugreport.txt de 60MB+)
+  async function scanTextForCheatsChunked(text, filePath, onProgress) {
     const hits = [];
-    const textLower = text.toLowerCase();
+    const foundTermsInFile = new Set();
+    const CHUNK_SIZE = 1500000; // 1.5 MB por bloco
+    const OVERLAP = 256;
+    const totalLen = text.length;
 
-    for (const sig of CHEAT_SIGNATURES) {
-      const idx = textLower.indexOf(sig.term.toLowerCase());
-      if (idx !== -1) {
-        const snippetStart = Math.max(0, idx - 40);
-        const snippetEnd = Math.min(text.length, idx + sig.term.length + 50);
-        const rawSnippet = text.substring(snippetStart, snippetEnd).replace(/\r?\n/g, ' ');
+    for (let offset = 0; offset < totalLen; offset += CHUNK_SIZE) {
+      const end = Math.min(totalLen, offset + CHUNK_SIZE + OVERLAP);
+      const slice = text.slice(offset, end);
+      const sliceLower = slice.toLowerCase();
 
-        hits.push({
-          term: sig.term,
-          name: sig.name,
-          category: sig.cat,
-          categoryLabel: CATEGORY_NAMES[sig.cat] || sig.cat,
-          weight: sig.weight,
-          risk: sig.risk,
-          file: filePath,
-          snippet: rawSnippet
-        });
+      for (let sIdx = 0; sIdx < CHEAT_SIGNATURES.length; sIdx++) {
+        const sig = CHEAT_SIGNATURES[sIdx];
+        if (foundTermsInFile.has(sig.term)) continue;
+
+        const localIdx = sliceLower.indexOf(sig.termLower);
+        if (localIdx !== -1) {
+          foundTermsInFile.add(sig.term);
+          const globalIdx = offset + localIdx;
+          const ctx = extractLineContext(text, globalIdx);
+
+          hits.push({
+            term: sig.term,
+            name: sig.name,
+            category: sig.cat,
+            categoryLabel: CATEGORY_NAMES[sig.cat] || sig.cat,
+            weight: sig.weight,
+            risk: sig.risk,
+            file: filePath,
+            snippet: ctx.currentLine || slice.substring(Math.max(0, localIdx - 40), Math.min(slice.length, localIdx + sig.term.length + 60)).replace(/\r?\n/g, ' '),
+            context: ctx
+          });
+        }
+      }
+
+      if (totalLen > CHUNK_SIZE && onProgress) {
+        onProgress(Math.min(1, end / totalLen));
+        await sleep(0);
       }
     }
+
     return hits;
   }
 
   function unlockScanDashboard() {
     if (scanLoginView && scanDashboardView) {
       scanLoginView.style.display = 'none';
+      scanLoginView.hidden = true;
       scanDashboardView.style.display = 'block';
+      scanDashboardView.hidden = false;
     }
   }
 
   function lockScanDashboard() {
     if (scanLoginView && scanDashboardView) {
       scanLoginView.style.display = 'block';
+      scanLoginView.hidden = false;
       scanDashboardView.style.display = 'none';
+      scanDashboardView.hidden = true;
     }
   }
 
-  if (isAdmAuthenticated) {
-    unlockScanDashboard();
+  // SEMPRE iniciar bloqueado ao carregar a página (exige login de ADM toda vez)
+  lockScanDashboard();
+
+  function triggerScanLogin() {
+    if (!scanUser || !scanPass) return;
+    handleAdminLogin(scanUser.value, scanPass.value).then((ok) => {
+      if (ok) {
+        scanPass.value = '';
+      } else {
+        scanPass.classList.add('input-invalid');
+        setTimeout(() => scanPass.classList.remove('input-invalid'), 600);
+      }
+    });
   }
 
   if (scanBtnLogin && scanUser && scanPass) {
-    scanBtnLogin.addEventListener('click', () => {
-      handleAdminLogin(scanUser.value, scanPass.value);
+    scanBtnLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      triggerScanLogin();
+    });
+    [scanUser, scanPass].forEach((inp) => {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          triggerScanLogin();
+        }
+      });
     });
   }
 
   if (scanBtnLogout) {
     scanBtnLogout.addEventListener('click', () => {
       isAdmAuthenticated = false;
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch (e) {}
       updateAuthUI();
       lockScanDashboard();
       sfx.tick(600);
@@ -2560,6 +2951,11 @@ NinjaFF (sem patente)`;
 
   if (scanUploadBox) {
     scanUploadBox.addEventListener('click', () => {
+      if (!isAdmAuthenticated) {
+        lockScanDashboard();
+        showToast('error', 'Acesso Negado', 'Faça login com as credenciais de ADM para usar o scanner.');
+        return;
+      }
       if (currentScanMode === 'zip') scanFileInput?.click();
       else if (currentScanMode === 'folder') scanFolderInput?.click();
       else scanLooseInput?.click();
@@ -2603,6 +2999,11 @@ NinjaFF (sem patente)`;
   let scanBusy = false;
 
   async function processUploadedFiles(fileList) {
+    if (!isAdmAuthenticated) {
+      lockScanDashboard();
+      showToast('error', 'Acesso Restrito', 'Autentique-se com usuário e senha de ADM antes de escanear.');
+      return;
+    }
     if (!fileList || fileList.length === 0) return;
     if (scanBusy) {
       showToast('info', 'Análise em andamento', 'Aguarde o scan atual terminar.');
@@ -2619,14 +3020,15 @@ NinjaFF (sem patente)`;
       terminalStatus.className = 'terminal-status-indicator';
     }
 
-    logTerminal('SYS', 'Iniciando ccq-forensics engine 3.1...', 'terminal-info');
-    logTerminal('IO', `Detectados ${fileList.length} arquivos no buffer de entrada.`, 'terminal-info');
-    updateScanProgress(10, 'Carregando arquivos para a sandbox de memória...');
+    logTerminal('SYS', 'Iniciando ccq-forensics engine 3.2 (Etapas 1-7 + Detector de Instalação)...', 'terminal-info');
+    logTerminal('IO', `Detectados ${fileList.length} arquivo(s) no buffer de entrada.`, 'terminal-info');
+    updateScanProgress(5, 'Carregando arquivos para a sandbox de memória...');
     sfx.start();
 
     const startTime = performance.now();
     const findings = [];
     const seen = new Set();
+    const seenInstallers = new Set();
     const deviceInfo = { brand: '', model: '', osVersion: '', serial: '', kernel: '' };
     let analyzedCount = 0;
     let skippedCount = 0;
@@ -2638,64 +3040,99 @@ NinjaFF (sem patente)`;
       const first = files[0];
       const isArchive = files.length === 1 && ARCHIVE_RE.test(first.name);
 
-      let entries = [];
+      let rawEntries = [];
 
       if (isArchive) {
         const lowerName = first.name.toLowerCase();
         if (lowerName.endsWith('.zip')) {
-          logTerminal('ZIP', `Carregando container ${first.name} (${(first.size / 1024 / 1024).toFixed(1)} MB)...`, 'terminal-info');
-          updateScanProgress(15, 'Inicializando descompactador JSZip em RAM...');
+          logTerminal('ZIP', `Lendo container ${first.name} (${(first.size / 1024 / 1024).toFixed(1)} MB)...`, 'terminal-info');
+          updateScanProgress(12, 'Inicializando motor JSZip em RAM...');
           const jszipInstance = await ensureJSZip();
-          logTerminal('ZIP', 'Descompactando container .zip em memória RAM...', 'terminal-info');
+          updateScanProgress(18, 'Indexando estrutura do arquivo .zip...');
+          await sleep(10);
           const zip = await jszipInstance.loadAsync(first);
-          entries = Object.values(zip.files).filter(e => !e.dir).map(e => ({
+          // Usar uint8array + TextDecoder nativo (C++) em vez de async('string') para evitar congelamento em arquivos grandes
+          rawEntries = Object.values(zip.files).filter(e => !e.dir).map(e => ({
             path: e.name,
+            size: (e._data && e._data.uncompressedSize) ? e._data.uncompressedSize : 0,
             bytes: () => e.async('uint8array'),
-            text: () => e.async('string')
+            text: async () => {
+              const buf = await e.async('uint8array');
+              return utf8.decode(buf);
+            }
           }));
         } else {
           logTerminal('TAR', `Descomprimindo ${first.name} (${(first.size / 1024 / 1024).toFixed(1)} MB)...`, 'terminal-info');
           updateScanProgress(15, 'Descomprimindo fluxo gzip/tar em memória...');
-          entries = await readTarLike(first);
+          rawEntries = await readTarLike(first);
         }
       } else {
-        entries = files.map(f => ({
+        rawEntries = files.map(f => ({
           path: f.webkitRelativePath || f.name,
+          size: f.size || 0,
           bytes: async () => new Uint8Array(await f.arrayBuffer()),
-          text: () => f.text()
+          text: async () => {
+            const buf = new Uint8Array(await f.arrayBuffer());
+            return utf8.decode(buf);
+          }
         }));
       }
 
-      const totalRaw = entries.length;
-      if (entries.some(e => /sysdiagnose|\.plist$|\.ips$/i.test(e.path))) osDetected = 'IOS';
-      entries = entries.filter(e => isRelevantEntry(e.path));
-      logTerminal('IO', `Estrutura indexada: ${totalRaw} entradas, ${entries.length} relevantes para perícia.`, 'terminal-info');
+      const totalRaw = rawEntries.length;
+      if (rawEntries.some(e => /sysdiagnose|\.plist$|\.ips$/i.test(e.path))) osDetected = 'IOS';
+
+      // Filtrar apenas entradas forenses relevantes (evita travar em imagens, proto, traces binários)
+      let entries = [];
+      for (const e of rawEntries) {
+        const mode = classifyScanEntry(e.path);
+        if (mode) {
+          entries.push({ ...e, scanMode: mode });
+        } else {
+          skippedCount++;
+        }
+      }
+
+      // Caso o usuário tenha enviado um arquivo solto com nome incomum, analisar como texto
+      if (entries.length === 0 && rawEntries.length > 0) {
+        entries = rawEntries.slice(0, 30).map(e => ({ ...e, scanMode: 'text' }));
+      }
+
+      logTerminal('IO', `Estrutura indexada: ${totalRaw} entradas totais, ${entries.length} arquivos forenses selecionados (${CHEAT_SIGNATURES.length} assinaturas ativas).`, 'terminal-info');
 
       if (!entries.length) {
         throw new Error('Nenhum arquivo de log ou dump analisável foi encontrado no pacote.');
       }
 
       logTerminal('SYS', `Sistema alvo: ${osDetected === 'IOS' ? 'iOS (sysdiagnose)' : 'Android (bugreport/dump)'}`, 'terminal-info');
-      updateScanProgress(30, 'Executando varredura por offsets e injeções il2cpp...');
+      updateScanProgress(25, 'Executando varredura forense (Offsets, Overlays, Proxies, Logs External e Etapas 1-7)...');
+      await sleep(10);
 
       const total = entries.length;
       for (let i = 0; i < total; i++) {
         const entry = entries[i];
         const name = entry.path.split('/').pop() || entry.path;
+        const basePct = 25 + ((i / total) * 68);
 
-        if (i % 3 === 0 || i === total - 1) {
-          const pct = 30 + Math.round(((i + 1) / total) * 55);
-          updateScanProgress(pct, `Analisando: ${name} (${i + 1}/${total})`);
-        }
+        updateScanProgress(Math.round(basePct), `Analisando (${i + 1}/${total}): ${name}`);
+        await sleep(0);
 
         try {
           let text = '';
-          if (BINARY_EXT.test(entry.path)) {
+          if (entry.scanMode === 'binary') {
+            if (entry.size && entry.size > 15 * 1024 * 1024) {
+              skippedCount++;
+              continue;
+            }
             const bytes = await entry.bytes();
-            if (bytes.length <= 25 * 1024 * 1024) {
+            if (bytes.length <= 15 * 1024 * 1024) {
               text = extractPrintableStrings(bytes);
             }
           } else {
+            if (entry.size && entry.size > 120 * 1024 * 1024) {
+              logTerminal('SKIP', `Pulando arquivo gigante (${(entry.size / 1024 / 1024).toFixed(0)} MB): ${name}`, 'terminal-info');
+              skippedCount++;
+              continue;
+            }
             text = await entry.text();
           }
 
@@ -2704,34 +3141,48 @@ NinjaFF (sem patente)`;
             continue;
           }
 
-          checkedLines += Math.min(text.length / 50, 50000);
+          checkedLines += Math.max(1, Math.round(text.length / 65));
           extractDeviceInfo(text, deviceInfo);
 
-          const hits = scanTextForCheats(text, entry.path);
+          // 1) Detector de origem de instalação (Package [...] installerPackageName=...)
+          if (osDetected === 'ANDROID' && text.includes('installerPackageName=')) {
+            const installerHits = verificarOrigemInstalacao(text, entry.path, seenInstallers);
+            for (const ih of installerHits) {
+              findings.push(ih);
+              logTerminal('ORIGEM', `[${ih.risk.toUpperCase()}] ${ih.name}`, 'terminal-err');
+            }
+          }
+
+          // 2) Varredura em chunks das assinaturas forenses + Etapas 1 a 6 + Contexto Etapa 7
+          const stepSpan = 68 / total;
+          const hits = await scanTextForCheatsChunked(text, entry.path, (chunkRatio) => {
+            const subPct = Math.min(93, Math.round(basePct + chunkRatio * stepSpan));
+            updateScanProgress(subPct, `Analisando ${name} (${Math.round(chunkRatio * 100)}%)...`);
+          });
+
           for (const h of hits) {
             const key = h.name + '|' + h.file;
             if (seen.has(key)) continue;
             seen.add(key);
             findings.push(h);
             logTerminal('ALERTA', `[${h.risk.toUpperCase()}] ${h.name} em ${name}`, 'terminal-err');
-            sfx.alert(h.weight === 100);
+            if (h.weight >= 85) {
+              sfx.alert(h.weight === 100);
+            }
           }
 
           analyzedCount++;
         } catch (fileErr) {
           skippedCount++;
         }
-
-        // Permite ao navegador atualizar a tela a cada 5 arquivos
-        if (i % 5 === 0) await sleep(0);
       }
 
-      updateScanProgress(90, 'Compilando relatório pericial forense...');
-      await sleep(200);
+      updateScanProgress(96, 'Aplicando Etapa 7 (Análise Contextual dos Resultados)...');
+      await sleep(120);
 
       const durationSec = ((performance.now() - startTime) / 1000).toFixed(1);
       updateScanProgress(100, `Varredura concluída em ${durationSec}s`);
-      logTerminal('SYS', `Análise finalizada: ${analyzedCount} arquivos examinados, ${findings.length} ameaças encontradas.`, 'terminal-info');
+      logTerminal('SYS', `Análise finalizada: ${analyzedCount} arquivos examinados, ${findings.length} ocorrências encontradas.`, 'terminal-info');
 
       if (terminalStatus) {
         terminalStatus.textContent = 'CONCLUÍDO';
@@ -2739,6 +3190,14 @@ NinjaFF (sem patente)`;
       }
 
       sfx.done();
+
+      // Cálculo de score ponderado (penaliza mais cheats diretos/root/overlays do que logs informativos de auditoria)
+      const totalPenalty = findings.reduce((acc, f) => {
+        if (f.category === 'log_audit') return acc + 5;
+        if (f.weight >= 90) return acc + 35;
+        if (f.weight >= 60) return acc + 18;
+        return acc + 8;
+      }, 0);
 
       currentScanReport = {
         findings,
@@ -2749,12 +3208,12 @@ NinjaFF (sem patente)`;
         osDetected,
         deviceInfo,
         timestamp: new Date().toLocaleString('pt-BR'),
-        score: findings.length === 0 ? 100 : Math.max(0, 100 - findings.length * 25)
+        score: findings.length === 0 ? 100 : Math.max(0, 100 - totalPenalty)
       };
 
       displayScanResults(currentScanReport);
       showToast(findings.length === 0 ? 'success' : 'error', 'Análise Finalizada',
-        findings.length === 0 ? 'Dispositivo 100% limpo e aprovado.' : `${findings.length} ameaça(s) encontrada(s)!`);
+        findings.length === 0 ? 'Dispositivo 100% limpo e aprovado.' : `${findings.length} ocorrência(s) forense(s) encontrada(s)!`);
 
     } catch (err) {
       logTerminal('ERR', `Falha no scanner: ${err.message || String(err)}`, 'terminal-err');
@@ -2800,18 +3259,25 @@ NinjaFF (sem patente)`;
   function displayScanResults(report) {
     if (!scanResults) return;
     scanResults.style.display = 'block';
+    activeFilterCategory = 'all';
 
+    const highRiskCount = report.findings.filter(f => f.weight >= 60).length;
     const isClean = report.findings.length === 0;
 
     resultSummary.innerHTML = `
-      <h3 style="color: ${isClean ? 'var(--live-green)' : 'var(--red)'};">
-        ${isClean ? 'DISPOSITIVO 100% LIMPO & APROVADO' : 'AMEAÇAS FORENSES DETECTADAS'}
+      <h3 style="color: ${isClean ? 'var(--live-green)' : (highRiskCount > 0 ? 'var(--red)' : '#f5a623')};">
+        ${isClean ? 'DISPOSITIVO 100% LIMPO & APROVADO' : (highRiskCount > 0 ? 'AMEAÇAS FORENSES DETECTADAS' : 'REGISTROS DE AUDITORIA DETECTADOS (VERIFICAR CONTEXTO)')}
       </h3>
       <p style="color: var(--text-2); font-size: 0.95rem;">
-        ${isClean ? 'Nenhum mod menu, offset il2cpp ou bypass foi identificado nos logs examinados.' : `Foram encontradas ${report.findings.length} evidências de trapaça ou modificações não autorizadas.`}
+        ${isClean
+          ? 'Nenhum mod menu, offset il2cpp, janela sobreposta (overlay), proxy ou origem de instalação irregular foi identificado.'
+          : `Foram encontradas ${report.findings.length} evidências/registros (${highRiskCount} de risco médio/alto ou ban direto).`}
       </p>
       <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-3); margin-top: 10px;">
-        Pontuação de Integridade: <strong style="color: #fff;">${report.score}/100</strong> · Arquivos examinados: ${report.analyzedCount} · Tempo: ${report.durationSec}s
+        Pontuação de Integridade: <strong style="color: #fff;">${report.score}/100</strong> · Arquivos examinados: ${report.analyzedCount} · Linhas: ~${report.checkedLines.toLocaleString('pt-BR')} · Tempo: ${report.durationSec}s
+      </div>
+      <div style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: rgba(255,255,255,0.03); border-left: 3px solid var(--amber, #f5a623); font-size: 0.78rem; color: var(--text-3); line-height: 1.5;">
+        <strong style="color: #fff;">📋 ETAPA 7 — ANÁLISE DOS RESULTADOS:</strong> Examinar o contexto de cada ocorrência abaixo (incluindo linha anterior, linha posterior, timestamp, tag e componente responsável). Os termos de infraestrutura/logging, isoladamente, dependem da mensagem completa, da versão do Android e do componente que gerou o registro.
       </div>
     `;
 
@@ -2871,7 +3337,7 @@ NinjaFF (sem patente)`;
       : findings.filter(f => f.category === categoryFilter);
 
     if (filtered.length === 0 && findings.length > 0) {
-      resultDetails.innerHTML = `<p style="color:var(--text-3); padding:16px 0;">Nenhuma ameaça nesta categoria.</p>`;
+      resultDetails.innerHTML = `<p style="color:var(--text-3); padding:16px 0;">Nenhuma ocorrência nesta categoria.</p>`;
       return;
     }
 
@@ -2885,39 +3351,48 @@ NinjaFF (sem patente)`;
       return;
     }
 
-    resultDetails.innerHTML = filtered.map(f => `
+    resultDetails.innerHTML = filtered.map(f => {
+      const ctx = f.context || {};
+      const hasContextLines = Boolean(ctx.prevLine || ctx.nextLine);
+      return `
       <div class="result-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
           <strong style="color: #fff;">${escapeHtml(f.name)}</strong>
-          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--red); background: rgba(229,72,77,0.15); padding: 2px 8px; border-radius: 4px;">${escapeHtml(f.risk)}</span>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--red); background: rgba(229,72,77,0.15); padding: 2px 8px; border-radius: 4px;">
+            Peso: ${f.weight || 50} · ${escapeHtml(f.risk)}
+          </span>
         </div>
         <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-3); margin-bottom: 6px;">
-          Arquivo: ${escapeHtml(f.file)}
+          Arquivo: <span style="color: var(--text-2);">${escapeHtml(f.file)}</span> · Termo: <code style="color:#f5a623;">${escapeHtml(f.term)}</code>
+          ${ctx.meta ? `<br><span style="color: #7ee787;">${escapeHtml(ctx.meta)}</span>` : ''}
         </div>
-        <code style="display: block; word-break: break-all; color: #ff8a80; background: #000; padding: 6px 10px; border-radius: 4px;">
-          ${escapeHtml(f.snippet.slice(0, 180))}
-        </code>
+        <div style="background: #050507; border: 1px solid rgba(255,255,255,0.07); padding: 8px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.5; overflow-x: auto;">
+          ${hasContextLines && ctx.prevLine ? `<div style="color: #6e7681; word-break: break-all;">[Linha -1] ${escapeHtml(ctx.prevLine)}</div>` : ''}
+          <div style="color: #ff8a80; font-weight: 600; word-break: break-all;">[Ocorrência] ${escapeHtml((ctx.currentLine || f.snippet || '').slice(0, 220))}</div>
+          ${hasContextLines && ctx.nextLine ? `<div style="color: #6e7681; word-break: break-all;">[Linha +1] ${escapeHtml(ctx.nextLine)}</div>` : ''}
+        </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
   }
 
   if (scanBtnCopyReport) {
     scanBtnCopyReport.addEventListener('click', () => {
       if (!currentScanReport) return;
-      let rep = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v3.1* 🛡️\n`;
+      let rep = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v3.2* 🛡️\n`;
       rep += `📅 Data: ${currentScanReport.timestamp}\n`;
       rep += `🎯 Score de Integridade: ${currentScanReport.score}/100\n`;
       rep += `⏱️ Duração: ${currentScanReport.durationSec}s (${currentScanReport.analyzedCount} arquivos examinados)\n`;
       if (currentScanReport.deviceInfo && currentScanReport.deviceInfo.model) {
         rep += `📱 Dispositivo: ${currentScanReport.deviceInfo.brand} ${currentScanReport.deviceInfo.model} (${currentScanReport.deviceInfo.osVersion || currentScanReport.osDetected})\n`;
       }
-      rep += `⚠️ Ameaças Encontradas: ${currentScanReport.findings.length}\n\n`;
+      rep += `⚠️ Ocorrências Encontradas: ${currentScanReport.findings.length}\n\n`;
 
       if (currentScanReport.findings.length === 0) {
         rep += `✅ NENHUMA IRREGULARIDADE DETECTADA. JOGADOR APROVADO.\n`;
       } else {
         currentScanReport.findings.forEach((f, idx) => {
-          rep += `${idx + 1}. [${f.risk}] ${f.name}\n   Arquivo: ${f.file}\n   Trecho: ${f.snippet.slice(0, 80)}\n\n`;
+          rep += `${idx + 1}. [${f.risk} | Peso ${f.weight}] ${f.name}\n   Arquivo: ${f.file}\n   Evidência: ${(f.snippet || '').slice(0, 100)}\n\n`;
         });
       }
       rep += `----------------------------------\n`;
