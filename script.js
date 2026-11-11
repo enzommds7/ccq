@@ -278,7 +278,78 @@ document.addEventListener('DOMContentLoaded', () => {
     return res;
   }
 
-  // SHA-256 via Web Crypto API nativa com fallback determinístico (funciona em HTTPS, HTTP e file://)
+  // SHA-256 nativo (Web Crypto) com fallback RFC-6234 puro JS (100% determinístico em HTTPS, HTTP e file://)
+  function pureJsSha256(ascii) {
+    function rightRotate(value, amount) {
+      return (value >>> amount) | (value << (32 - amount));
+    }
+    const mathPow = Math.pow;
+    const maxWord = mathPow(2, 32);
+    let i, j;
+    let result = '';
+    const words = [];
+    const asciiBitLength = ascii.length * 8;
+    const hash = [];
+    const k = [];
+    let primeCounter = 0;
+    const isComposite = {};
+    for (let candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+        hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+        k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      }
+    }
+    ascii += '\x80';
+    while ((ascii.length % 64) - 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i);
+      words[i >> 2] |= j << ((3 - (i % 4)) * 8);
+    }
+    words[words.length] = (asciiBitLength / maxWord) | 0;
+    words[words.length] = asciiBitLength;
+    for (j = 0; j < words.length;) {
+      const w = words.slice(j, (j += 16));
+      const oldHash = hash.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        const w15 = w[i - 15];
+        const w2 = w[i - 2];
+        const a = hash[0];
+        const e = hash[4];
+        const temp1 = hash[7] +
+          (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) +
+          ((e & hash[5]) ^ (~e & hash[6])) +
+          k[i] +
+          (w[i] = (i < 16) ? w[i] : (
+            w[i - 16] +
+            (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3)) +
+            w[i - 7] +
+            (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))
+          ) | 0);
+        const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) +
+          ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash[7] = hash[6];
+        hash[6] = hash[5];
+        hash[5] = hash[4];
+        hash[4] = (oldHash[4] + temp1) | 0;
+        hash[3] = hash[2];
+        hash[2] = hash[1];
+        hash[1] = hash[0];
+        hash[0] = (temp1 + temp2) | 0;
+      }
+      for (i = 0; i < 8; i++) {
+        hash[i] = (hash[i] + oldHash[i]) | 0;
+      }
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j >= 0; j--) {
+        const b = (hash[i] >> (j * 8)) & 255;
+        result += ((b < 16) ? '0' : '') + b.toString(16);
+      }
+    }
+    return result;
+  }
+
   async function sha256Hex(str) {
     try {
       if (typeof crypto !== 'undefined' && crypto.subtle && crypto.subtle.digest) {
@@ -288,16 +359,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return arr.map(b => b.toString(16).padStart(2, '0')).join('');
       }
     } catch (_) {}
-    // Fallback determinístico 256-bit (8x32-bit FNV-1a mix) quando crypto.subtle não está disponível
-    const seeds = [0x811c9dc5, 0x9e3779b9, 0x85ebca6b, 0xc2b2ae35, 0x27d4eb2f, 0x165667b1, 0xd3a2646c, 0xfd7046c5];
-    for (let i = 0; i < str.length; i++) {
-      const c = str.charCodeAt(i);
-      for (let s = 0; s < 8; s++) {
-        seeds[s] ^= c + s * 31;
-        seeds[s] = Math.imul(seeds[s], 0x01000193) >>> 0;
-      }
-    }
-    return seeds.map(h => h.toString(16).padStart(8, '0')).join('');
+    return pureJsSha256(str);
   }
 
   function generateRandomSeedHex() {
@@ -428,10 +490,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─────────────────────────────────────────────────────────────
   // 6. Autenticação Unificada de ADM (Sempre Exige Login ao Entrar)
   // ─────────────────────────────────────────────────────────────
-  const ADMIN_USER_VAL = 'CACIQUE';
-  const ADMIN_PASS_VAL = 'g.indiopatrocina777';
-  const ADMIN_USER_HASH = '3680593c420bee400f624c81661151f3141f3271ed3f80121738da69f456cace'; // 'CACIQUE'
-  const ADMIN_PASS_HASH = 'e0112dd9dc3f248b7a9e78bda4d522999d68636989c772137e7f644d32caf443'; // 'g.indiopatrocina777'
+  const ADMIN_USER_HASH = '3680593c420bee400f624c81661151f3141f3271ed3f80121738da69f456cace';
+  const ADMIN_PASS_HASH = 'e0112dd9dc3f248b7a9e78bda4d522999d68636989c772137e7f644d32caf443';
   const AUTH_STORAGE_KEY = 'cacique_unified_adm_auth';
 
   // Remove qualquer sessão antiga salva no navegador para NUNCA iniciar logado automaticamente
@@ -480,9 +540,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const cleanUser = (userVal || '').trim().toUpperCase();
     const cleanPass = (passVal || '').trim();
 
-    let isMatch = (cleanUser === ADMIN_USER_VAL && (cleanPass === ADMIN_PASS_VAL || cleanPass.toLowerCase() === ADMIN_PASS_VAL.toLowerCase()));
+    let isMatch = false;
 
-    if (!isMatch && typeof crypto !== 'undefined' && crypto.subtle) {
+    // 1. Tentar validação via API Backend (se estiver rodando)
+    try {
+      const resp = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: cleanUser, pass: cleanPass })
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.status === 'success') {
+          isMatch = true;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Validação client-side puramente criptográfica (apenas comparação de hash SHA-256)
+    if (!isMatch) {
       try {
         const userH = await sha256Hex(cleanUser);
         const passH = await sha256Hex(cleanPass);
