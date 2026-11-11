@@ -2643,7 +2643,160 @@ NinjaFF (sem patente)`;
     { term: 'logd', name: 'Etapa 6 (Componentes de Logging): logd', cat: 'log_audit', weight: 30, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
     { term: 'LogBuffer', name: 'Etapa 6 (Componentes de Logging): LogBuffer', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
     { term: 'Logcat', name: 'Etapa 6 (Componentes de Logging): Logcat', cat: 'log_audit', weight: 30, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
-    { term: 'liblog', name: 'Etapa 6 (Componentes de Logging): liblog', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' }
+    { term: 'liblog', name: 'Etapa 6 (Componentes de Logging): liblog', cat: 'log_audit', weight: 35, risk: 'Auditoria Etapa 6 (Infraestrutura Android)' },
+
+    // ── INJEÇÕES EM GAMEASSET, CRASH DE MEMÓRIA & PASTA NÃO VERIFICADA -SHgap- ──
+    { term: '-SHgap-', name: '-SHgap- Pasta Não Verificada (Reinstalar Free Fire)', cat: 'ff_cheat', weight: 100, risk: 'Crítico (Pedir para reinstalar Free Fire)', recommendation: 'Reinstalar Free Fire' },
+    { term: 'gameassetbundles/font/SH-Gpp2', name: 'Arquivo Injetado na GameAsset (SH-Gpp2)', cat: 'injection', weight: 100, risk: 'Ban Direto (Arquivo Injetado na GameAsset)' },
+    { term: 'SH-Gpp2', name: 'Arquivo Injetado na GameAsset (SH-Gpp2)', cat: 'injection', weight: 100, risk: 'Ban Direto (Arquivo Injetado na GameAsset)' },
+    { term: 'app_resources_lib.jar', name: 'Processo Suspeito Cache (app_resources_lib.jar)', cat: 'injection', weight: 90, risk: 'Alto (Processo Suspeito em Cache)' },
+    { term: 'google_api_resources_lib.jar', name: 'Processo Suspeito Cache (google_api_resources_lib.jar)', cat: 'injection', weight: 90, risk: 'Alto (Processo Suspeito em Cache)' },
+    { term: 'comm="UnityMain" path="/data/data/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/font/SH-Gpp2"', name: 'SELinux AVC: Execução Não Autorizada em GameAsset (UnityMain)', cat: 'injection', weight: 100, risk: 'Ban Direto (Arquivo Injetado na GameAsset / AVC Granted)' },
+    { term: 'granted  { execute } for  comm="UnityMain"', name: 'SELinux AVC: Execução Não Autorizada em GameAsset (UnityMain)', cat: 'injection', weight: 100, risk: 'Ban Direto (Arquivo Injetado na GameAsset / AVC Granted)' },
+    { term: 'process=com.dts.freefiremax reason=3 (LOW_MEMORY)', name: 'Encerramento de Processo na Memória (LOW_MEMORY)', cat: 'system', weight: 60, risk: 'Médio (Processo de Encerramento na Memória)' },
+    { term: 'reason=3 (LOW_MEMORY)', name: 'Encerramento de Processo na Memória (LOW_MEMORY)', cat: 'system', weight: 50, risk: 'Médio (Processo de Encerramento na Memória)' },
+    { term: 'github.com/jilleJr', name: 'Crash Suspeito Envolvendo Link Github (jilleJr/Newtonsoft.Json)', cat: 'injection', weight: 90, risk: 'Alto (Processo Suspeito Causando Crash)' },
+    { term: 'jilleJr/Ne', name: 'DLL Externa Injetada Causando Crash (jilleJr/Newtonsoft.Json)', cat: 'injection', weight: 90, risk: 'Alto (Processo Suspeito Causando Crash)' },
+    { term: 'signal 11 (SIGSEGV), code 1 (SEGV_MAPERR)', name: 'Crash UnityMain SIGSEGV SEGV_MAPERR (Injeção de Bytes Assembly / Wallhack)', cat: 'injection', weight: 95, risk: 'Crítico (Tentativa de Escrever na Memória / Wallhack)' },
+    { term: 'SEGV_MAPERR', name: 'Crash de Memória: SEGV_MAPERR (Injeção de Memória / Crash)', cat: 'injection', weight: 85, risk: 'Alto (Tentativa de Escrever na Memória)', isWordBoundary: true },
+    { term: 'pac_enabled_keys', name: 'Dump de Crash PAC Keys (UnityMain / Injeção)', cat: 'injection', weight: 70, risk: 'Alto (Dump de Crash com PAC Keys)' },
+
+    // ── LOGS DE RESTORE BACKUP (iOS RESTORE - POSSIBLE HACK) ──
+    { term: 'MobileBackup', name: 'Logs Restore/Backup: MobileBackup', cat: 'backup_restore', weight: 50, risk: 'Possible (Atividade do Serviço de Backup)' },
+    { term: 'BackupAgent', name: 'Logs Restore/Backup: BackupAgent', cat: 'backup_restore', weight: 50, risk: 'Possible (Processos Relacionados a Backup)' },
+    { term: 'BackupRestore', name: 'Logs Restore/Backup: BackupRestore', cat: 'backup_restore', weight: 60, risk: 'Possible (Operações de Backup ou Restauração)' },
+    { term: 'RestoreFromBackup', name: 'Logs Restore/Backup: RestoreFromBackup', cat: 'backup_restore', weight: 70, risk: 'Possible (Possível Restauração de Backup)' },
+    { term: 'Restored', name: 'Logs Restore/Backup: Restored', cat: 'backup_restore', weight: 55, risk: 'Possible (Serviço Responsável por Restauração)' },
+    { term: 'mobilebackupd', name: 'Logs Restore/Backup: mobilebackupd', cat: 'backup_restore', weight: 60, risk: 'Possible (Daemon de Backup do iOS)' },
+    { term: 'restore_type', name: 'Logs Restore/Backup: restore_type', cat: 'backup_restore', weight: 65, risk: 'Possible (Identificação de Tipo de Restauração)' },
+    { term: 'SetupAssistant', name: 'Logs Restore/Backup: SetupAssistant', cat: 'backup_restore', weight: 50, risk: 'Possible (Configuração Inicial do iPhone)' },
+    { term: 'iCloudRestore', name: 'Logs Restore/Backup: iCloudRestore', cat: 'backup_restore', weight: 65, risk: 'Possible (Possível Restauração pelo iCloud)' },
+    { term: 'itunesstored', name: 'Logs App Store: itunesstored', cat: 'backup_restore', weight: 30, risk: 'Informativo (Serviço App Store - Não é Prova de Restauração)' },
+
+    // ── LISTA OFICIAL DE PROXIES & BYPASSES FF (Att: 09/08/2026) ──
+    { term: '03', name: 'Proxy FF ID: 03', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '051', name: 'Proxy FF ID: 051', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '06', name: 'Proxy FF ID: 06', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '06a', name: 'Proxy FF ID: 06a', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '0af', name: 'Proxy FF ID: 0af', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '0b', name: 'Proxy FF ID: 0b', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '0E', name: 'Proxy FF ID: 0E', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'od', name: 'Proxy FF ID: od', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '105e', name: 'Proxy FF ID: 105e', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '14', name: 'Proxy FF ID: 14', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '140', name: 'Proxy FF ID: 140', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '15d', name: 'Proxy FF ID: 15d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '1b69', name: 'Proxy FF ID: 1b69', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '1ea', name: 'Proxy FF ID: 1ea', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '28a', name: 'Proxy FF ID: 28a', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '2bb', name: 'Proxy FF ID: 2bb', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '2c', name: 'Proxy FF ID: 2c', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '3c', name: 'Proxy FF ID: 3c', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '3c4', name: 'Proxy FF ID: 3c4', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '40e', name: 'Proxy FF ID: 40e', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '439', name: 'Proxy FF ID: 439', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '47', name: 'Proxy FF ID: 47', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '4a', name: 'Proxy FF ID: 4a', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '4c', name: 'Proxy FF ID: 4c', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '4cf', name: 'Proxy FF ID: 4cf', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '4d', name: 'Proxy FF ID: 4d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '4e', name: 'Proxy FF ID: 4e', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '51', name: 'Proxy FF ID: 51', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '550', name: 'Proxy FF ID: 550', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '59ac', name: 'Proxy FF ID: 59ac', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '5b', name: 'Proxy FF ID: 5b', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '5c10', name: 'Proxy FF ID: 5c10', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '60a', name: 'Proxy FF ID: 60a', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '60af', name: 'Proxy FF ID: 60af', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '62', name: 'Proxy FF ID: 62', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '62d', name: 'Proxy FF ID: 62d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '69', name: 'Proxy FF ID: 69', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '6b', name: 'Proxy FF ID: 6b', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '6dd', name: 'Proxy FF ID: 6dd', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '704', name: 'Proxy FF ID: 704', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '704114', name: 'Proxy FF ID: 704114', cat: 'proxy_net', weight: 90, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '70a', name: 'Proxy FF ID: 70a', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '70d', name: 'Proxy FF ID: 70d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '739', name: 'Proxy FF ID: 739', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '76d', name: 'Proxy FF ID: 76d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '78f', name: 'Proxy FF ID: 78f', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '7d', name: 'Proxy FF ID: 7d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '80', name: 'Proxy FF ID: 80', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '84', name: 'Proxy FF ID: 84', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '87', name: 'Proxy FF ID: 87', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '90eb', name: 'Proxy FF ID: 90eb', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '96f', name: 'Proxy FF ID: 96f', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: '9d', name: 'Proxy FF ID: 9d', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a00', name: 'Proxy FF ID: a00', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a1fc', name: 'Proxy FF ID: a1fc', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a4', name: 'Proxy FF ID: a4', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a48', name: 'Proxy FF ID: a48', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a4c', name: 'Proxy FF ID: a4c', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a5', name: 'Proxy FF ID: a5', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a64', name: 'Proxy FF ID: a64', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'a9', name: 'Proxy FF ID: a9', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'ae7', name: 'Proxy FF ID: ae7', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'authproxyxff.up', name: 'AuthProxyX FF (authproxyxff.up)', cat: 'proxy_net', weight: 100, risk: 'Ban Direto (Proxy FF)' },
+    { term: 'b0', name: 'Proxy FF ID: b0', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'b4', name: 'Proxy FF ID: b4', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'b9', name: 'Proxy FF ID: b9', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'bc', name: 'Proxy FF ID: bc', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'bd', name: 'Proxy FF ID: bd', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'bd32', name: 'Proxy FF ID: bd32', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'bd32d', name: 'Proxy FF ID: bd32d', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'c17', name: 'Proxy FF ID: c17', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'c25', name: 'Proxy FF ID: c25', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'c9', name: 'Proxy FF ID: c9', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'com.antijudas.dns', name: 'Proxy DNS AntiJudas (com.antijudas.dns)', cat: 'proxy_net', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.antijudas.ios', name: 'Cheat AntiJudas iOS (com.antijudas.ios)', cat: 'proxy_net', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.apple.mgmt.External', name: 'Perfil Externo de Gestão (com.apple.mgmt.External)', cat: 'proxy_net', weight: 90, risk: 'Alto (Perfil de Proxy MDM)' },
+    { term: 'com.congdatregedit', name: 'Regedit CongDat (com.congdatregedit)', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.criperlegend', name: 'CriperLegend Mod (com.criperlegend)', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.demon.engine', name: 'Demon Engine Cheat (com.demon.engine)', cat: 'injection', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.giahuyregedit.apple', name: 'GiaHuy Regedit Apple (com.giahuyregedit.apple)', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.giahuyregedit', name: 'GiaHuy Regedit (com.giahuyregedit)', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.headshot', name: 'Headshot Mod (com.headshot)', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.krarosxvenuxapple', name: 'KrarosX Venux Apple (com.krarosxvenuxapple)', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.luxebypass', name: 'Luxe Bypass (com.luxebypass)', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.ngocsonregedit.apple', name: 'NgocSon Regedit Apple (com.ngocsonregedit.apple)', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.peligroff.input.redzone', name: 'PeligroFF Redzone Input (com.peligroff.input.redzone)', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.sensi.fluida.pro', name: 'Sensi Fluida Pro (com.sensi.fluida.pro)', cat: 'ff_cheat', weight: 95, risk: 'Ban Direto' },
+    { term: 'com.solitude.profile.v12', name: 'Solitude Profile v12 (com.solitude.profile.v12)', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.thanhcongregedit.apple.dns', name: 'ThanhCong Regedit Apple DNS', cat: 'proxy_net', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.thanhcongregedit', name: 'ThanhCong Regedit (com.thanhcongregedit)', cat: 'ff_regedit', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.Vluv.lockprofile', name: 'Vluv Lock Profile (com.Vluv.lockprofile)', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'com.xtremo.mobile', name: 'Xtremo Mobile Proxy/Cheat (com.xtremo.mobile)', cat: 'proxy_net', weight: 95, risk: 'Ban Direto' },
+    { term: 'd03', name: 'Proxy FF ID: d03', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'd03090', name: 'Proxy FF ID: d03090', cat: 'proxy_net', weight: 90, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'd14', name: 'Proxy FF ID: d14', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'd141', name: 'Proxy FF ID: d141', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'd4f0', name: 'Proxy FF ID: d4f0', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'd5', name: 'Proxy FF ID: d5', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'd7319', name: 'Proxy FF ID: d7319', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'dash.proxy', name: 'Dash Proxy (dash.proxy)', cat: 'proxy_net', weight: 90, risk: 'Alto (Proxy de Rede)' },
+    { term: 'dd4f0', name: 'Proxy FF ID: dd4f0', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'dd4fa', name: 'Proxy FF ID: dd4fa', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'e0', name: 'Proxy FF ID: e0', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'e3', name: 'Proxy FF ID: e3', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'f54', name: 'Proxy FF ID: f54', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'f6', name: 'Proxy FF ID: f6', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'f6c', name: 'Proxy FF ID: f6c', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'f9', name: 'Proxy FF ID: f9', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'ff32', name: 'Proxy FF ID: ff32', cat: 'proxy_net', weight: 85, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'ff6', name: 'Proxy FF ID: ff6', cat: 'proxy_net', weight: 80, risk: 'Alto (Proxy/Bypass FF - Lista 09/08)', isWordBoundary: true },
+    { term: 'freefireproxy.xyz', name: 'Free Fire Proxy XYZ (freefireproxy.xyz)', cat: 'proxy_net', weight: 100, risk: 'Ban Direto' },
+    { term: 'iMac.EFB7D714', name: 'iMac Proxy Hardware Profile (iMac.EFB7D714)', cat: 'proxy_net', weight: 90, risk: 'Alto' },
+    { term: 'khoindvn', name: 'Khoindvn Bypass/Proxy', cat: 'proxy_net', weight: 95, risk: 'Ban Direto' },
+    { term: 'mitm', name: 'MITM Man-in-the-Middle', cat: 'proxy_net', weight: 80, risk: 'Alto (Interceptação MITM)', isWordBoundary: true },
+    { term: 'proxyady', name: 'ProxyAdy Interceptor', cat: 'proxy_net', weight: 95, risk: 'Ban Direto' },
+    { term: 'Regedit', name: 'Regedit Config', cat: 'ff_regedit', weight: 85, risk: 'Alto (Regedit Detectado)', isWordBoundary: true },
+    { term: 'to.appdb.C2D9F2', name: 'AppDB Certificado C2D9F2', cat: 'root_bypass', weight: 95, risk: 'Ban Direto' },
+    { term: 'to.appdb.certs1', name: 'AppDB Certificado 1', cat: 'root_bypass', weight: 95, risk: 'Ban Direto' },
+    { term: 'to.appdb.certs2', name: 'AppDB Certificado 2', cat: 'root_bypass', weight: 95, risk: 'Ban Direto' },
+    { term: 'TRONGHIEU', name: 'TrongHieu Cheat Profile', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' },
+    { term: 'vip.uncover', name: 'VIP Unc0ver Jailbreak/Tweak', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'vip.uncOver', name: 'VIP Unc0ver Tweak Profile', cat: 'root_bypass', weight: 100, risk: 'Ban Direto' },
+    { term: 'XITADO', name: 'Xitado Cheat Profile', cat: 'ff_cheat', weight: 100, risk: 'Ban Direto' }
   ].map(s => ({ ...s, termLower: s.term.toLowerCase() }));
 
   const CATEGORY_NAMES = {
@@ -2655,6 +2808,8 @@ NinjaFF (sem patente)`;
     injection: '💉 Injeção & Hooking',
     root_bypass: '🔓 Root & Bypass',
     proxy_net: '🌐 Proxy & Interceptação',
+    backup_restore: '🔄 Backup & Restauração (Possible)',
+    casino_log: '🎰 Log de Cassino (Hífen)',
     external_log: '📡 Logs External & ADB',
     installer_origin: '📦 Origem de Instalação',
     log_audit: '🔎 Auditoria de Logs (Etapas 1-7)',
@@ -2663,7 +2818,7 @@ NinjaFF (sem patente)`;
 
   // Allowlist estrita de arquivos relevantes para evitar travamentos em protobufs (.pb), vídeos, imagens ou traces gigantes
   const TEXT_EXT_RE = /\.(txt|log|prop|plist|xml|json|csv|conf|cfg|properties|yaml|yml|html|htm|js|sh|py|smali|reg|ini|md)$/i;
-  const BIN_EXT_RE = /\.(so|dex|dylib|bin|elf)$/i;
+  const BIN_EXT_RE = /\.(so|dex|dylib|bin|elf|jar)$/i;
   const NO_EXT_ALLOW = new Set([
     'packages', 'services', 'dumpsys', 'logcat',
     'procrank', 'processes', 'bugreport', 'meminfo',
@@ -2674,6 +2829,10 @@ NinjaFF (sem patente)`;
   function classifyScanEntry(path) {
     const clean = path.replace(/\\/g, '/');
     const lower = clean.toLowerCase();
+    // Prioridade máxima: garantir que injeções em GameAsset, .jar em cache ou pastas não verificadas nunca sejam ignoradas
+    if (lower.includes('sh-gpp2') || lower.includes('-shgap-')) return 'text';
+    if (/\.(jar)$/i.test(lower)) return 'binary';
+
     // Ignorar pastas de mídia, fontes, imagens, proto, perfetto-trace e zips aninhados
     if (/\.(png|jpg|jpeg|gif|bmp|webp|ico|heic|mp4|mov|avi|mkv|mp3|wav|ogg|m4a|ttf|otf|woff|woff2|pb|perfetto-trace|hprof|apk|arsc|vdex|odex|oat|zip|gz|tar)$/i.test(lower)) {
       return null;
@@ -2958,8 +3117,21 @@ NinjaFF (sem patente)`;
         const sig = CHEAT_SIGNATURES[sIdx];
         if (foundTermsInFile.has(sig.term)) continue;
 
-        const localIdx = sliceLower.indexOf(sig.termLower);
-        if (localIdx !== -1) {
+        let searchFrom = 0;
+        while (searchFrom < sliceLower.length) {
+          const localIdx = sliceLower.indexOf(sig.termLower, searchFrom);
+          if (localIdx === -1) break;
+
+          // Se for termo curto (ex: proxies de 2 a 4 caracteres), validar delimitadores de palavra para eliminar falsos positivos
+          if (sig.isWordBoundary) {
+            const charBefore = localIdx > 0 ? sliceLower[localIdx - 1] : ' ';
+            const charAfter = (localIdx + sig.termLower.length < sliceLower.length) ? sliceLower[localIdx + sig.termLower.length] : ' ';
+            if (/[a-z0-9_]/.test(charBefore) || /[a-z0-9_]/.test(charAfter)) {
+              searchFrom = localIdx + 1;
+              continue;
+            }
+          }
+
           foundTermsInFile.add(sig.term);
           const globalIdx = offset + localIdx;
           const ctx = extractLineContext(text, globalIdx);
@@ -2975,6 +3147,7 @@ NinjaFF (sem patente)`;
             snippet: ctx.currentLine || slice.substring(Math.max(0, localIdx - 40), Math.min(slice.length, localIdx + sig.term.length + 60)).replace(/\r?\n/g, ' '),
             context: ctx
           });
+          break;
         }
       }
 
@@ -3367,7 +3540,29 @@ NinjaFF (sem patente)`;
     const highRiskCount = report.findings.filter(f => f.weight >= 60).length;
     const isClean = report.findings.length === 0;
 
+    // Detecção da pasta não verificada -SHgap- (Exige reinstalação imediata do Free Fire)
+    const hasSHgap = report.findings.some(f =>
+      f.term === '-SHgap-' ||
+      (f.file && f.file.includes('-SHgap-')) ||
+      (f.snippet && f.snippet.includes('-SHgap-')) ||
+      (f.name && f.name.includes('-SHgap-'))
+    );
+
     resultSummary.innerHTML = `
+      ${hasSHgap ? `
+      <div style="background: rgba(229,72,77,0.18); border: 2px solid var(--red); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; color: #fff;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom: 6px;">
+          <span style="font-size: 1.4rem;">⚠️</span>
+          <strong style="color: var(--red); font-size: 1.05rem; letter-spacing: 0.5px;">ALERTA CRÍTICO: PASTA NÃO VERIFICADA DETECTADA (-SHgap-)</strong>
+        </div>
+        <p style="font-size: 0.9rem; line-height: 1.5; color: #ffcdd2; margin: 0 0 8px 0;">
+          A pasta <code>-SHgap-</code> <strong>NÃO</strong> é uma pasta verificada do Free Fire original. Foram identificados arquivos injetados na GameAsset ou manipulação de diretório não autorizado.
+        </p>
+        <div style="background: rgba(0,0,0,0.45); padding: 10px 14px; border-radius: 6px; font-weight: bold; color: #fff; font-size: 0.9rem; border-left: 3px solid var(--red);">
+          🚨 AÇÃO OBRIGATÓRIA: Peça para o jogador desinstalar e reinstalar o Free Fire imediatamente da loja oficial!
+        </div>
+      </div>
+      ` : ''}
       <h3 style="color: ${isClean ? 'var(--live-green)' : (highRiskCount > 0 ? 'var(--red)' : '#f5a623')};">
         ${isClean ? 'DISPOSITIVO 100% LIMPO & APROVADO' : (highRiskCount > 0 ? 'AMEAÇAS FORENSES DETECTADAS' : 'REGISTROS DE AUDITORIA DETECTADOS (VERIFICAR CONTEXTO)')}
       </h3>
@@ -3408,9 +3603,22 @@ NinjaFF (sem patente)`;
         scanFilters.style.display = 'none';
       } else {
         scanFilters.style.display = 'flex';
-        const cats = Array.from(new Set(report.findings.map(f => f.category)));
+        // Filtro de Log de Cassino (Tudo que contém hífen é log de cassino)
+        const casinoCount = report.findings.filter(f =>
+          f.category === 'casino_log' ||
+          f.term.includes('-') ||
+          (f.snippet && f.snippet.includes('-')) ||
+          (f.context && f.context.currentLine && f.context.currentLine.includes('-'))
+        ).length;
+
+        const cats = Array.from(new Set(report.findings.map(f => f.category))).filter(c => c !== 'casino_log');
         scanFilters.innerHTML = `
           <button type="button" class="scan-filter-chip ${activeFilterCategory === 'all' ? 'active' : ''}" data-cat="all">Todas (${report.findings.length})</button>
+          ${casinoCount > 0 ? `
+            <button type="button" class="scan-filter-chip ${activeFilterCategory === 'casino_log' ? 'active' : ''}" data-cat="casino_log">
+              🎰 Log de Cassino (Hífen) (${casinoCount})
+            </button>
+          ` : ''}
           ${cats.map(c => `
             <button type="button" class="scan-filter-chip ${activeFilterCategory === c ? 'active' : ''}" data-cat="${c}">
               ${CATEGORY_NAMES[c] || c} (${report.findings.filter(f => f.category === c).length})
@@ -3435,9 +3643,20 @@ NinjaFF (sem patente)`;
 
   function renderThreatList(findings, categoryFilter) {
     if (!resultDetails) return;
-    const filtered = (categoryFilter === 'all')
-      ? findings
-      : findings.filter(f => f.category === categoryFilter);
+    let filtered;
+    if (categoryFilter === 'all') {
+      filtered = findings;
+    } else if (categoryFilter === 'casino_log') {
+      // Filtro especial: tudo que contém hífen é considerado log de cassino
+      filtered = findings.filter(f =>
+        f.category === 'casino_log' ||
+        f.term.includes('-') ||
+        (f.snippet && f.snippet.includes('-')) ||
+        (f.context && f.context.currentLine && f.context.currentLine.includes('-'))
+      );
+    } else {
+      filtered = findings.filter(f => f.category === categoryFilter);
+    }
 
     if (filtered.length === 0 && findings.length > 0) {
       resultDetails.innerHTML = `<p style="color:var(--text-3); padding:16px 0;">Nenhuma ocorrência nesta categoria.</p>`;
@@ -3482,7 +3701,19 @@ NinjaFF (sem patente)`;
   if (scanBtnCopyReport) {
     scanBtnCopyReport.addEventListener('click', () => {
       if (!currentScanReport) return;
+      const hasSHgap = currentScanReport.findings.some(f =>
+        f.term === '-SHgap-' ||
+        (f.file && f.file.includes('-SHgap-')) ||
+        (f.snippet && f.snippet.includes('-SHgap-')) ||
+        (f.name && f.name.includes('-SHgap-'))
+      );
+
       let rep = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v3.2* 🛡️\n`;
+      if (hasSHgap) {
+        rep += `\n🚨 *ALERTA CRÍTICO: PASTA NÃO VERIFICADA DETECTADA (-SHgap-)* 🚨\n`;
+        rep += `A pasta "-SHgap-" NÃO é uma pasta verificada do Free Fire original.\n`;
+        rep += `AÇÃO OBRIGATÓRIA: Peça para o jogador reinstalar o Free Fire imediatamente da loja oficial!\n\n`;
+      }
       rep += `📅 Data: ${currentScanReport.timestamp}\n`;
       rep += `🎯 Score de Integridade: ${currentScanReport.score}/100\n`;
       rep += `⏱️ Duração: ${currentScanReport.durationSec}s (${currentScanReport.analyzedCount} arquivos examinados)\n`;
