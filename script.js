@@ -2817,7 +2817,7 @@ NinjaFF (sem patente)`;
   };
 
   // Allowlist estrita de arquivos relevantes para evitar travamentos em protobufs (.pb), vídeos, imagens ou traces gigantes
-  const TEXT_EXT_RE = /\.(txt|log|prop|plist|xml|json|csv|conf|cfg|properties|yaml|yml|html|htm|js|sh|py|smali|reg|ini|md)$/i;
+  const TEXT_EXT_RE = /\.(txt|log|prop|plist|xml|json|csv|conf|cfg|properties|yaml|yml|html|htm|js|sh|py|smali|reg|ini|md|ips|mobileconfig)$/i;
   const BIN_EXT_RE = /\.(so|dex|dylib|bin|elf|jar)$/i;
   const NO_EXT_ALLOW = new Set([
     'packages', 'services', 'dumpsys', 'logcat',
@@ -2829,6 +2829,8 @@ NinjaFF (sem patente)`;
   function classifyScanEntry(path) {
     const clean = path.replace(/\\/g, '/');
     const lower = clean.toLowerCase();
+    // Unified Logs binários iOS (.tracev3) devem ser encaminhados ao parser dedicado, nunca lidos como texto puro
+    if (lower.endsWith('.tracev3')) return 'tracev3';
     // Prioridade máxima: garantir que injeções em GameAsset, .jar em cache ou pastas não verificadas nunca sejam ignoradas
     if (lower.includes('sh-gpp2') || lower.includes('-shgap-')) return 'text';
     if (/\.(jar)$/i.test(lower)) return 'binary';
@@ -3384,26 +3386,39 @@ NinjaFF (sem patente)`;
         entries = rawEntries.slice(0, 30).map(e => ({ ...e, scanMode: 'text' }));
       }
 
-      logTerminal('IO', `Estrutura indexada: ${totalRaw} entradas totais, ${entries.length} arquivos forenses selecionados (${CHEAT_SIGNATURES.length} assinaturas ativas).`, 'terminal-info');
+      const forensicEngineApi = window.CaciqueForensicEngine;
+      if (!forensicEngineApi) {
+        throw new Error('Motor forense v4.0 (forensic_engine.js) não foi carregado.');
+      }
+
+      logTerminal('IO', `Estrutura indexada: ${totalRaw} entradas totais, ${entries.length} arquivos forenses selecionados (${forensicEngineApi.RULE_REGISTRY.length} regras no registro v${forensicEngineApi.ENGINE_VERSION}).`, 'terminal-info');
 
       if (!entries.length) {
         throw new Error('Nenhum arquivo de log ou dump analisável foi encontrado no pacote.');
       }
 
       logTerminal('SYS', `Sistema alvo: ${osDetected === 'IOS' ? 'iOS (sysdiagnose)' : 'Android (bugreport/dump)'}`, 'terminal-info');
-      updateScanProgress(25, 'Executando varredura forense (Offsets, Overlays, Proxies, Logs External e Etapas 1-7)...');
+      updateScanProgress(25, 'Carregando arquivos e executando análise contextual v4.0...');
       await sleep(10);
 
+      const collectedFiles = [];
       const total = entries.length;
       for (let i = 0; i < total; i++) {
         const entry = entries[i];
         const name = entry.path.split('/').pop() || entry.path;
-        const basePct = 25 + ((i / total) * 68);
+        const basePct = 25 + ((i / total) * 40);
 
-        updateScanProgress(Math.round(basePct), `Analisando (${i + 1}/${total}): ${name}`);
+        updateScanProgress(Math.round(basePct), `Lendo (${i + 1}/${total}): ${name}`);
         await sleep(0);
 
         try {
+          if (entry.scanMode === 'tracev3') {
+            const bytes = await entry.bytes();
+            collectedFiles.push({ path: entry.path, bytes, size: bytes.length });
+            logTerminal('TRACEV3', `${name} encaminhado ao parser Unified Log (sem leitura como texto puro).`, 'terminal-info');
+            continue;
+          }
+
           let text = '';
           if (entry.scanMode === 'binary') {
             if (entry.size && entry.size > 15 * 1024 * 1024) {
@@ -3428,48 +3443,36 @@ NinjaFF (sem patente)`;
             continue;
           }
 
-          checkedLines += Math.max(1, Math.round(text.length / 65));
           extractDeviceInfo(text, deviceInfo);
-
-          // 1) Detector de origem de instalação (Package [...] installerPackageName=...)
-          if (osDetected === 'ANDROID' && text.includes('installerPackageName=')) {
-            const installerHits = verificarOrigemInstalacao(text, entry.path, seenInstallers);
-            for (const ih of installerHits) {
-              findings.push(ih);
-              logTerminal('ORIGEM', `[${ih.risk.toUpperCase()}] ${ih.name}`, 'terminal-err');
-            }
-          }
-
-          // 2) Varredura em chunks das assinaturas forenses + Etapas 1 a 6 + Contexto Etapa 7
-          const stepSpan = 68 / total;
-          const hits = await scanTextForCheatsChunked(text, entry.path, (chunkRatio) => {
-            const subPct = Math.min(93, Math.round(basePct + chunkRatio * stepSpan));
-            updateScanProgress(subPct, `Analisando ${name} (${Math.round(chunkRatio * 100)}%)...`);
-          });
-
-          for (const h of hits) {
-            const key = h.name + '|' + h.file;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            findings.push(h);
-            logTerminal('ALERTA', `[${h.risk.toUpperCase()}] ${h.name} em ${name}`, 'terminal-err');
-            if (h.weight >= 85) {
-              sfx.alert(h.weight === 100);
-            }
-          }
-
-          analyzedCount++;
+          collectedFiles.push({ path: entry.path, text, size: text.length });
         } catch (fileErr) {
           skippedCount++;
         }
       }
 
-      updateScanProgress(96, 'Aplicando Etapa 7 (Análise Contextual dos Resultados)...');
-      await sleep(120);
+      updateScanProgress(70, 'Executando correlação de evidências, parsers e deduplicação...');
+      const engine = new forensicEngineApi.ForensicEngine();
+      const engineReport = await engine.analyzeFiles(collectedFiles, {
+        osHint: osDetected.toLowerCase(),
+        onProgress: (ratio, fpath) => {
+          const pct = Math.min(96, Math.round(70 + ratio * 26));
+          updateScanProgress(pct, `Analisando contexto: ${fpath.split('/').pop()}`);
+        }
+      });
+
+      for (const al of engineReport.alerts) {
+        if (al.evidence_tier !== 'textual_reference') {
+          logTerminal('EVIDÊNCIA', `[${al.evidence_tier_label}] ${al.signature_name} (${al.raw_occurrences}x)`, 'terminal-err');
+          if (al.weight >= 45) sfx.alert(al.weight >= 80);
+        }
+      }
+      for (const uf of engineReport.unanalyzed_files) {
+        logTerminal('COBERTURA', `${uf.file}: ${uf.reason}`, 'terminal-info');
+      }
 
       const durationSec = ((performance.now() - startTime) / 1000).toFixed(1);
-      updateScanProgress(100, `Varredura concluída em ${durationSec}s`);
-      logTerminal('SYS', `Análise finalizada: ${analyzedCount} arquivos examinados, ${findings.length} ocorrências encontradas.`, 'terminal-info');
+      updateScanProgress(100, `Análise forense v${engineReport.engine_version} concluída em ${durationSec}s`);
+      logTerminal('SYS', `Finalizado: ${engineReport.counters.analyzed_files} analisados, ${engineReport.counters.unique_events} evento(s) único(s) (${engineReport.counters.raw_occurrences} ocorrências brutas).`, 'terminal-info');
 
       if (terminalStatus) {
         terminalStatus.textContent = 'CONCLUÍDO';
@@ -3478,29 +3481,23 @@ NinjaFF (sem patente)`;
 
       sfx.done();
 
-      // Cálculo de score ponderado (penaliza mais cheats diretos/root/overlays do que logs informativos de auditoria)
-      const totalPenalty = findings.reduce((acc, f) => {
-        if (f.category === 'log_audit') return acc + 5;
-        if (f.weight >= 90) return acc + 35;
-        if (f.weight >= 60) return acc + 18;
-        return acc + 8;
-      }, 0);
-
       currentScanReport = {
-        findings,
-        checkedLines: Math.round(checkedLines),
-        analyzedCount,
+        ...engineReport,
+        findings: engineReport.alerts,
+        checkedLines: engineReport.counters.checked_lines,
+        analyzedCount: engineReport.counters.analyzed_files,
         skippedCount,
         durationSec,
-        osDetected,
+        osDetected: engineReport.os_detected,
         deviceInfo,
         timestamp: new Date().toLocaleString('pt-BR'),
-        score: findings.length === 0 ? 100 : Math.max(0, 100 - totalPenalty)
+        score: engineReport.integrity_score
       };
 
       displayScanResults(currentScanReport);
-      showToast(findings.length === 0 ? 'success' : 'error', 'Análise Finalizada',
-        findings.length === 0 ? 'Dispositivo 100% limpo e aprovado.' : `${findings.length} ocorrência(s) forense(s) encontrada(s)!`);
+      const hasReviewOrHigher = (engineReport.counters.validated_evidence + engineReport.counters.review_alerts) > 0;
+      showToast(hasReviewOrHigher ? 'error' : 'success', 'Análise Finalizada',
+        engineReport.verdict.status + ' — ' + engineReport.verdict.summary);
 
     } catch (err) {
       logTerminal('ERR', `Falha no scanner: ${err.message || String(err)}`, 'terminal-err');
@@ -3537,45 +3534,63 @@ NinjaFF (sem patente)`;
     scanResults.style.display = 'block';
     activeFilterCategory = 'all';
 
-    const highRiskCount = report.findings.filter(f => f.weight >= 60).length;
-    const isClean = report.findings.length === 0;
-
-    // Detecção da pasta não verificada -SHgap- (Exige reinstalação imediata do Free Fire)
-    const hasSHgap = report.findings.some(f =>
-      f.term === '-SHgap-' ||
-      (f.file && f.file.includes('-SHgap-')) ||
-      (f.snippet && f.snippet.includes('-SHgap-')) ||
-      (f.name && f.name.includes('-SHgap-'))
-    );
+    const alerts = report.alerts || report.findings || [];
+    const unanalyzed = report.unanalyzed_files || [];
+    const counters = report.counters || {
+      raw_occurrences: alerts.length,
+      unique_events: alerts.length,
+      validated_evidence: 0,
+      review_alerts: 0,
+      informative_events: alerts.length,
+      unanalyzed_files: unanalyzed.length,
+      analyzed_files: report.analyzedCount || 0,
+      checked_lines: report.checkedLines || 0
+    };
+    const verdict = report.verdict || { status: 'CONCLUÍDO', color: 'green', summary: '' };
+    const colorMap = { red: 'var(--red)', yellow: '#f5a623', green: 'var(--live-green)' };
+    const titleColor = colorMap[verdict.color] || 'var(--live-green)';
 
     resultSummary.innerHTML = `
-      ${hasSHgap ? `
-      <div style="background: rgba(229,72,77,0.18); border: 2px solid var(--red); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; color: #fff;">
+      ${report.has_gameasset_anomaly ? `
+      <div style="background: rgba(229,72,77,0.14); border: 1px solid var(--red); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; color: #fff;">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom: 6px;">
-          <span style="font-size: 1.4rem;">⚠️</span>
-          <strong style="color: var(--red); font-size: 1.05rem; letter-spacing: 0.5px;">ALERTA CRÍTICO: PASTA NÃO VERIFICADA DETECTADA (-SHgap-)</strong>
+          <span style="font-size: 1.3rem;">⚠️</span>
+          <strong style="color: var(--red); font-size: 1rem;">ANOMALIA EM ARQUIVO DO FREE FIRE — REVISÃO NECESSÁRIA</strong>
         </div>
-        <p style="font-size: 0.9rem; line-height: 1.5; color: #ffcdd2; margin: 0 0 8px 0;">
-          A pasta <code>-SHgap-</code> <strong>NÃO</strong> é uma pasta verificada do Free Fire original. Foram identificados arquivos injetados na GameAsset ou manipulação de diretório não autorizado.
+        <p style="font-size: 0.88rem; line-height: 1.5; color: #ffcdd2; margin: 0 0 8px 0;">
+          Foi identificada anomalia contextual em caminho específico do Free Fire (<code>SH-Gpp2</code> ou <code>-SHgap-</code>). Esse registro isolado exige verificação técnica e não determina punição automática.
         </p>
-        <div style="background: rgba(0,0,0,0.45); padding: 10px 14px; border-radius: 6px; font-weight: bold; color: #fff; font-size: 0.9rem; border-left: 3px solid var(--red);">
-          🚨 AÇÃO OBRIGATÓRIA: Peça para o jogador desinstalar e reinstalar o Free Fire imediatamente da loja oficial!
+        <div style="background: rgba(0,0,0,0.4); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #fff; border-left: 3px solid #f5a623;">
+          🔍 <strong>Próxima ação:</strong> Verificar integridade do recurso, versão do jogo e eventos independentes; recomendar reinstalação pela loja oficial se houver indícios consistentes de adulteração.
         </div>
       </div>
       ` : ''}
-      <h3 style="color: ${isClean ? 'var(--live-green)' : (highRiskCount > 0 ? 'var(--red)' : '#f5a623')};">
-        ${isClean ? 'DISPOSITIVO 100% LIMPO & APROVADO' : (highRiskCount > 0 ? 'AMEAÇAS FORENSES DETECTADAS' : 'REGISTROS DE AUDITORIA DETECTADOS (VERIFICAR CONTEXTO)')}
-      </h3>
-      <p style="color: var(--text-2); font-size: 0.95rem;">
-        ${isClean
-          ? 'Nenhum mod menu, offset il2cpp, janela sobreposta (overlay), proxy ou origem de instalação irregular foi identificado.'
-          : `Foram encontradas ${report.findings.length} evidências/registros (${highRiskCount} de risco médio/alto ou ban direto).`}
-      </p>
-      <div style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-3); margin-top: 10px;">
-        Pontuação de Integridade: <strong style="color: #fff;">${report.score}/100</strong> · Arquivos examinados: ${report.analyzedCount} · Linhas: ~${report.checkedLines.toLocaleString('pt-BR')} · Tempo: ${report.durationSec}s
+      <h3 style="color: ${titleColor};">${escapeHtml(verdict.status)}</h3>
+      <p style="color: var(--text-2); font-size: 0.95rem;">${escapeHtml(verdict.summary)}</p>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px;">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.76rem;">
+          <span style="color: var(--text-3); display:block;">Integridade</span>
+          <strong style="color: #fff; font-size: 0.95rem;">${report.score}/100</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.76rem;">
+          <span style="color: var(--text-3); display:block;">Evidências Validadas</span>
+          <strong style="color: var(--red); font-size: 0.95rem;">${counters.validated_evidence}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.76rem;">
+          <span style="color: var(--text-3); display:block;">Alertas p/ Revisão</span>
+          <strong style="color: #f5a623; font-size: 0.95rem;">${counters.review_alerts}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.76rem;">
+          <span style="color: var(--text-3); display:block;">Eventos Únicos / Brutos</span>
+          <strong style="color: #fff; font-size: 0.95rem;">${counters.unique_events} / ${counters.raw_occurrences}</strong>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 8px 10px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.76rem;">
+          <span style="color: var(--text-3); display:block;">Não Analisados</span>
+          <strong style="color: #7ee787; font-size: 0.95rem;">${counters.unanalyzed_files}</strong>
+        </div>
       </div>
-      <div style="margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: rgba(255,255,255,0.03); border-left: 3px solid var(--amber, #f5a623); font-size: 0.78rem; color: var(--text-3); line-height: 1.5;">
-        <strong style="color: #fff;">📋 ETAPA 7 — ANÁLISE DOS RESULTADOS:</strong> Examinar o contexto de cada ocorrência abaixo (incluindo linha anterior, linha posterior, timestamp, tag e componente responsável). Os termos de infraestrutura/logging, isoladamente, dependem da mensagem completa, da versão do Android e do componente que gerou o registro.
+      <div style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-3); margin-top: 10px;">
+        Motor v${escapeHtml(report.engine_version || '4.0.0')} · Arquivos examinados: ${counters.analyzed_files} · Linhas: ~${(counters.checked_lines || 0).toLocaleString('pt-BR')} · Tempo: ${report.durationSec}s
       </div>
     `;
 
@@ -3599,29 +3614,22 @@ NinjaFF (sem patente)`;
     }
 
     if (scanFilters) {
-      if (isClean) {
+      if (alerts.length === 0 && unanalyzed.length === 0) {
         scanFilters.style.display = 'none';
       } else {
         scanFilters.style.display = 'flex';
-        // Filtro de Log de Cassino (Tudo que contém hífen é log de cassino)
-        const casinoCount = report.findings.filter(f =>
-          f.category === 'casino_log' ||
-          f.term.includes('-') ||
-          (f.snippet && f.snippet.includes('-')) ||
-          (f.context && f.context.currentLine && f.context.currentLine.includes('-'))
-        ).length;
+        const catLabels = (window.CaciqueForensicEngine && window.CaciqueForensicEngine.CATEGORY_LABELS) || {};
+        const cats = Array.from(new Set(alerts.map(a => a.category)));
 
-        const cats = Array.from(new Set(report.findings.map(f => f.category))).filter(c => c !== 'casino_log');
         scanFilters.innerHTML = `
-          <button type="button" class="scan-filter-chip ${activeFilterCategory === 'all' ? 'active' : ''}" data-cat="all">Todas (${report.findings.length})</button>
-          ${casinoCount > 0 ? `
-            <button type="button" class="scan-filter-chip ${activeFilterCategory === 'casino_log' ? 'active' : ''}" data-cat="casino_log">
-              🎰 Log de Cassino (Hífen) (${casinoCount})
-            </button>
-          ` : ''}
+          <button type="button" class="scan-filter-chip ${activeFilterCategory === 'all' ? 'active' : ''}" data-cat="all">Todos (${alerts.length})</button>
+          <button type="button" class="scan-filter-chip ${activeFilterCategory === '_tier_corroborated' ? 'active' : ''}" data-cat="_tier_corroborated">Evidências Corroboradas (${counters.validated_evidence})</button>
+          <button type="button" class="scan-filter-chip ${activeFilterCategory === '_tier_review' ? 'active' : ''}" data-cat="_tier_review">Revisão Necessária (${counters.review_alerts})</button>
+          <button type="button" class="scan-filter-chip ${activeFilterCategory === '_tier_informative' ? 'active' : ''}" data-cat="_tier_informative">Informativos & Estabilidade (${counters.informative_events || 0})</button>
+          ${unanalyzed.length > 0 ? `<button type="button" class="scan-filter-chip ${activeFilterCategory === '_unanalyzed' ? 'active' : ''}" data-cat="_unanalyzed">Não Analisados (${unanalyzed.length})</button>` : ''}
           ${cats.map(c => `
             <button type="button" class="scan-filter-chip ${activeFilterCategory === c ? 'active' : ''}" data-cat="${c}">
-              ${CATEGORY_NAMES[c] || c} (${report.findings.filter(f => f.category === c).length})
+              ${escapeHtml(catLabels[c] || c)} (${alerts.filter(a => a.category === c).length})
             </button>
           `).join('')}
         `;
@@ -3631,67 +3639,98 @@ NinjaFF (sem patente)`;
             activeFilterCategory = btn.dataset.cat;
             scanFilters.querySelectorAll('.scan-filter-chip').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            renderThreatList(report.findings, activeFilterCategory);
+            renderThreatList(report, activeFilterCategory);
             sfx.tick(900);
           });
         });
       }
     }
 
-    renderThreatList(report.findings, activeFilterCategory);
+    renderThreatList(report, activeFilterCategory);
   }
 
-  function renderThreatList(findings, categoryFilter) {
+  function renderThreatList(reportOrFindings, categoryFilter) {
     if (!resultDetails) return;
-    let filtered;
-    if (categoryFilter === 'all') {
-      filtered = findings;
-    } else if (categoryFilter === 'casino_log') {
-      // Filtro especial: tudo que contém hífen é considerado log de cassino
-      filtered = findings.filter(f =>
-        f.category === 'casino_log' ||
-        f.term.includes('-') ||
-        (f.snippet && f.snippet.includes('-')) ||
-        (f.context && f.context.currentLine && f.context.currentLine.includes('-'))
-      );
-    } else {
-      filtered = findings.filter(f => f.category === categoryFilter);
+    const isReportObj = !Array.isArray(reportOrFindings);
+    const alerts = isReportObj ? (reportOrFindings.alerts || reportOrFindings.findings || []) : reportOrFindings;
+    const unanalyzed = isReportObj ? (reportOrFindings.unanalyzed_files || []) : [];
+
+    if (categoryFilter === '_unanalyzed') {
+      if (unanalyzed.length === 0) {
+        resultDetails.innerHTML = `<p style="color:var(--text-3); padding:16px 0;">Todos os arquivos selecionados foram analisados.</p>`;
+        return;
+      }
+      resultDetails.innerHTML = unanalyzed.map(u => `
+        <div class="result-card" style="border-left-color: #f5a623;">
+          <strong style="color: #fff;">📄 ${escapeHtml(u.file)}</strong>
+          <p style="color: var(--text-2); font-size: 0.85rem; margin-top: 6px;">${escapeHtml(u.reason)}</p>
+        </div>
+      `).join('');
+      return;
     }
 
-    if (filtered.length === 0 && findings.length > 0) {
+    let filtered = alerts;
+    if (categoryFilter === '_tier_corroborated') {
+      filtered = alerts.filter(a => a.evidence_tier === 'corroborated_evidence' || a.evidence_tier === 'confirmed_interference');
+    } else if (categoryFilter === '_tier_review') {
+      filtered = alerts.filter(a => a.evidence_tier === 'specific_anomaly');
+    } else if (categoryFilter === '_tier_informative') {
+      filtered = alerts.filter(a => a.evidence_tier === 'textual_reference' || a.evidence_tier === 'contextual_event');
+    } else if (categoryFilter !== 'all') {
+      filtered = alerts.filter(a => a.category === categoryFilter);
+    }
+
+    if (filtered.length === 0 && alerts.length > 0) {
       resultDetails.innerHTML = `<p style="color:var(--text-3); padding:16px 0;">Nenhuma ocorrência nesta categoria.</p>`;
       return;
     }
 
-    if (findings.length === 0) {
+    if (alerts.length === 0) {
       resultDetails.innerHTML = `
         <div class="result-card" style="border-left-color: var(--live-green);">
           <strong style="color: var(--live-green);">Integridade Confirmada</strong>
-          <p style="color: var(--text-2); font-size: 0.88rem; margin-top: 4px;">Nenhum rastro de trapaça ou modificação ilegal detectado.</p>
+          <p style="color: var(--text-2); font-size: 0.88rem; margin-top: 4px;">Nenhuma evidência técnica de adulteração ou interferência detectada.</p>
         </div>
       `;
       return;
     }
 
-    resultDetails.innerHTML = filtered.map(f => {
-      const ctx = f.context || {};
-      const hasContextLines = Boolean(ctx.prevLine || ctx.nextLine);
+    resultDetails.innerHTML = filtered.map(a => {
+      const ctx = a.contextual_snippet || a.context || {};
+      const prevL = ctx.prev_line || ctx.prevLine || '';
+      const currL = ctx.current_line || ctx.currentLine || a.observed_event || '';
+      const nextL = ctx.next_line || ctx.nextLine || '';
+      const tierColor = (a.evidence_tier === 'corroborated_evidence' || a.evidence_tier === 'confirmed_interference')
+        ? 'var(--red)'
+        : (a.evidence_tier === 'specific_anomaly' ? '#f5a623' : '#7ee787');
+
       return `
-      <div class="result-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
-          <strong style="color: #fff;">${escapeHtml(f.name)}</strong>
-          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--red); background: rgba(229,72,77,0.15); padding: 2px 8px; border-radius: 4px;">
-            Peso: ${f.weight || 50} · ${escapeHtml(f.risk)}
+      <div class="result-card" style="border-left-color: ${tierColor};">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+          <strong style="color: #fff;">${escapeHtml(a.signature_name || a.name)}</strong>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; color: ${tierColor}; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">
+            ${escapeHtml(a.evidence_tier_label || a.evidence_tier)} · Confiança: ${escapeHtml(a.confidence_label || a.confidence)} · Ocorrências: ${a.raw_occurrences || 1}x
           </span>
         </div>
-        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-3); margin-bottom: 6px;">
-          Arquivo: <span style="color: var(--text-2);">${escapeHtml(f.file)}</span> · Termo: <code style="color:#f5a623;">${escapeHtml(f.term)}</code>
-          ${ctx.meta ? `<br><span style="color: #7ee787;">${escapeHtml(ctx.meta)}</span>` : ''}
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-3); margin-bottom: 8px; line-height: 1.5;">
+          <strong>Categoria:</strong> <span style="color: var(--text-2);">${escapeHtml(a.category_label || a.category)}</span> ·
+          <strong>Assinatura:</strong> <code>${escapeHtml(a.signature_id || a.term || '')}</code><br>
+          <strong>Arquivo:</strong> <span style="color: var(--text-2);">${escapeHtml(a.source_file || a.file)}</span> ·
+          <strong>Processo:</strong> <span style="color: #fff;">${escapeHtml(a.process || 'Não identificado')}</span> ·
+          <strong>Timestamp:</strong> <span style="color: #7ee787;">${escapeHtml(a.timestamp || 'Não disponível')}</span>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--text-2); line-height: 1.5; margin-bottom: 8px;">
+          <div><strong>Evento observado:</strong> ${escapeHtml(a.observed_event || '')}</div>
+          <div><strong>Interpretação técnica:</strong> ${escapeHtml(a.technical_interpretation || '')}</div>
+          <div><strong>Evidências corroboradoras:</strong> ${(a.corroborating_evidence && a.corroborating_evidence.length) ? escapeHtml(a.corroborating_evidence.join('; ')) : 'Nenhuma evidência independente adicional'}</div>
+          <div><strong>Motivo da classificação:</strong> ${escapeHtml(a.classification_reason || '')}</div>
+          <div style="color: var(--text-3);"><strong>Limitação:</strong> ${escapeHtml(a.limitation || '')}</div>
+          <div style="color: #7ee787;"><strong>Próxima ação recomendada:</strong> ${escapeHtml(a.recommended_action || '')}</div>
         </div>
         <div style="background: #050507; border: 1px solid rgba(255,255,255,0.07); padding: 8px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.74rem; line-height: 1.5; overflow-x: auto;">
-          ${hasContextLines && ctx.prevLine ? `<div style="color: #6e7681; word-break: break-all;">[Linha -1] ${escapeHtml(ctx.prevLine)}</div>` : ''}
-          <div style="color: #ff8a80; font-weight: 600; word-break: break-all;">[Ocorrência] ${escapeHtml((ctx.currentLine || f.snippet || '').slice(0, 220))}</div>
-          ${hasContextLines && ctx.nextLine ? `<div style="color: #6e7681; word-break: break-all;">[Linha +1] ${escapeHtml(ctx.nextLine)}</div>` : ''}
+          ${prevL ? `<div style="color: #6e7681; word-break: break-all;">[Linha -1] ${escapeHtml(prevL)}</div>` : ''}
+          <div style="color: #ff8a80; font-weight: 600; word-break: break-all;">[Ocorrência] ${escapeHtml(currL.slice(0, 220))}</div>
+          ${nextL ? `<div style="color: #6e7681; word-break: break-all;">[Linha +1] ${escapeHtml(nextL)}</div>` : ''}
         </div>
       </div>
     `;
@@ -3701,32 +3740,23 @@ NinjaFF (sem patente)`;
   if (scanBtnCopyReport) {
     scanBtnCopyReport.addEventListener('click', () => {
       if (!currentScanReport) return;
-      const hasSHgap = currentScanReport.findings.some(f =>
-        f.term === '-SHgap-' ||
-        (f.file && f.file.includes('-SHgap-')) ||
-        (f.snippet && f.snippet.includes('-SHgap-')) ||
-        (f.name && f.name.includes('-SHgap-'))
-      );
-
-      let rep = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v3.2* 🛡️\n`;
-      if (hasSHgap) {
-        rep += `\n🚨 *ALERTA CRÍTICO: PASTA NÃO VERIFICADA DETECTADA (-SHgap-)* 🚨\n`;
-        rep += `A pasta "-SHgap-" NÃO é uma pasta verificada do Free Fire original.\n`;
-        rep += `AÇÃO OBRIGATÓRIA: Peça para o jogador reinstalar o Free Fire imediatamente da loja oficial!\n\n`;
-      }
+      const alerts = currentScanReport.alerts || currentScanReport.findings || [];
+      const c = currentScanReport.counters || {};
+      let rep = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v${currentScanReport.engine_version || '4.0.0'}* 🛡️\n`;
       rep += `📅 Data: ${currentScanReport.timestamp}\n`;
+      rep += `📌 Veredito: ${currentScanReport.verdict ? currentScanReport.verdict.status : 'CONCLUÍDO'}\n`;
       rep += `🎯 Score de Integridade: ${currentScanReport.score}/100\n`;
-      rep += `⏱️ Duração: ${currentScanReport.durationSec}s (${currentScanReport.analyzedCount} arquivos examinados)\n`;
-      if (currentScanReport.deviceInfo && currentScanReport.deviceInfo.model) {
-        rep += `📱 Dispositivo: ${currentScanReport.deviceInfo.brand} ${currentScanReport.deviceInfo.model} (${currentScanReport.deviceInfo.osVersion || currentScanReport.osDetected})\n`;
-      }
-      rep += `⚠️ Ocorrências Encontradas: ${currentScanReport.findings.length}\n\n`;
+      rep += `📊 Evidências Validadas: ${c.validated_evidence || 0} | Revisão: ${c.review_alerts || 0} | Únicos: ${c.unique_events || alerts.length} (Brutos: ${c.raw_occurrences || alerts.length}) | Não analisados: ${c.unanalyzed_files || 0}\n\n`;
 
-      if (currentScanReport.findings.length === 0) {
-        rep += `✅ NENHUMA IRREGULARIDADE DETECTADA. JOGADOR APROVADO.\n`;
+      if (alerts.length === 0) {
+        rep += `✅ NENHUMA EVIDÊNCIA DE INTERFERÊNCIA DETECTADA.\n`;
       } else {
-        currentScanReport.findings.forEach((f, idx) => {
-          rep += `${idx + 1}. [${f.risk} | Peso ${f.weight}] ${f.name}\n   Arquivo: ${f.file}\n   Evidência: ${(f.snippet || '').slice(0, 100)}\n\n`;
+        alerts.forEach((a, idx) => {
+          rep += `${idx + 1}. [${a.evidence_tier_label} | Confiança: ${a.confidence_label}] ${a.signature_name}\n`;
+          rep += `   Categoria: ${a.category_label} | Processo: ${a.process} | Timestamp: ${a.timestamp}\n`;
+          rep += `   Arquivo: ${a.source_file} (${a.raw_occurrences}x)\n`;
+          rep += `   Interpretação: ${a.technical_interpretation}\n`;
+          rep += `   Ação: ${a.recommended_action}\n\n`;
         });
       }
       rep += `----------------------------------\n`;
