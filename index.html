@@ -41,14 +41,6 @@
     rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css?v=11">
-  <script src="jszip.min.js"></script>
-  <script>
-    if (typeof JSZip === 'undefined') {
-      var s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-      document.head.appendChild(s);
-    }
-  </script>
 </head>
 
 <body>
@@ -1050,7 +1042,7 @@ LendaFF (sem patente = padrão)"></textarea>
             <header class="scan-dash-header">
               <div class="scan-sys-status">
                 <div class="dot"></div> ENGINE ONLINE <span class="sys-sep">/</span> <span class="sys-ver">ccq-scan
-                  4.0</span>
+                  5.0</span>
               </div>
               <button class="btn btn-secondary btn-sm" id="scanBtnLogout">Sair</button>
             </header>
@@ -1484,9 +1476,8 @@ LendaFF (sem patente = padrão)"></textarea>
   <!-- Região de Notificações Toast -->
   <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
 
-  <!-- Motor Forense v4.0 + Script Principal -->
-  <script src="forensic_engine.js?v=1" defer></script>
-  <script src="script.js?v=13" defer></script>
+  <!-- Aplicação Modular v5.0 (Core + Arena + Scanner Web Worker sob demanda) -->
+  <script type="module" src="js/main.js?v=5"></script>
 </body>
 
 </html>
