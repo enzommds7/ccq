@@ -114,10 +114,15 @@
       "default_status": "candidate_only",
       "match_policy": "exact_package_id",
       "required_context": "registro estruturado de PackageManager (pacote instalado + versão + instalador)",
-      "notes": "removidos duplicados (client.by), apps legítimos/irrelevantes (com.facebook.lite, com.pornhub) e IDs inválidos/genéricos (com.s, com.spotify.música)",
+      "notes": "removidos duplicados (client.by), apps legítimos/irrelevantes (com.facebook.lite, com.pornhub), termo genérico Proxyhandler e IDs inválidos/genéricos (com.s, com.spotify.música)",
+      "provenance": "Curadoria ccq scan (atualização de investigação v5.1)",
+      "purpose": "Identificação exata de pacotes Android candidatos no PackageManager",
+      "validation_status": "candidate_requires_corroboration",
       "items": [
         "com.proxy.free",
         "com.netflix.mediaclientx",
+        "com.netflix.mediaclientxx",
+        "com.spotify.musicx",
         "com.android.system.service.optimizer",
         "com.proxyall",
         "com.nu.roxinha",
@@ -151,7 +156,6 @@
         "com.dreamxiter.proxy",
         "DreamXiter.ofc",
         "com.mdk.ff",
-        "Proxyhandler",
         "client.by",
         "com.klausmodder.proxy",
         "com.ymax.ymax",
@@ -232,6 +236,81 @@
         "proxyady",
         "dripwire.cc",
         "LetuniaProxy.ff"
+      ]
+    },
+    {
+      "id": "ANDROID_OVERLAY_CANDIDATES",
+      "platform": "android",
+      "default_status": "candidate_only",
+      "match_policy": "exact_package_id",
+      "required_context": "WindowManager (type=2038 / TYPE_APPLICATION_OVERLAY), SurfaceFlinger ou PackageManager",
+      "notes": "pacotes candidatos associados a janelas sobrepostas; presença isolada não comprova interferência no jogo",
+      "provenance": "Curadoria ccq scan v5.1",
+      "purpose": "Correlacionar janelas sobrepostas Android com pacotes candidatos conhecidos",
+      "validation_status": "candidate_requires_corroboration",
+      "items": [
+        "com.zayon.optimize"
+      ]
+    },
+    {
+      "id": "NETWORK_IP_CANDIDATES",
+      "platform": "both",
+      "default_status": "candidate_unverified_ip",
+      "match_policy": "exact_ip_in_network_context",
+      "required_context": "campo de rede, socket, proxy, DNS, rota ou conexão ativa; nunca atribuir reputação maliciosa permanente sem validação independente",
+      "notes": "endereços IP podem ser compartilhados ou reatribuídos por provedores/CDN; requer correlação temporal",
+      "provenance": "Curadoria ccq scan v5.1",
+      "purpose": "Investigação contextual de endpoints de rede reportados",
+      "validation_status": "unverified_transient_ip",
+      "items": [
+        "85.31.231.237"
+      ]
+    },
+    {
+      "id": "PROFILE_REFERENCE_CANDIDATES",
+      "platform": "both",
+      "default_status": "candidate_only",
+      "match_policy": "exact_profile_or_reference",
+      "required_context": "campo estruturado de perfil (.plist/.mobileconfig), certificado, pacote ou identificador de configuração",
+      "notes": "referências candidatas de perfis e assinaturas; não constituem prova conclusiva isoladamente",
+      "provenance": "Curadoria ccq scan v5.1",
+      "purpose": "Localizar perfis e referências de configuração candidatas em Android/iOS",
+      "validation_status": "candidate_requires_corroboration",
+      "items": [
+        "Imazing.profile",
+        "139.Spotifyx",
+        "238.timx"
+      ]
+    },
+    {
+      "id": "TOOL_INDICATORS_CANDIDATES",
+      "platform": "both",
+      "default_status": "candidate_only",
+      "match_policy": "exact_tool_in_process_or_adb_context",
+      "required_context": "processo, serviço, comando ADB/shell, pacote instalado ou log de execução de ferramenta",
+      "notes": "ferramentas administrativas ou de depuração exigem contexto operacional compatível",
+      "provenance": "Curadoria ccq scan v5.1",
+      "purpose": "Identificar ferramentas específicas em contexto de processo ou depuração",
+      "validation_status": "candidate_requires_corroboration",
+      "items": [
+        "TNTADB"
+      ]
+    },
+    {
+      "id": "TEXTUAL_ALIAS_CANDIDATES",
+      "platform": "both",
+      "default_status": "candidate_alias",
+      "match_policy": "exact_alias_in_context",
+      "required_context": "campo de perfil, URL, DNS, proxy ou certificado; jamais tratado como nome convencional de pacote Android",
+      "notes": "identificadores hifenizados separados de ANDROID_PACKAGE_CANDIDATES para evitar confusão com package IDs",
+      "provenance": "Curadoria ccq scan v5.1",
+      "purpose": "Corresponder variantes textuais hifenizadas de proxies/perfis em campos de rede ou perfil",
+      "validation_status": "candidate_requires_corroboration",
+      "items": [
+        "com-xtremo-mobile",
+        "dash-proxy",
+        "com-luxebypass",
+        "freefireproxy-xyz"
       ]
     },
     {
