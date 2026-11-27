@@ -40,37 +40,40 @@
   <link rel="stylesheet" href="styles.css?v=12">
   <style>
     *, *::before, *::after { border-radius: 0 !important; }
-    body { background: #090909; }
-    main > section:not(#scan), #header .nav-links li:not(:has(a[href="#scan"])),
-    #header .nav-cta, #mobileMenu a:not([href="#scan"]), #footer .footer-links,
-    #footer .footer-bottom { display: none !important; }
-    #scan { min-height: calc(100vh - 160px); background: #090909; padding-top: 110px; }
-    #scan .section-header { text-align: left; }
-    #scan .scan-panel, #scan .scan-dashboard { background: #111; box-shadow: none; }
-    #header, #footer { background: #101010; }
-    #header { border-bottom: 2px solid #c71920; }
-    #scan .section-header h2 { color: #eee; }
-  
-    #header .nav-links, #header .nav-toggle, #mobileMenu { display: none !important; }
-    #header .nav-brand-title { font-family: Geist, sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.7px; text-transform: none; }
+    body { background: #090909; font-family: Geist, sans-serif; }
+    #header { background: #101010; border-bottom: 2px solid #c71920; }
+    #header .container { max-width: 1200px; }
+    #header .nav-brand-title { font-family: Geist, sans-serif; font-size: 20px; font-weight: 700; letter-spacing: -.6px; text-transform: none; }
     #header .nav-actions { margin-left: auto; }
-    #header .role-badge.is-admin .role-text { font-size: 0; }
-    #header .role-badge.is-admin .role-text::after { content: "Operador"; font-size: 12px; }
-    #scan { padding: 100px 0 48px; min-height: calc(100vh - 85px); }
-    #scan > .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
-    #scan .section-header { margin: 0 0 28px; }
-    #scan .section-header h2 { font-family: Geist, sans-serif; font-size: clamp(28px, 4vw, 38px); letter-spacing: -1px; text-transform: none; }
-    #scan .section-label::before { display: none; }
-    #scan .scan-wrapper { width: 100%; max-width: none; margin: 0; }
-    #scan .scan-dashboard { width: 100%; max-width: none; padding: 24px; border: 1px solid #303030; }
+    #roleBadgeBtn { display: none; }
+    #scan { background: #090909; padding: 100px 0 48px; min-height: 100vh; }
+    #scan > .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+    #scan .section-header { text-align: left; margin: 0; }
+    #scan .section-header h2 { font-family: Geist, sans-serif; font-size: clamp(38px, 5vw, 64px); letter-spacing: -2px; text-transform: none; color: #eee; line-height: 1.08; }
+    #scan .section-header p { color: #aaa; font-size: 18px; max-width: 470px; margin: 18px 0 0; }
+    #scan .section-label { color: #e5484d; }
+    #scan .section-label::before, #scan .section-label::after { display: none; }
+    #scan .scan-wrapper { width: 100%; max-width: none; margin: 0; min-width: 0; }
+    #scan .scan-panel { width: 100%; max-width: 400px; margin: 0 auto; padding: 0; background: transparent; border: 0; box-shadow: none; text-align: left; }
+    #scan .scan-panel::before, #scan .scan-panel::after { display: none; }
+    #scan .scan-lock-icon { display: none; }
+    #scan .scan-panel h3 { font-family: Geist, sans-serif; font-size: 25px; letter-spacing: -.6px; margin: 0 0 10px; }
+    #scan .scan-hint { text-align: left; color: #aaa; margin-bottom: 24px; }
+    #scan .scan-input { background: #141414; border: 1px solid #383838; width: 100%; margin-bottom: 12px; }
+    #scan .scan-btn-login { background: #c71920; width: 100%; }
+    #scan > .container:has(#scanDashboardView[hidden]) { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; gap: 72px; min-height: calc(100vh - 150px); }
+    #scan > .container:has(#scanDashboardView:not([hidden])) { max-width: 1440px; }
+    #scan > .container:has(#scanDashboardView:not([hidden])) > .section-header { display: none; }
+    #scan .scan-dashboard { width: 100%; max-width: none; padding: 24px; background: #111; border: 1px solid #303030; box-shadow: none; }
     #scan .scan-dash-header { padding: 0 0 18px; }
     #scan .scan-upload-box { background: #0b0b0b; }
     #scan .scan-upload-box h4 { font-family: Geist, sans-serif; letter-spacing: 0; }
-    #scan .scan-panel { border: 1px solid #303030; }
-    #footer { display: none; }
-    @media (max-width: 600px) {
-      #scan { padding-top: 90px; }
-      #scan > .container { padding: 0 14px; }
+    #scan [hidden] { display: none !important; }
+    @media (max-width: 760px) {
+      #scan { padding-top: 100px; }
+      #scan > .container { padding: 0 20px; }
+      #scan > .container:has(#scanDashboardView[hidden]) { grid-template-columns: 1fr; gap: 36px; min-height: auto; }
+      #scan .scan-panel { margin: 0; }
       #scan .scan-dashboard { padding: 12px; }
       #scan .scan-mode-selector { flex-wrap: wrap; }
     }
@@ -137,12 +140,12 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </figure>
-            <h3>Acesso Restrito ao Scanner</h3>
-            <p class="scan-hint">Faça login com a credencial de ADM para liberar o scanner forense.</p>
-            <input type="text" id="scanUser" placeholder="Usuário de ADM" class="scan-input" autocomplete="username">
-            <input type="password" id="scanPass" placeholder="Senha de ADM" class="scan-input"
+            <h3>Acesso restrito</h3>
+            <p class="scan-hint">Entre com suas credenciais de operador.</p>
+            <input type="text" id="scanUser" placeholder="Usuário" aria-label="Usuário" class="scan-input" autocomplete="username">
+            <input type="password" id="scanPass" placeholder="Senha" aria-label="Senha" class="scan-input"
               autocomplete="current-password">
-            <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Desbloquear Scanner</button>
+            <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Acessar scanner</button>
           </article>
 
           <!-- Dashboard do Scanner Liberado -->
