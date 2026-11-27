@@ -1,6 +1,6 @@
-# CACIQUE SCAN v5.0 — Documentação Forense e Arquitetura Modular
+# ccq scan v5.0 — Documentação Forense e Arquitetura Modular
 
-Esta documentação descreve a arquitetura **CACIQUE SCAN v5.0** — modularizada em ES Modules nativos com processamento fora da UI via **Web Worker** em modo **streaming**, utilizando o catálogo limpo (`js/scan/catalog-rules.json`).
+Esta documentação descreve a arquitetura **ccq scan v5.0** — modularizada em ES Modules nativos com processamento fora da UI via **Web Worker** em modo **streaming**, utilizando o catálogo limpo (`js/scan/catalog-rules.json`).
 
 ---
 
@@ -33,14 +33,8 @@ js/
 │   ├── sound.js              # Áudio Web API e feedback háptico
 │   ├── ui-utils.js           # escapeHtml, showToast, performCopy, SHA-256, HeroCanvas, navegação
 │   └── auth.js               # Autenticação ADM (/login + SHA-256 client-side)
-├── arena/
-│   ├── ranks.js              # Patentes e pesos editáveis
-│   ├── roster.js             # Gestão e parse de elenco
-│   ├── wheel-engine.js       # Canvas 2D + CSPRNG das roletas
-│   ├── arena-controller.js   # Orquestração das 3 mesas, Telão, Card PNG e Auditoria
-│   └── quick-sort.js         # Modo Rápido clássico
 ├── scan/
-│   ├── scan-ui.js            # UI thread leve (lazy-loaded ao autenticar/abrir scanner)
+│   ├── scan-ui.js            # UI thread leve (lazy-loaded ao autenticar)
 │   ├── scan.worker.js        # Web Worker ES Module: streaming + orquestração fora da UI
 │   ├── archive-reader.js     # Leitura streaming segura ZIP/TAR/GZ com limites e anti-path-traversal
 │   ├── catalog-rules.json    # Catálogo v5.0-clean compilado no boot do Worker
