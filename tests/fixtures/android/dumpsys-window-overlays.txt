@@ -1,0 +1,29 @@
+WINDOW MANAGER WINDOWS (dumpsys window windows)
+  mCurrentFocus=Window{99a1 u0 com.dts.freefiremax/com.dts.freefireth.FFMainActivity}
+  WindowToken{101 type=2038 android.os.BinderProxy@111}
+    Window #0 Window{201 u0 com.android.systemui/com.android.systemui.ScreenDecor}:
+      mOwnerUid=10100 mViewVisibility=0x0 isVisible=true
+  WindowToken{102 type=2038 android.os.BinderProxy@112}
+    Window #0 Window{202 u0 com.google.android.gms/com.google.android.gms.Overlay}:
+      mViewVisibility=0x0 isVisible=true
+  WindowToken{103 type=2038 android.os.BinderProxy@113}
+    Window #0 Window{203 u0 com.miui.securitycenter/FloatWindow}:
+      mViewVisibility=0x0 isVisible=true
+  WindowToken{104 type=2038 android.os.BinderProxy@114}
+    Window #0 Window{204 u0 com.transsion.smartpanel/Panel}:
+      mViewVisibility=0x0 isVisible=true
+  WindowToken{105 type=2038 android.os.BinderProxy@115}
+    Window #0 Window{205 u0 ShellDropTarget}:
+  WindowToken{106 type=2038 android.os.BinderProxy@116}
+    Window #0 Window{206 u0 Shell Root Leash}:
+  WindowToken{107 type=2038 android.os.BinderProxy@117}
+    Window #0 Window{207 u0 android}:
+  WindowToken{108 type=2038 android.os.BinderProxy@118}
+    Window #0 Window{208 u0 com.whatsapp/com.whatsapp.voipcalling.FloatingView}:
+      mViewVisibility=0x0 isVisible=true
+  WindowToken{109 type=2038 android.os.BinderProxy@119}
+    Window #0 Window{209 u0 com.zayon.optimize/com.zayon.optimize.OverlayPanel}:
+      mOwnerPackageName=com.zayon.optimize mViewVisibility=0x0 isVisible=true
+  WindowToken{110 type=2038 android.os.BinderProxy@120}
+    Window #0 Window{210 u0 com.unknown.floatmenu/com.unknown.floatmenu.HudService}:
+      mViewVisibility=0x0 isVisible=true

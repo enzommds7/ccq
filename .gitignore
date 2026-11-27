@@ -18,8 +18,3 @@ api/app.py
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-
-# Testes e config local Node (não necessários no GitHub Pages)
-/package.json
-tests/

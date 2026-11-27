@@ -1,0 +1,5 @@
+auditd: type=1400 audit(0.0:263201): avc: granted { execute } for comm="UnityMain" path="/data/data/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/font/SH-Gpp2" dev="dm-67" ino=2343323 scontext=u:r:untrusted_app:s0 tcontext=u:object_r:app_data_file:s0 tclass=file app=com.dts.freefiremax
+auditd: type=1400 audit(0.0:263202): avc: granted { execute } for comm="UnityMain" path="/data/user/0/com.dts.freefireth/files/contentcache/Compulsory/android/gameassetbundles/font/SH-Gpp2" dev="dm-67" ino=2343324
+auditd: type=1400 audit(0.0:263203): avc: denied { execute } for comm="UnityMain" path="/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/font/SH-Gpp2" app=com.dts.freefiremax
+auditd: type=1400 audit(0.0:263204): avc: granted { execute } for comm="sh" path="/data/user/0/com.dts.freefiremax/files/contentcache/Compulsory/android/gameassetbundles/font/SH-Gpp2" app=com.external.tool
+auditd: type=1400 audit(0.0:263205): avc: granted { read } for path="/data/user/0/com.dts.freefireth/files/contentcache/Compulsory/android/gameassetbundles/font/SH-Gpp2"

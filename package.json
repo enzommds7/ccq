@@ -1,0 +1,9 @@
+{
+  "name": "ccq-scan",
+  "version": "5.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js tests/test_scan_v5.mjs"
+  }
+}
