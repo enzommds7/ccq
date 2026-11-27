@@ -77,6 +77,14 @@
       #scan .scan-dashboard { padding: 12px; }
       #scan .scan-mode-selector { flex-wrap: wrap; }
     }
+    .password-field { position: relative; width: 100%; margin-bottom: 12px; }
+    #scan .password-field .scan-input, .password-field .scan-input { width: 100%; padding-right: 48px; margin-bottom: 0; }
+    .password-toggle { position: absolute; right: 1px; top: 1px; bottom: 1px; width: 42px; display: grid; place-items: center; background: transparent; border: 0; color: #999; cursor: pointer; }
+    .password-toggle:hover { color: #eee; }
+    .password-toggle:focus-visible { outline: 1px solid #c71920; outline-offset: -3px; }
+    .password-toggle svg { width: 20px; height: 20px; pointer-events: none; }
+    .password-toggle .password-slash { display: none; }
+    .password-toggle[aria-pressed="true"] .password-slash { display: block; }
   </style>
 </head>
 
@@ -143,8 +151,8 @@
             <h3>Acesso restrito</h3>
             <p class="scan-hint">Entre com suas credenciais de operador.</p>
             <input type="text" id="scanUser" placeholder="Usuário" aria-label="Usuário" class="scan-input" autocomplete="username">
-            <input type="password" id="scanPass" placeholder="Senha" aria-label="Senha" class="scan-input"
-              autocomplete="current-password">
+            <div class="password-field"><input type="password" id="scanPass" placeholder="Senha" aria-label="Senha" class="scan-input"
+              autocomplete="current-password"><button type="button" class="password-toggle" aria-controls="scanPass" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="password-slash" d="M3 3l18 18"/></svg></button></div>
             <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Acessar scanner</button>
           </article>
 
@@ -248,8 +256,8 @@
         <p class="modal-desc">Acesso restrito aos operadores do scanner.</p>
         <div class="auth-fields">
           <input type="text" id="authUserInput" placeholder="Usuário ADM" class="scan-input" autocomplete="username">
-          <input type="password" id="authPassInput" placeholder="Senha de Segurança" class="scan-input"
-            autocomplete="current-password">
+          <div class="password-field"><input type="password" id="authPassInput" placeholder="Senha de Segurança" class="scan-input"
+            autocomplete="current-password"><button type="button" class="password-toggle" aria-controls="authPassInput" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="password-slash" d="M3 3l18 18"/></svg></button></div>
         </div>
       </div>
       <footer class="modal-footer">
@@ -261,5 +269,24 @@
   </div>
 <div class="toast-region" id="toastRegion" role="status" aria-live="polite"></div>
 <script type="module" src="js/main.js?v=8"></script>
+<script>
+  document.querySelectorAll('.password-toggle').forEach(button => {
+    const input = document.getElementById(button.getAttribute('aria-controls'));
+    function setVisible(visible) {
+      input.type = visible ? 'text' : 'password';
+      button.setAttribute('aria-pressed', String(visible));
+      const label = visible ? 'Ocultar senha' : 'Mostrar senha';
+      button.setAttribute('aria-label', label);
+      button.title = label;
+    }
+    button.addEventListener('click', () => setVisible(input.type === 'password'));
+    input.addEventListener('input', () => { if (!input.value) setVisible(false); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) setVisible(false); });
+    const panel = input.closest('#scanLoginView, #modalAuthBackdrop');
+    if (panel) new MutationObserver(() => {
+      if (panel.hidden || getComputedStyle(panel).display === 'none') setVisible(false);
+    }).observe(panel, { attributes: true, attributeFilter: ['hidden', 'style', 'class'] });
+  });
+</script>
 </body>
 </html>
