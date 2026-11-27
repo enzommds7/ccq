@@ -4,23 +4,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CCQ SCAN</title>
-  <meta name="description" content="CCQ SCAN — análise forense de dispositivos Android e iOS.">
+  <title>ccq scan</title>
+  <meta name="description" content="ccq scan — análise forense de dispositivos Android e iOS.">
   <meta name="theme-color" content="#0d0e12">
   <link rel="canonical" href="https://enzommds7.github.io/ccq/">
 
   <!-- Open Graph / WhatsApp / Discord -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="CCQ SCAN">
+  <meta property="og:site_name" content="ccq scan">
   <meta property="og:locale" content="pt_BR">
   <meta property="og:url" content="https://enzommds7.github.io/ccq/">
-  <meta property="og:title" content="CCQ SCAN">
+  <meta property="og:title" content="ccq scan">
   <meta property="og:description"
     content="Análise forense de dispositivos Android e iOS.">
   <meta property="og:image" content="https://enzommds7.github.io/ccq/logo.jpg">
-  <meta property="og:image:alt" content="CCQ SCAN">
+  <meta property="og:image:alt" content="ccq scan">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="CCQ SCAN">
+  <meta name="twitter:title" content="ccq scan">
   <meta name="twitter:description"
     content="Análise forense de dispositivos Android e iOS.">
   <meta name="twitter:image" content="https://enzommds7.github.io/ccq/logo.jpg">
@@ -50,6 +50,30 @@
     #header, #footer { background: #101010; }
     #header { border-bottom: 2px solid #c71920; }
     #scan .section-header h2 { color: #eee; }
+  
+    #header .nav-links, #header .nav-toggle, #mobileMenu { display: none !important; }
+    #header .nav-brand-title { font-family: Geist, sans-serif; font-size: 19px; font-weight: 700; letter-spacing: -0.7px; text-transform: none; }
+    #header .nav-actions { margin-left: auto; }
+    #header .role-badge.is-admin .role-text { font-size: 0; }
+    #header .role-badge.is-admin .role-text::after { content: "Operador"; font-size: 12px; }
+    #scan { padding: 100px 0 48px; min-height: calc(100vh - 85px); }
+    #scan > .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+    #scan .section-header { margin: 0 0 28px; }
+    #scan .section-header h2 { font-family: Geist, sans-serif; font-size: clamp(28px, 4vw, 38px); letter-spacing: -1px; text-transform: none; }
+    #scan .section-label::before { display: none; }
+    #scan .scan-wrapper { width: 100%; max-width: none; margin: 0; }
+    #scan .scan-dashboard { width: 100%; max-width: none; padding: 24px; border: 1px solid #303030; }
+    #scan .scan-dash-header { padding: 0 0 18px; }
+    #scan .scan-upload-box { background: #0b0b0b; }
+    #scan .scan-upload-box h4 { font-family: Geist, sans-serif; letter-spacing: 0; }
+    #scan .scan-panel { border: 1px solid #303030; }
+    #footer { display: none; }
+    @media (max-width: 600px) {
+      #scan { padding-top: 90px; }
+      #scan > .container { padding: 0 14px; }
+      #scan .scan-dashboard { padding: 12px; }
+      #scan .scan-mode-selector { flex-wrap: wrap; }
+    }
   </style>
 </head>
 
@@ -58,19 +82,19 @@
   <!-- Barra de Navegação Fixa -->
   <header id="header">
     <nav class="container">
-      <a href="#" class="nav-brand" aria-label="Página inicial do CCQ SCAN">
+      <a href="#" class="nav-brand" aria-label="Página inicial do ccq scan">
         <picture class="nav-brand-picture">
           <source srcset="logo.webp" type="image/webp">
-          <img src="logo.jpg" alt="Logo CCQ SCAN" width="34" height="34" class="nav-logo">
+          <img src="logo.jpg" alt="Logo ccq scan" width="34" height="34" class="nav-logo">
         </picture>
-        <span class="nav-brand-title">CCQ SCAN</span>
+        <span class="nav-brand-title">ccq scan</span>
       </a>
 
       <ul class="nav-links" id="navLinks">
         <li><a href="#sobre">Sobre</a></li>
         <li><a href="#regras">Regras</a></li>
         <li><a href="#sorteio">Arena & Sorteio</a></li>
-        <li><a href="#scan">CCQ SCAN</a></li>
+        <li><a href="#scan">ccq scan</a></li>
         <li><a href="#redes">Redes</a></li>
       </ul>
 
@@ -107,7 +131,7 @@
       <a href="#sobre">Sobre</a>
       <a href="#regras">Regras</a>
       <a href="#sorteio">Arena de Roletas & Sorteio</a>
-      <a href="#scan">CCQ SCAN (Anti-Cheat)</a>
+      <a href="#scan">ccq scan (Anti-Cheat)</a>
       <a href="#redes">Nossas Redes</a>
       <a href="#redes" class="cta-link">Entrar na Tribo Oficial</a>
     </div>
@@ -157,7 +181,7 @@
             <div class="emblem-corner bottom-right"></div>
             <picture class="emblem-picture">
               <source srcset="logo.webp" type="image/webp">
-              <img src="logo.jpg" alt="Brasão Oficial CCQ SCAN" width="380" height="380" class="hero-logo-img">
+              <img src="logo.jpg" alt="Brasão Oficial ccq scan" width="380" height="380" class="hero-logo-img">
             </picture>
             <figcaption class="seal-badge">
               <strong>PAGA</strong>
@@ -1021,12 +1045,12 @@ LendaFF (sem patente = padrão)"></textarea>
       </div>
     </section>
 
-    <!-- 04: CCQ SCAN (Anti-Cheat Forense) -->
+    <!-- 04: ccq scan (Anti-Cheat Forense) -->
     <section class="scan" id="scan">
       <div class="container">
         <header class="section-header">
-          <span class="section-label">Anti-Cheat Profissional</span>
-          <h2>CCQ SCAN</h2>
+          <span class="section-label">MOBILE FORENSICS</span>
+          <h2>Scanner forense</h2>
           <p>Análise forense de arquivos Android e iOS.</p>
         </header>
 
@@ -1190,7 +1214,7 @@ LendaFF (sem patente = padrão)"></textarea>
             </figure>
             <div class="rede-panel-info">
               <h3>Discord Oficial</h3>
-              <p>Servidor oficial da Tribo CCQ SCAN. Regras, anúncios, chamadas de partidas e canais de duelos
+              <p>Servidor oficial da Tribo ccq scan. Regras, anúncios, chamadas de partidas e canais de duelos
                 organizados em tempo real.</p>
               <span class="tag-live">Comunidade Ativa</span>
               <div class="rede-copy-row">
@@ -1286,7 +1310,7 @@ LendaFF (sem patente = padrão)"></textarea>
             </figure>
             <div class="rede-panel-info">
               <h3>Canal no YouTube</h3>
-              <p>Canal oficial da CCQ SCAN: destaques, análises de partidas, tutoriais de regras e transmissões
+              <p>Canal oficial da ccq scan: destaques, análises de partidas, tutoriais de regras e transmissões
                 dos maiores confrontos.</p>
               <div class="rede-copy-row">
                 <span class="rede-link-display">youtube.com/@CaciqueApostas</span>
@@ -1318,10 +1342,10 @@ LendaFF (sem patente = padrão)"></textarea>
         <div class="footer-brand">
           <picture>
             <source srcset="logo.webp" type="image/webp">
-            <img src="logo.jpg" alt="Logo CCQ SCAN" width="38" height="38">
+            <img src="logo.jpg" alt="Logo ccq scan" width="38" height="38">
           </picture>
           <div>
-            <strong>CCQ SCAN</strong>
+            <strong>ccq scan</strong>
             <span>Análise forense mobile</span>
           </div>
         </div>
@@ -1329,14 +1353,14 @@ LendaFF (sem patente = padrão)"></textarea>
           <li><a href="#sobre">Sobre</a></li>
           <li><a href="#regras">Regras</a></li>
           <li><a href="#sorteio">Arena & Sorteio</a></li>
-          <li><a href="#scan">CCQ SCAN</a></li>
+          <li><a href="#scan">ccq scan</a></li>
           <li><a href="#redes">Redes</a></li>
         </ul>
       </div>
       <div class="footer-bottom">
         <div class="responsible-gaming-notice">
           <span class="badge-18">18+</span>
-          <p>CCQ SCAN &mdash; Todos os direitos reservados. Comunidade dedicada a duelos e entretenimento
+          <p>ccq scan &mdash; Todos os direitos reservados. Comunidade dedicada a duelos e entretenimento
             competitivo. Jogue com responsabilidade. Proibido para menores de 18 anos.</p>
           <p>Je t'aime, WQZ!</p>
         </div>
