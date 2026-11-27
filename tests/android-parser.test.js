@@ -63,7 +63,7 @@ test('Android ADB: diferencia porta configurada, serviço ativo, loopback, conex
   assert.equal(portEv.evidence_level, 'anomaly_review');
   assert.equal(portEv.domain, 'depuracao');
   assert.equal(portEv.observed.outcome, '5555');
-  assert.ok(!repPortOnly.events.some(e => e.rule_id === 'ANDROID_ADB_REMOTE_CONNECTION_001'), 'Porta configurada não é conexão remota estabelecida');
+  assert.ok(!repPortOnly.events.some(e => e.rule_id === 'ANDROID_ADB_REMOTE_001'), 'Porta configurada não é conexão remota estabelecida');
   assert.ok(repPortOnly.events.some(e => e.rule_id === 'ANDROID_ADB_SERVICE_ACTIVE_001' && e.evidence_level === 'informational'));
 
   // 2. Loopback local (Brevent/Shizuku) -> informational peso 0
@@ -79,7 +79,7 @@ test('Android ADB: diferencia porta configurada, serviço ativo, loopback, conex
     path: 'logcat.txt',
     text: '11-27 10:01:00.000 1000 1000 I adbd: client connected from 192.168.1.44:5555\n'
   }], { catalog, osHint: 'android' });
-  assert.ok(repRemote.events.some(e => e.rule_id === 'ANDROID_ADB_REMOTE_CONNECTION_001' && e.evidence_level === 'anomaly_review'));
+  assert.ok(repRemote.events.some(e => e.rule_id === 'ANDROID_ADB_REMOTE_001' && e.evidence_level === 'anomaly_review'));
 
   // 4. Depuração USB e Wireless isoladas -> informational peso 0
   const repUsbWifi = await runForensicScan([{
