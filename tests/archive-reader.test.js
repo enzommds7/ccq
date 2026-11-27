@@ -92,3 +92,26 @@ test('Archive Reader: allowlist e exclusões forenses (UUIDText, .tracev3, mídi
   assert.equal(classifyArchiveEntry('FS/proc/1/mountinfo').action, 'analyze_text');
   assert.equal(classifyArchiveEntry('sysdiagnose/lsaw.csstoredump').action, 'analyze_text');
 });
+
+test('Archive Reader: trata gzip corrompido graciosamente e respeita sinal de cancelamento', async () => {
+  const badGz = new Uint8Array([0x1f, 0x8b, 0x08, 0x00, 0xde, 0xad, 0xbe, 0xef]);
+  const coverage = createCoverageTracker();
+  await streamInputSource([{
+    name: 'broken.tar.gz',
+    size: badGz.length,
+    bytes: badGz,
+    slice: (s, e) => ({ arrayBuffer: async () => badGz.slice(s, e).buffer }),
+    arrayBuffer: async () => badGz.buffer
+  }], {
+    coverage,
+    onEntry: async () => {}
+  });
+  assert.ok(coverage.gaps.length >= 1, 'Gzip corrompido deve registrar lacuna sem lançar exceção');
+
+  // Cancelamento cooperativo
+  const signal = { aborted: true };
+  await assert.rejects(
+    () => streamInputSource([{ path: 'a.log', text: 'ok\n' }], { signal, onEntry: async () => {} }),
+    (err) => err && err.code === 'SCAN_CANCELLED'
+  );
+});

@@ -71,6 +71,7 @@ export async function runForensicScan(inputs, options = {}) {
     limits,
     coverage,
     onProgress,
+    signal,
     onEntry: async (entry) => {
       checkCancelled();
       seenPaths.push(entry.path);

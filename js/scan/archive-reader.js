@@ -1,8 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — ARCHIVE READER SEGURO & STREAMING
+   ccq scan — ARCHIVE READER SEGURO & STREAMING
    - Suporta ZIP (JSZip lazy em Worker/Node), TAR, TAR.GZ e arquivos soltos
-   - Bloqueia Path Traversal (../), symlinks e explosão de tamanho
+   - Bloqueia Path Traversal (../), symlinks, arquivos corrompidos e explosão de tamanho
+   - Libera referências de buffers/entradas após cada arquivo processado
    - Leitura em chunks de 1 MB com indexOf('\n') — zero split() total
+   - Nota arquitetural: JSZip 3.10.1 materializa o arquivo ZIP comprimido em RAM
+     via FileReader.readAsArrayBuffer mesmo recebendo File/Blob diretamente;
+     o ganho imediato aqui é evitar cópias extras e reter apenas 1 entrada por vez.
    ══════════════════════════════════════════════════════════════════ */
 
 export const DEFAULT_LIMITS = Object.freeze({
@@ -435,115 +439,179 @@ async function processSingleVirtualOrRawEntry({ rawPath, sizeBytes, isLoose, get
   });
 }
 
-async function streamZipArchive(item, limits, coverage, onEntry, onProgress) {
-  const JSZip = await loadJSZip();
-  if (onProgress) onProgress(12, `Indexando ZIP ${item.name || 'arquivo.zip'}...`);
+function canPassBlobDirectlyToJSZip(item) {
+  return (
+    typeof process === 'undefined' &&
+    typeof Blob !== 'undefined' &&
+    typeof FileReader !== 'undefined' &&
+    item instanceof Blob
+  );
+}
 
-  const rawBuf = await readItemAsUint8Array(item);
-  const zip = await JSZip.loadAsync(rawBuf);
-  const allEntries = Object.values(zip.files);
+function checkAborted(signal) {
+  if (signal && signal.aborted) {
+    const err = new Error('Análise cancelada pelo usuário ou encerramento de sessão.');
+    err.code = 'SCAN_CANCELLED';
+    throw err;
+  }
+}
+
+async function streamZipArchive(item, limits, coverage, onEntry, onProgress, signal) {
+  const JSZip = await loadJSZip();
+  const archiveLabel = item.name || 'arquivo.zip';
+  if (onProgress) onProgress(12, `Indexando ZIP ${archiveLabel}...`);
+
+  let zip;
+  let rawBuf = null;
+  try {
+    if (canPassBlobDirectlyToJSZip(item)) {
+      // No browser Worker, passa File/Blob diretamente para evitar uma cópia extra de ArrayBuffer no chamador.
+      // Internamente, JSZip 3.10.1 ainda materializa o ZIP comprimido em Uint8Array via FileReader.
+      zip = await JSZip.loadAsync(item);
+    } else {
+      rawBuf = await readItemAsUint8Array(item);
+      zip = await JSZip.loadAsync(rawBuf);
+    }
+  } catch (err) {
+    coverage.gaps.push({
+      file: archiveLabel,
+      reason: `Arquivo ZIP inválido ou corrompido (${err && err.message ? err.message : 'erro de leitura'}).`
+    });
+    return;
+  } finally {
+    rawBuf = null;
+  }
+
+  const entryKeys = Object.keys(zip.files);
+  const totalEntries = entryKeys.length;
   let accumulatedUncompressed = 0;
 
-  for (let i = 0; i < allEntries.length; i++) {
-    const zEntry = allEntries[i];
-    if (zEntry.dir) continue;
+  for (let i = 0; i < totalEntries; i++) {
+    checkAborted(signal);
+    const entryKey = entryKeys[i];
+    const zEntry = zip.files[entryKey];
+    if (!zEntry) continue;
 
-    coverage.total_container_entries++;
-    const rawZipPath = zEntry.unsafeOriginalName || zEntry.name;
-    const san = sanitizeArchivePath(rawZipPath);
-    if (!san.ok) {
-      coverage.rejected_security.push({ file: rawZipPath, reason: `Path traversal / caminho inválido rejeitado (${san.reason})` });
-      continue;
-    }
+    try {
+      if (zEntry.dir) continue;
 
-    // Bloquear symlink Unix em ZIP (S_IFLNK = 0o120000)
-    if (typeof zEntry.unixPermissions === 'number' && (zEntry.unixPermissions & 0o170000) === 0o120000) {
-      coverage.rejected_security.push({ file: san.normalized, reason: 'Link simbólico em ZIP rejeitado por segurança.' });
-      continue;
-    }
+      coverage.total_container_entries++;
+      const rawZipPath = zEntry.unsafeOriginalName || zEntry.name;
+      const san = sanitizeArchivePath(rawZipPath);
+      if (!san.ok) {
+        coverage.rejected_security.push({ file: rawZipPath, reason: `Path traversal / caminho inválido rejeitado (${san.reason})` });
+        continue;
+      }
 
-    const declaredSize = (zEntry._data && typeof zEntry._data.uncompressedSize === 'number')
-      ? zEntry._data.uncompressedSize
-      : 0;
+      // Bloquear symlink Unix em ZIP (S_IFLNK = 0o120000)
+      if (typeof zEntry.unixPermissions === 'number' && (zEntry.unixPermissions & 0o170000) === 0o120000) {
+        coverage.rejected_security.push({ file: san.normalized, reason: 'Link simbólico em ZIP rejeitado por segurança.' });
+        continue;
+      }
 
-    const cls = classifyArchiveEntry(san.normalized, declaredSize, limits, false);
-    if (cls.action === 'ignore_aux') {
-      coverage.ignored_auxiliary.push({ file: san.normalized, reason: cls.reason });
-      continue;
-    }
-    if (cls.action === 'unsupported') {
-      coverage.unsupported_files.push({ file: san.normalized, reason: cls.reason });
-      continue;
-    }
-    if (cls.action === 'reject_limit') {
-      coverage.rejected_limits.push({ file: san.normalized, reason: cls.reason });
-      continue;
-    }
-    if (cls.action === 'skip_ignored') {
-      coverage.skipped_ignored++;
-      continue;
-    }
+      const declaredSize = (zEntry._data && typeof zEntry._data.uncompressedSize === 'number')
+        ? zEntry._data.uncompressedSize
+        : 0;
 
-    if (coverage.analyzed_files >= limits.maxRelevantEntries) {
-      coverage.rejected_limits.push({
-        file: san.normalized,
-        reason: `Limite máximo de ${limits.maxRelevantEntries} entradas relevantes atingido.`
-      });
-      continue;
-    }
+      const cls = classifyArchiveEntry(san.normalized, declaredSize, limits, false);
+      if (cls.action === 'ignore_aux') {
+        coverage.ignored_auxiliary.push({ file: san.normalized, reason: cls.reason });
+        continue;
+      }
+      if (cls.action === 'unsupported') {
+        coverage.unsupported_files.push({ file: san.normalized, reason: cls.reason });
+        continue;
+      }
+      if (cls.action === 'reject_limit') {
+        coverage.rejected_limits.push({ file: san.normalized, reason: cls.reason });
+        continue;
+      }
+      if (cls.action === 'skip_ignored') {
+        coverage.skipped_ignored++;
+        continue;
+      }
 
-    if (onProgress) {
-      const pct = Math.min(88, 15 + Math.round((i / Math.max(1, allEntries.length)) * 70));
-      onProgress(pct, `Extraindo (${i + 1}/${allEntries.length}): ${san.normalized.split('/').pop()}`);
-    }
+      if (coverage.analyzed_files >= limits.maxRelevantEntries) {
+        coverage.rejected_limits.push({
+          file: san.normalized,
+          reason: `Limite máximo de ${limits.maxRelevantEntries} entradas relevantes atingido.`
+        });
+        continue;
+      }
 
-    if (cls.action === 'analyze_metadata_only') {
+      if (onProgress) {
+        const pct = Math.min(88, 15 + Math.round((i / Math.max(1, totalEntries)) * 70));
+        onProgress(pct, `Extraindo (${i + 1}/${totalEntries}): ${san.normalized.split('/').pop()}`);
+      }
+
+      if (cls.action === 'analyze_metadata_only') {
+        await onEntry({
+          path: san.normalized,
+          format: cls.format,
+          action: cls.action,
+          size: declaredSize,
+          getBytes: async () => new Uint8Array(0),
+          getSource: async () => ''
+        });
+        continue;
+      }
+
+      // Descompacta estritamente 1 entrada por vez e verifica tamanho real pós-descompactação (anti zip-bomb)
+      let u8 = null;
+      try {
+        u8 = await zEntry.async('uint8array');
+      } catch (entryErr) {
+        coverage.gaps.push({
+          file: san.normalized,
+          reason: `Entrada corrompida ou ilegível no ZIP (${entryErr && entryErr.message ? entryErr.message : 'erro de descompressão'}).`
+        });
+        continue;
+      }
+
+      const entryLimit = cls.action === 'analyze_bytes' ? limits.maxBinaryEntryBytes : limits.maxEntryBytes;
+      if (u8.byteLength > entryLimit) {
+        coverage.rejected_limits.push({
+          file: san.normalized,
+          reason: `Tamanho real descomprimido (${(u8.byteLength / (1024 * 1024)).toFixed(1)} MB) excede limite de ${(entryLimit / (1024 * 1024)).toFixed(0)} MB.`
+        });
+        u8 = null;
+        continue;
+      }
+
+      accumulatedUncompressed += u8.byteLength;
+      if (accumulatedUncompressed > limits.maxTotalUncompressedBytes) {
+        coverage.rejected_limits.push({
+          file: san.normalized,
+          reason: `Volume total descomprimido excedeu ${(limits.maxTotalUncompressedBytes / (1024 * 1024)).toFixed(0)} MB.`
+        });
+        u8 = null;
+        break;
+      }
+
+      const currentBytes = u8;
       await onEntry({
         path: san.normalized,
         format: cls.format,
         action: cls.action,
-        size: declaredSize,
-        getBytes: async () => new Uint8Array(0),
-        getSource: async () => ''
+        size: currentBytes.byteLength,
+        getBytes: async () => currentBytes,
+        getSource: async () => currentBytes
       });
-      continue;
+      u8 = null;
+    } finally {
+      // Libera referência do ZipObject e seus dados comprimidos imediatamente após o processamento
+      delete zip.files[entryKey];
+      entryKeys[i] = null;
     }
-
-    // Descompacta apenas 1 entrada por vez e verifica tamanho real pós-descompactação (anti zip-bomb)
-    const u8 = await zEntry.async('uint8array');
-    if (u8.byteLength > limits.maxEntryBytes) {
-      coverage.rejected_limits.push({
-        file: san.normalized,
-        reason: `Tamanho real descomprimido (${(u8.byteLength / (1024 * 1024)).toFixed(1)} MB) excede limite de ${(limits.maxEntryBytes / (1024 * 1024)).toFixed(0)} MB.`
-      });
-      continue;
-    }
-
-    accumulatedUncompressed += u8.byteLength;
-    if (accumulatedUncompressed > limits.maxTotalUncompressedBytes) {
-      coverage.rejected_limits.push({
-        file: san.normalized,
-        reason: `Volume total descomprimido excedeu ${(limits.maxTotalUncompressedBytes / (1024 * 1024)).toFixed(0)} MB.`
-      });
-      break;
-    }
-
-    await onEntry({
-      path: san.normalized,
-      format: cls.format,
-      action: cls.action,
-      size: u8.byteLength,
-      getBytes: async () => u8,
-      getSource: async () => u8
-    });
   }
 }
 
-async function streamTarOrGzip(item, limits, coverage, onEntry, onProgress) {
+async function streamTarOrGzip(item, limits, coverage, onEntry, onProgress, signal) {
   const lower = (item.name || '').toLowerCase();
-  if (onProgress) onProgress(12, `Descomprimindo ${item.name || 'container'}...`);
+  const archiveLabel = item.name || 'container';
+  if (onProgress) onProgress(12, `Descomprimindo ${archiveLabel}...`);
 
-  let raw;
+  let raw = null;
   try {
     if (lower.endsWith('.tar')) {
       raw = await readItemAsUint8Array(item);
@@ -563,72 +631,89 @@ async function streamTarOrGzip(item, limits, coverage, onEntry, onProgress) {
       coverage.rejected_limits.push({ file: item.name || 'archive.gz', reason: err.message });
       return;
     }
-    throw err;
-  }
-
-  if (isUstarMagic(raw)) {
-    const cstr = (b) => latin1Decoder.decode(b).replace(/\0[\s\S]*$/, '');
-    let off = 0;
-    let pendingName = null;
-
-    while (off + 512 <= raw.length) {
-      const h = raw.subarray(off, off + 512);
-      if (h[0] === 0 && h.every(b => b === 0)) break;
-
-      let name = cstr(h.subarray(0, 100));
-      const prefix = cstr(h.subarray(345, 500));
-      const size = parseInt(cstr(h.subarray(124, 136)).trim() || '0', 8) || 0;
-      const type = String.fromCharCode(h[156] || 48);
-      const dataStart = off + 512;
-      const data = raw.subarray(dataStart, dataStart + size);
-
-      if (type === 'L') {
-        pendingName = cstr(data);
-      } else if (type === 'x') {
-        const m = utf8Decoder.decode(data).match(/\d+ path=([^\n]+)\n/);
-        if (m) pendingName = m[1];
-      } else if (type === '1' || type === '2') {
-        const linkPath = pendingName || (prefix ? `${prefix}/${name}` : name);
-        coverage.rejected_security.push({
-          file: linkPath,
-          reason: `Link simbólico/hardlink (type=${type}) em TAR rejeitado por segurança.`
-        });
-        pendingName = null;
-      } else if (type === '0' || type === '7') {
-        if (pendingName) name = pendingName;
-        else if (prefix) name = `${prefix}/${name}`;
-        pendingName = null;
-
-        await processSingleVirtualOrRawEntry({
-          rawPath: name,
-          sizeBytes: size,
-          isLoose: false,
-          getBytes: async () => data,
-          getSourceForStreaming: async () => data,
-          limits,
-          coverage,
-          onEntry
-        });
-      } else if (type !== 'g') {
-        pendingName = null;
-      }
-      off = dataStart + Math.ceil(size / 512) * 512;
-    }
+    coverage.gaps.push({
+      file: archiveLabel,
+      reason: `Arquivo compactado gzip/TAR inválido ou corrompido (${err && err.message ? err.message : 'erro de descompressão'}).`
+    });
     return;
   }
 
-  // Arquivo .gz simples contendo um único log
-  const cleanName = (item.name || 'log.txt').replace(/\.gz$/i, '') || 'log.txt';
-  await processSingleVirtualOrRawEntry({
-    rawPath: cleanName,
-    sizeBytes: raw.byteLength,
-    isLoose: true,
-    getBytes: async () => raw,
-    getSourceForStreaming: async () => raw,
-    limits,
-    coverage,
-    onEntry
-  });
+  try {
+    if (isUstarMagic(raw)) {
+      const cstr = (b) => latin1Decoder.decode(b).replace(/\0[\s\S]*$/, '');
+      let off = 0;
+      let pendingName = null;
+
+      while (off + 512 <= raw.length) {
+        checkAborted(signal);
+        const h = raw.subarray(off, off + 512);
+        if (h[0] === 0 && h.every(b => b === 0)) break;
+
+        let name = cstr(h.subarray(0, 100));
+        const prefix = cstr(h.subarray(345, 500));
+        const size = parseInt(cstr(h.subarray(124, 136)).trim() || '0', 8);
+        if (!Number.isFinite(size) || size < 0 || off + 512 + size > raw.length) {
+          coverage.gaps.push({
+            file: archiveLabel,
+            reason: 'Cabeçalho TAR truncado ou tamanho de entrada fora dos limites do arquivo.'
+          });
+          break;
+        }
+        const type = String.fromCharCode(h[156] || 48);
+        const dataStart = off + 512;
+        const data = raw.subarray(dataStart, dataStart + size);
+
+        if (type === 'L') {
+          pendingName = cstr(data);
+        } else if (type === 'x') {
+          const m = utf8Decoder.decode(data).match(/\d+ path=([^\n]+)\n/);
+          if (m) pendingName = m[1];
+        } else if (type === '1' || type === '2') {
+          const linkPath = pendingName || (prefix ? `${prefix}/${name}` : name);
+          coverage.rejected_security.push({
+            file: linkPath,
+            reason: `Link simbólico/hardlink (type=${type}) em TAR rejeitado por segurança.`
+          });
+          pendingName = null;
+        } else if (type === '0' || type === '7') {
+          if (pendingName) name = pendingName;
+          else if (prefix) name = `${prefix}/${name}`;
+          pendingName = null;
+
+          await processSingleVirtualOrRawEntry({
+            rawPath: name,
+            sizeBytes: size,
+            isLoose: false,
+            getBytes: async () => data,
+            getSourceForStreaming: async () => data,
+            limits,
+            coverage,
+            onEntry
+          });
+        } else if (type !== 'g') {
+          pendingName = null;
+        }
+        off = dataStart + Math.ceil(size / 512) * 512;
+      }
+      return;
+    }
+
+    // Arquivo .gz simples contendo um único log
+    const cleanName = (item.name || 'log.txt').replace(/\.gz$/i, '') || 'log.txt';
+    const rawRef = raw;
+    await processSingleVirtualOrRawEntry({
+      rawPath: cleanName,
+      sizeBytes: rawRef.byteLength,
+      isLoose: true,
+      getBytes: async () => rawRef,
+      getSourceForStreaming: async () => rawRef,
+      limits,
+      coverage,
+      onEntry
+    });
+  } finally {
+    raw = null;
+  }
 }
 
 export async function streamInputSource(inputs, options = {}) {
@@ -636,9 +721,11 @@ export async function streamInputSource(inputs, options = {}) {
   const coverage = options.coverage || createCoverageTracker();
   const onEntry = options.onEntry;
   const onProgress = options.onProgress || null;
+  const signal = options.signal || null;
 
   const list = Array.from(inputs || []);
   for (let i = 0; i < list.length; i++) {
+    checkAborted(signal);
     const item = list[i];
 
     // Entrada virtual direta (usada pelos testes ou logs em memória): { path, text, bytes }
@@ -681,11 +768,11 @@ export async function streamInputSource(inputs, options = {}) {
     const head = isSingleArchive ? await readItemHeadBytes(item, 4) : null;
 
     if (isSingleArchive && (rawName.toLowerCase().endsWith('.zip') || isZipMagic(head))) {
-      await streamZipArchive(item, limits, coverage, onEntry, onProgress);
+      await streamZipArchive(item, limits, coverage, onEntry, onProgress, signal);
       continue;
     }
     if (isSingleArchive) {
-      await streamTarOrGzip(item, limits, coverage, onEntry, onProgress);
+      await streamTarOrGzip(item, limits, coverage, onEntry, onProgress, signal);
       continue;
     }
 
