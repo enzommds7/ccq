@@ -1,0 +1,33 @@
+name: ccq scan — Regression Tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  forensic-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Syntax check all ES Modules
+        run: |
+          find js -name '*.js' -print0 | xargs -0 -n1 node --check
+
+      - name: Validate catalog JSON
+        run: |
+          node -e "JSON.parse(require('node:fs').readFileSync('js/scan/catalog-rules.json', 'utf8')); console.log('catalog-rules.json valid')"
+
+      - name: Run forensic test suite
+        run: npm test
