@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — CORRELACIONADOR DE EVIDÊNCIAS & VEREDITO
-   - Exige >= 2 fontes técnicas independentes para EVIDÊNCIA CORROBORADA
+   ccq scan — CORRELACIONADOR DE EVIDÊNCIAS & VEREDITO
+   - Exige >= 2 fontes técnicas efetivamente independentes para EVIDÊNCIA CORROBORADA
+   - Impede inflação artificial de pontuação (teto por família + bônus limitado)
    - Separa rigorosamente Cobertura de Índice Heurístico
    - Nunca declara "100% limpo" nem "Ban Direto"
    - Diante de lacunas / parser ausente, declara INCONCLUSIVO
@@ -8,29 +9,39 @@
 import { DOMAIN_LABELS, EVIDENCE_LEVEL_LABELS, EVIDENCE_LEVEL_RANK } from './matcher.js';
 
 const SIGNAL_FAMILY_MAP = Object.freeze({
-  ff_sh_gpp2_exec: { family: 'selinux_gameasset', label: 'SELinux/auditd GameAsset' },
-  ff_shgap_dir: { family: 'fs_gameasset', label: 'Diretório anômalo no jogo' },
-  ff_jar_loaded: { family: 'classloader_jar', label: 'ClassLoader/execução de JAR' },
-  ff_non_playstore: { family: 'packagemanager_origin', label: 'Origem de instalação fora da Play Store' },
-  android_candidate_pkg: { family: 'packagemanager_pkg', label: 'Pacote candidato instalado' },
-  android_root_env: { family: 'root_environment', label: 'Ambiente Root/Módulos' },
-  android_boot_unlocked: { family: 'boot_properties', label: 'Propriedades de Boot/SELinux' },
-  android_setedit_anomaly: { family: 'settings_provider', label: 'Alteração via SetEdit' },
-  injected_backtrace: { family: 'crash_backtrace', label: 'Biblioteca externa em backtrace' },
-  android_adb_remote: { family: 'adb_network', label: 'ADB remoto via rede' },
-  android_proxy_tool: { family: 'network_proxy', label: 'Proxy/MITM configurado' },
-  proxy_named_domain: { family: 'network_dns', label: 'Domínio/perfil proxy em contexto de rede' },
-  proxy_package_installed: { family: 'packagemanager_proxy', label: 'Pacote proxy instalado' },
-  ios_usedimage_injection: { family: 'ios_crash_ips', label: 'usedImages .ips com dylib suspeita' },
-  ios_ff_non_appstore: { family: 'ios_ips_origin', label: 'Metadados App Store divergentes em .ips' },
-  ios_proxy_profile: { family: 'ios_profile_plist', label: 'Perfil/Proxy estruturado em .plist' },
-  ios_dopamine_runtime: { family: 'ios_runtime_dopamine', label: 'Runtime Dopamine/Tweak em log decodificado' },
-  ios_jailbreak_runtime: { family: 'ios_runtime_jailbreak', label: 'Evento decodificado de jailbreak' }
+  ff_sh_gpp2_exec: { family: 'selinux_gameasset', label: 'SELinux/auditd GameAsset', corroborationEligible: true },
+  ff_sh_gpp2_mismatch: { family: 'selinux_gameasset', label: 'SELinux/auditd GameAsset (inconsistência contextual)', corroborationEligible: true },
+  ff_shgap_dir: { family: 'fs_gameasset', label: 'Diretório anômalo no jogo', corroborationEligible: true },
+  ff_jar_loaded: { family: 'classloader_jar', label: 'ClassLoader/execução de JAR', corroborationEligible: true },
+  ff_non_playstore: { family: 'packagemanager_origin', label: 'Origem de instalação fora da Play Store', corroborationEligible: true },
+  android_candidate_pkg: { family: 'packagemanager_pkg', label: 'Pacote candidato instalado', corroborationEligible: true },
+  android_root_env: { family: 'root_environment', label: 'Ambiente Root/Módulos', corroborationEligible: true },
+  android_boot_unlocked: { family: 'boot_properties', label: 'Propriedades de Boot/SELinux', corroborationEligible: true },
+  android_setedit_anomaly: { family: 'settings_provider', label: 'Alteração via SetEdit', corroborationEligible: true },
+  android_shell_settings_anomaly: { family: 'settings_provider', label: 'Alteração de Settings via Android Shell', corroborationEligible: false },
+  injected_backtrace: { family: 'crash_backtrace', label: 'Biblioteca externa em backtrace', corroborationEligible: true },
+  android_adb_tcp_port: { family: 'adb_config', label: 'Porta ADB TCP configurada (compatível com Brevent/Shizuku)', corroborationEligible: false },
+  android_adb_remote: { family: 'adb_network', label: 'ADB remoto via rede', corroborationEligible: true },
+  android_adb_forward: { family: 'adb_network', label: 'Encaminhamento de porta ADB', corroborationEligible: false },
+  android_overlay_active: { family: 'window_overlay', label: 'Janela sobreposta (WindowManager/SurfaceFlinger)', corroborationEligible: true },
+  android_proxy_tool: { family: 'network_proxy', label: 'Proxy/MITM configurado', corroborationEligible: true },
+  proxy_named_domain: { family: 'network_dns', label: 'Domínio/perfil proxy em contexto de rede', corroborationEligible: true },
+  proxy_alias_candidate: { family: 'network_dns', label: 'Alias textual de proxy/bypass em contexto de rede', corroborationEligible: true },
+  network_ip_candidate: { family: 'network_ip', label: 'Endereço IP candidato (sem reputação permanente)', corroborationEligible: false },
+  profile_ref_candidate: { family: 'profile_reference', label: 'Referência de perfil candidata', corroborationEligible: true },
+  tool_indicator_detected: { family: 'debug_tool', label: 'Ferramenta candidata em contexto operacional', corroborationEligible: true },
+  proxy_package_installed: { family: 'packagemanager_proxy', label: 'Pacote proxy instalado', corroborationEligible: true },
+  ios_usedimage_injection: { family: 'ios_crash_ips', label: 'usedImages .ips com dylib suspeita', corroborationEligible: true },
+  ios_ff_non_appstore: { family: 'ios_ips_origin', label: 'Metadados App Store divergentes em .ips', corroborationEligible: true },
+  ios_proxy_profile: { family: 'ios_profile_plist', label: 'Perfil/Proxy estruturado em .plist', corroborationEligible: true },
+  ios_dopamine_runtime: { family: 'ios_runtime_dopamine', label: 'Runtime Dopamine/Tweak em log decodificado', corroborationEligible: true },
+  ios_jailbreak_runtime: { family: 'ios_runtime_jailbreak', label: 'Evento decodificado de jailbreak', corroborationEligible: true }
 });
 
-// Regras elegíveis para promoção a EVIDÊNCIA CORROBORADA quando sustentadas por >= 2 fontes independentes
+// Regras elegíveis para promoção a EVIDÊNCIA CORROBORADA quando sustentadas por >= 2 fontes técnicas independentes
 const CORROBORATABLE_RULES = new Set([
   'ANDROID_GAME_SH_GPP2_EXEC_001',
+  'ANDROID_GAME_SH_GPP2_CTX_MISMATCH_001',
   'ANDROID_GAME_SHGAP_DIR_001',
   'ANDROID_GAME_JAR_LOADED_001',
   'ANDROID_FF_NON_PLAYSTORE_001',
@@ -38,7 +49,11 @@ const CORROBORATABLE_RULES = new Set([
   'ANDROID_PROFILE_PKG_001',
   'ANDROID_CRASH_INJECTED_BACKTRACE_001',
   'ANDROID_NET_PROXY_TOOL_001',
+  'ANDROID_OVERLAY_ACTIVE_001',
   'PROXY_NAMED_DOMAIN_001',
+  'PROXY_ALIAS_CANDIDATE_001',
+  'PROFILE_REFERENCE_CANDIDATE_001',
+  'TOOL_INDICATOR_CANDIDATE_001',
   'ANDROID_SETTINGS_SETEDIT_ANOMALY_001',
   'IOS_IPS_USEDIMAGE_DYLIB_001',
   'IOS_IPS_FF_SIDELOAD_001',
@@ -49,15 +64,27 @@ const CORROBORATABLE_RULES = new Set([
 
 const RULE_SIGNAL_KEY = Object.freeze({
   ANDROID_GAME_SH_GPP2_EXEC_001: 'ff_sh_gpp2_exec',
+  ANDROID_GAME_SH_GPP2_CTX_MISMATCH_001: 'ff_sh_gpp2_mismatch',
   ANDROID_GAME_SHGAP_DIR_001: 'ff_shgap_dir',
   ANDROID_GAME_JAR_LOADED_001: 'ff_jar_loaded',
   ANDROID_FF_NON_PLAYSTORE_001: 'ff_non_playstore',
   ANDROID_PKG_CANDIDATE_001: 'android_candidate_pkg',
   ANDROID_PROFILE_PKG_001: 'proxy_package_installed',
+  ANDROID_ROOT_ENV_001: 'android_root_env',
+  ANDROID_BOOT_UNLOCKED_001: 'android_boot_unlocked',
   ANDROID_CRASH_INJECTED_BACKTRACE_001: 'injected_backtrace',
+  ANDROID_ADB_TCP_PORT_CONFIGURED_001: 'android_adb_tcp_port',
+  ANDROID_ADB_REMOTE_001: 'android_adb_remote',
+  ANDROID_ADB_FORWARD_001: 'android_adb_forward',
+  ANDROID_OVERLAY_ACTIVE_001: 'android_overlay_active',
   ANDROID_NET_PROXY_TOOL_001: 'android_proxy_tool',
   PROXY_NAMED_DOMAIN_001: 'proxy_named_domain',
+  PROXY_ALIAS_CANDIDATE_001: 'proxy_alias_candidate',
+  NETWORK_IP_CANDIDATE_001: 'network_ip_candidate',
+  PROFILE_REFERENCE_CANDIDATE_001: 'profile_ref_candidate',
+  TOOL_INDICATOR_CANDIDATE_001: 'tool_indicator_detected',
   ANDROID_SETTINGS_SETEDIT_ANOMALY_001: 'android_setedit_anomaly',
+  ANDROID_SETTINGS_SHELL_ANOMALY_001: 'android_shell_settings_anomaly',
   IOS_IPS_USEDIMAGE_DYLIB_001: 'ios_usedimage_injection',
   IOS_IPS_FF_SIDELOAD_001: 'ios_ff_non_appstore',
   IOS_PLIST_PROXY_PROFILE_001: 'ios_proxy_profile',
@@ -65,15 +92,68 @@ const RULE_SIGNAL_KEY = Object.freeze({
   IOS_JAILBREAK_EVENT_001: 'ios_jailbreak_runtime'
 });
 
+const MAX_SINGLE_FAMILY_SCORE = 35;
+const EXTRA_EVENT_SAME_FAMILY_STEP = 5;
+const MAX_EXTRA_EVENT_SAME_FAMILY = 10;
+const CORROBORATION_BONUS_PER_FAMILY = 15;
+const MAX_CORROBORATION_BONUS = 25;
+
 function summarizeIndependentFamilies(signalsMap) {
-  const familyDescriptions = new Map();
+  const eligibleFamilies = new Map();
   for (const [sigKey, desc] of signalsMap.entries()) {
-    const info = SIGNAL_FAMILY_MAP[sigKey] || { family: sigKey, label: sigKey };
-    if (!familyDescriptions.has(info.family)) {
-      familyDescriptions.set(info.family, `${info.label}: ${desc}`);
+    const info = SIGNAL_FAMILY_MAP[sigKey] || { family: sigKey, label: sigKey, corroborationEligible: false };
+    if (!info.corroborationEligible) continue;
+    if (!eligibleFamilies.has(info.family)) {
+      eligibleFamilies.set(info.family, `${info.label}: ${desc}`);
     }
   }
-  return familyDescriptions;
+  return eligibleFamilies;
+}
+
+function resolveEventFamily(ev) {
+  const sigKey = RULE_SIGNAL_KEY[ev.rule_id];
+  if (sigKey && SIGNAL_FAMILY_MAP[sigKey]) {
+    return SIGNAL_FAMILY_MAP[sigKey].family;
+  }
+  return (ev.source && ev.source.format) || ev.rule_id;
+}
+
+/**
+ * Calcula o índice heurístico de forma calibrada e resistente à inflação artificial:
+ * - Eventos da mesma família técnica sofrem amortecimento e teto (MAX_SINGLE_FAMILY_SCORE = 35)
+ * - Corroboração real (>= 2 famílias elegíveis) adiciona bônus único limitado (máx +25),
+ *   sem multiplicar ou sobrescrever os pesos individuais de cada evento.
+ */
+function computeCalibratedHeuristicIndex(events, eligibleFamilyCount, corroboratedCount) {
+  const familyBuckets = new Map();
+
+  for (const ev of events) {
+    const w = Number(ev.heuristic_weight) || 0;
+    if (w <= 0) continue;
+    const fam = resolveEventFamily(ev);
+    if (!familyBuckets.has(fam)) {
+      familyBuckets.set(fam, []);
+    }
+    familyBuckets.get(fam).push(w);
+  }
+
+  let familyScoreSum = 0;
+  for (const weights of familyBuckets.values()) {
+    weights.sort((a, b) => b - a);
+    const maxWeight = weights[0];
+    const extraContribution = Math.min(
+      MAX_EXTRA_EVENT_SAME_FAMILY,
+      (weights.length - 1) * EXTRA_EVENT_SAME_FAMILY_STEP
+    );
+    const familyCap = Math.max(MAX_SINGLE_FAMILY_SCORE, maxWeight);
+    familyScoreSum += Math.min(familyCap, maxWeight + extraContribution);
+  }
+
+  const corroborationBonus = (corroboratedCount > 0 && eligibleFamilyCount >= 2)
+    ? Math.min(MAX_CORROBORATION_BONUS, (eligibleFamilyCount - 1) * CORROBORATION_BONUS_PER_FAMILY)
+    : 0;
+
+  return Math.min(100, familyScoreSum + corroborationBonus);
 }
 
 export function correlateAndBuildReport({
@@ -87,21 +167,17 @@ export function correlateAndBuildReport({
   catalogMeta,
   inactiveRulesCount
 }) {
-  const familyMap = summarizeIndependentFamilies(signals);
+  const eligibleFamilyMap = summarizeIndependentFamilies(signals);
 
-  // 1. Correlação estrita: 2+ fontes técnicas independentes sustentam anomalia específica
-  if (familyMap.size >= 2) {
+  // 1. Correlação estrita: >= 2 fontes técnicas independentes e elegíveis sustentam anomalia específica
+  if (eligibleFamilyMap.size >= 2) {
     for (const ev of events) {
       if (ev.evidence_level !== 'anomaly_review') continue;
       if (!CORROBORATABLE_RULES.has(ev.rule_id)) continue;
 
-      const ownSigKey = RULE_SIGNAL_KEY[ev.rule_id];
-      const ownFamily = ownSigKey && SIGNAL_FAMILY_MAP[ownSigKey]
-        ? SIGNAL_FAMILY_MAP[ownSigKey].family
-        : ev.source.format;
-
+      const ownFamily = resolveEventFamily(ev);
       const otherSources = [];
-      for (const [fam, desc] of familyMap.entries()) {
+      for (const [fam, desc] of eligibleFamilyMap.entries()) {
         if (fam !== ownFamily) otherSources.push(desc);
       }
 
@@ -109,7 +185,7 @@ export function correlateAndBuildReport({
         ev.evidence_level = 'corroborated_evidence';
         ev.evidence_level_label = EVIDENCE_LEVEL_LABELS.corroborated_evidence;
         ev.corroboration = otherSources;
-        ev.heuristic_weight = Math.max(ev.heuristic_weight || 0, 50);
+        // Preserva o peso individual calibrado do evento (sem inflar todos para 50)
         ev.recommended_action = 'Revisão especializada recomendada com base em múltiplas fontes independentes (nunca aplicar punição automática apenas por logs).';
       }
     }
@@ -155,8 +231,11 @@ export function correlateAndBuildReport({
     domainCounts[ev.domain] = (domainCounts[ev.domain] || 0) + 1;
   }
 
-  const rawHeuristicSum = events.reduce((acc, ev) => acc + (ev.heuristic_weight || 0), 0);
-  const heuristicIndex = Math.min(100, rawHeuristicSum);
+  const heuristicIndex = computeCalibratedHeuristicIndex(
+    events,
+    eligibleFamilyMap.size,
+    corroboratedCount
+  );
 
   // 4. Veredito honesto nos 5 estados oficiais
   let verdict;
