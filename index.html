@@ -134,6 +134,18 @@
     #scan .ccq-formats { justify-content: center; }
     #scan .ccq-signature { text-align: center; }
     @media (max-width: 760px) { #scan .section-header h2 { font-size: clamp(32px, 9vw, 64px); } }
+    /* Center the identity within the entire left grid track, not the legacy header width. */
+    #scan > .container > .section-header { width: 100%; max-width: none; min-width: 0; margin: 0; box-sizing: border-box; justify-self: stretch; align-self: stretch; display: flex; align-items: center; justify-content: center; text-align: center; padding: 48px 24px; }
+    #scan .ccq-identity, #scan .ccq-signature { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: none; text-align: center; }
+    #scan .section-header .section-label { display: block; width: auto; margin: 0 auto; text-align: center; }
+    #scan .section-header h2 { display: block; width: auto; max-width: 100%; margin: 14px auto; text-align: center; }
+    #scan .section-header p { width: auto; margin-left: auto; margin-right: auto; text-align: center; }
+    #scan .ccq-formats { justify-content: center; }
+    #scan .ccq-signature { margin-top: 48px; }
+    #scan .scan-input { color-scheme: dark; }
+    #scan .scan-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #000 inset; -webkit-text-fill-color: #eee; caret-color: #eee; }
+    #scan > .container:has(#scanDashboardView:not([hidden])) > .section-header { display: none; }
+    @media (max-width: 760px) { #scan > .container > .section-header { padding: 36px 20px; } }
   </style>
 </head>
 
