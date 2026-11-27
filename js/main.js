@@ -15,7 +15,7 @@ function ensureScanUiReady() {
   }
 
   if (!scanUiPromise) {
-    scanUiPromise = import('./scan/scan-ui.js')
+    scanUiPromise = import('./scan/scan-ui.js?v=5.1')
       .then((mod) => {
         scanUiModule = mod;
         if (isAdminAuthenticated()) {

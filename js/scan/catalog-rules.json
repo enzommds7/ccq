@@ -1,11 +1,11 @@
 {
   "meta": {
-    "name": "CACIQUE Scan — Catálogo de Indicadores de Referência",
-    "version": "5.0-clean",
-    "updated": "2026-11-22",
+    "name": "ccq scan — Catálogo de Indicadores de Referência",
+    "version": "5.1-clean",
+    "updated": "2026-11-27",
     "status": "CANDIDATO_EM_VALIDACAO",
     "policy": "Termos são hipóteses de pesquisa, nunca vereditos nem regras automáticas de banimento",
-    "schema_version": "1.1"
+    "schema_version": "1.2"
   },
   "baselines": {
     "android_freefire_packages": [

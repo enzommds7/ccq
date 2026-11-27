@@ -1,11 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — MATCHER & COMPILADOR DE REGRAS (BOOT ÚNICO)
+   ccq scan v5.1 — MATCHER & COMPILADOR DE REGRAS (BOOT ÚNICO)
    - Pré-compila RegExp, Sets e Maps uma única vez no boot do Worker
+   - Consome todas as categorias ativas separadas do catálogo v5.1
    - Mantém PROXY_SHORT_TOKENS (disabled/inactive_research_only) fora de uso
-   - Padroniza eventos no Contrato Canônico v5.0
+   - Padroniza eventos no Contrato Canônico v5.1
    ══════════════════════════════════════════════════════════════════ */
 
-export const RULE_VERSION = '5.0.0';
+export const RULE_VERSION = '5.1.0';
 
 export const DOMAIN_LABELS = Object.freeze({
   seguranca_do_dispositivo: 'Segurança do Dispositivo',

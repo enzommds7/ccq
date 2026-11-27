@@ -293,8 +293,8 @@ export function correlateAndBuildReport({
   };
 
   return {
-    engine_version: '5.0.0',
-    catalog_version: (catalogMeta && catalogMeta.version) || '5.0-clean',
+    engine_version: '5.1.0',
+    catalog_version: (catalogMeta && catalogMeta.version) || '5.1-clean',
     os_detected: osDetected,
     duration_ms: Math.round(durationMs),
     verdict,

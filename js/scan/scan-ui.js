@@ -40,7 +40,7 @@ function terminateWorker() {
 
 function getOrCreateWorker() {
   if (activeWorker) return activeWorker;
-  activeWorker = new Worker(new URL('./scan.worker.js', import.meta.url), { type: 'module' });
+  activeWorker = new Worker(new URL('./scan.worker.js?v=5.1', import.meta.url), { type: 'module' });
   return activeWorker;
 }
 

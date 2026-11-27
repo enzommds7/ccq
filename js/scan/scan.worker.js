@@ -206,7 +206,7 @@ if (isWebWorkerContext) {
     if (cachedCatalog && cachedMatcher) {
       return { catalog: cachedCatalog, matcher: cachedMatcher };
     }
-    const resp = await fetch(new URL('./catalog-rules.json', import.meta.url));
+    const resp = await fetch(new URL('./catalog-rules.json?v=5.1', import.meta.url));
     if (!resp.ok) {
       throw new Error(`Falha ao carregar catalog-rules.json (HTTP ${resp.status}).`);
     }
