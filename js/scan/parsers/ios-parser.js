@@ -1,9 +1,10 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — PARSER FORENSE iOS (PLIST XML + bplist00 + IPS + LOGS)
+   ccq scan — PARSER FORENSE iOS (PLIST XML + bplist00 + IPS + LOGS)
    - Nunca varre UUIDText / DSC / timesync de system_logs.logarchive
+   - Nunca interpreta .tracev3 como texto
    - Decodifica bplist00 binário sem corrupção UTF-8
    - Valida .ips (itemID 1300146617/1480516829, usedImages, teamID pending)
-   - Trata Sandbox: deny, itunesstored, SetupAssistant e Screen Time sem falso positivo
+   - Trata Sandbox: deny, itunesstored, SetupAssistant e Screen Time nativo sem falso positivo
    ══════════════════════════════════════════════════════════════════ */
 import { buildCanonicalEvent, extractLineMeta } from '../engine/matcher.js';
 import { isIosAuxiliaryCatalogPath } from '../archive-reader.js';
@@ -16,8 +17,12 @@ const latin1Dec = new TextDecoder('latin1');
 const SANDBOX_DENY_RE = /\bSandbox:.*?\bdeny\b/i;
 const ENV_OR_PROC_CTX_RE = /(DYLD_INSERT_LIBRARIES|DOPAMINE_|JBUPDATE_|jbserver|jbctl|usedImages|Process:|Application:|\.dylib\b|execve|posix_spawn|launchd)/i;
 const PROC_EVENT_RE = /(^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}|Process:|launched|spawn|exec|CFBundleIdentifier|bundleID)/i;
-const NET_PROXY_RE = /(PayloadIdentifier|PayloadOrganization|ServerAddress|HTTPProxy|HTTPSProxy|DNS|proxy|http:\/\/|https:\/\/|\.apple\.dns)/i;
-const SCREENTIME_NATIVE_RE = /^system\.dateandtime\.force_date_time_configuration_.*-restrictions$/i;
+const NET_PROXY_RE = /(PayloadIdentifier|PayloadOrganization|PayloadDisplayName|ServerAddress|HTTPProxy|HTTPSProxy|SOCKSProxy|DNS|proxy|VPN|NEVPN|NEDNS|http:\/\/|https:\/\/|\.apple\.dns)/i;
+const PROFILE_LOG_CTX_RE = /(MCProfile|ManagedConfiguration|profiled|PayloadIdentifier|PayloadDisplayName|PayloadOrganization|ConfigurationProfile|configuration_profile)/i;
+
+// Expressão estritamente ancorada às famílias legítimas Apple/system de Tempo de Uso (Screen Time).
+// Não aceita prefixos arbitrários ou domínios de terceiros tentando disfarçar perfis suspeitos.
+export const SCREENTIME_NATIVE_RE = /^(?:system\.dateandtime\.force_date_time_configuration_[a-z0-9._-]+-restrictions|system\.web\.contentfilter\.[a-z0-9._-]*(?:digital_health_restrictions|basic-restrictions)|com\.apple\.(?:webcontentfilter|familycontrols|applicationaccess|screentime)\.[a-z0-9._-]*(?:digital_health_restrictions|basic-restrictions|-restrictions))$/i;
 
 const SUSPICIOUS_DYLIB_RE = /(\/var\/jb\/|\/Library\/MobileSubstrate\/|\/usr\/lib\/TweakInject\/|basebin\/launchdhook\.dylib|ElleKit|Substitute|libhooker|FridaGadget)/i;
 const APPLE_OFFICIAL_PREFIXES = ['/system/library/', '/usr/lib/system/', '/usr/lib/lib', '/developer/'];
@@ -190,11 +195,53 @@ function collectPlistEntries(node, keyPath, out) {
   }
 }
 
+const PROFILE_ID_PLIST_KEYS = new Set([
+  'payloadidentifier', 'profileidentifier', 'identifier',
+  'configurationidentifier', 'declarationidentifier'
+]);
+
+const NETWORK_PLIST_KEYS = new Set([
+  'serveraddress', 'httpproxy', 'httpsproxy', 'socksproxy',
+  'proxyautoconfigurlstring', 'dnsserveraddresses', 'dnsservers',
+  'servername', 'remoteaddress', 'remoteserver', 'server',
+  'proxy', 'matchdomains', 'supplementalmatchdomains'
+]);
+
+function matchStructuredProxyCandidate(value, matcher) {
+  const vTrim = value.trim();
+  const vLow = vTrim.toLowerCase();
+  if (!vLow) return null;
+
+  const exact = matcher.proxyNamedMap.get(vLow);
+  if (exact) return exact;
+
+  if (matcher.proxyNamedRe) {
+    const m = matcher.findAllMatches(matcher.proxyNamedRe, vTrim);
+    if (m.length > 0) return matcher.proxyNamedMap.get(m[0].toLowerCase()) || m[0];
+  }
+
+  // Suporta subdomínios ou PayloadIdentifier composto por segmentos separados por '.'
+  // (ex.: sub.freefireproxy.xyz ou freefireproxy.xyz.digital_health_restrictions)
+  for (const [keyLow, canon] of matcher.proxyNamedMap.entries()) {
+    if (!keyLow.includes('.')) continue;
+    if (
+      vLow.startsWith(`${keyLow}.`) ||
+      vLow.endsWith(`.${keyLow}`) ||
+      vLow.includes(`.${keyLow}.`)
+    ) {
+      return canon;
+    }
+  }
+  return null;
+}
+
 const RELEVANT_PLIST_KEYS = new Set([
-  'payloadidentifier', 'payloadorganization', 'payloaddisplayname',
-  'serveraddress', 'httpproxy', 'httpsproxy', 'proxyautoconfigurlstring',
-  'dnsserveraddresses', 'servername', 'remoteaddress', 'profileidentifier',
-  'identifier', 'bundleidentifier', 'cfbundleidentifier', 'proxy'
+  'payloadidentifier', 'payloadorganization', 'payloaddisplayname', 'payloaddescription',
+  'payloadtype', 'payloadcertificatefilename', 'payloadcertificatedisplayname',
+  'serveraddress', 'httpproxy', 'httpsproxy', 'socksproxy', 'proxyautoconfigurlstring',
+  'dnsserveraddresses', 'dnsservers', 'servername', 'remoteaddress', 'remoteserver',
+  'server', 'profileidentifier', 'identifier', 'bundleidentifier', 'cfbundleidentifier',
+  'proxy', 'matchdomains', 'supplementalmatchdomains'
 ]);
 
 export function analyzeIosPlistBytes({ filePath, bytes, matcher, emitEvent, addSignal, deviceInfo, coverage }) {
@@ -238,6 +285,8 @@ export function analyzeIosPlistBytes({ filePath, bytes, matcher, emitEvent, addS
     kvList = parseXmlPlistKeyValues(xmlText);
   }
 
+  const plistFormat = isBplist ? 'bplist00' : 'xml_plist';
+
   for (const { key, value } of kvList) {
     const kLow = key.toLowerCase();
     const vTrim = value.trim();
@@ -247,17 +296,18 @@ export function analyzeIosPlistBytes({ filePath, bytes, matcher, emitEvent, addS
     if (!deviceInfo.osVersion && kLow === 'productversion') deviceInfo.osVersion = `iOS ${vTrim}`;
     if (!deviceInfo.serial && kLow === 'serialnumber') deviceInfo.serial = vTrim;
 
-    if (SCREENTIME_NATIVE_RE.test(vTrim)) {
+    // Validar contexto de chave de identificador de perfil antes de classificar como Tempo de Uso nativo
+    if ((PROFILE_ID_PLIST_KEYS.has(kLow) || kLow === 'root') && SCREENTIME_NATIVE_RE.test(vTrim)) {
       emitEvent(buildCanonicalEvent({
         ruleId: 'IOS_PLIST_SCREENTIME_NATIVE_001',
         domain: 'seguranca_do_dispositivo',
         title: `Perfil Nativo Apple Tempo de Uso (${vTrim})`,
-        source: { path: filePath, format: isBplist ? 'bplist00' : 'xml_plist', line: 1 },
+        source: { path: filePath, format: plistFormat, line: 1 },
         observed: { process: 'ManagedConfiguration', operation: key, object_path: vTrim },
         evidenceLevel: 'informational',
         heuristicWeight: 0,
-        interpretation: 'Restrição nativa do recurso Tempo de Uso (Screen Time) do iOS. Não indica proxy nem jailbreak.',
-        alternativeExplanations: ['Controle parental ou restrição de data/hora nativa do iOS'],
+        interpretation: 'Restrição nativa do recurso Tempo de Uso (Screen Time) do iOS validada por identificador ancorado em campo de perfil. Não indica proxy nem jailbreak.',
+        alternativeExplanations: ['Controle parental, restrição de conteúdo web ou restrição de data/hora nativa do iOS'],
         recommendedAction: 'Nenhuma ação necessária.',
         dedupKey: `IOS_PLIST_SCREENTIME_NATIVE_001|${vLow}`
       }));
@@ -265,28 +315,122 @@ export function analyzeIosPlistBytes({ filePath, bytes, matcher, emitEvent, addS
     }
 
     if (RELEVANT_PLIST_KEYS.has(kLow)) {
-      // Correspondência exata em campo estruturado de perfil/proxy
-      let matchedCanonical = matcher.proxyNamedMap.get(vLow) || null;
-      if (!matchedCanonical && matcher.proxyNamedRe) {
-        const m = matcher.findAllMatches(matcher.proxyNamedRe, vTrim);
-        if (m.length > 0) matchedCanonical = matcher.proxyNamedMap.get(m[0].toLowerCase()) || m[0];
-      }
+      // 1. Proxies / domínios nomeados em campo estruturado de perfil/rede
+      const matchedCanonical = matchStructuredProxyCandidate(vTrim, matcher);
       if (matchedCanonical) {
         addSignal('ios_proxy_profile', `Plist ${key}=${vTrim}`);
         emitEvent(buildCanonicalEvent({
           ruleId: 'IOS_PLIST_PROXY_PROFILE_001',
           domain: 'rede',
           title: `Perfil/Proxy Candidato em Plist iOS (${matchedCanonical})`,
-          source: { path: filePath, format: isBplist ? 'bplist00' : 'xml_plist', line: 1 },
+          source: { path: filePath, format: plistFormat, line: 1 },
           observed: { process: 'ManagedConfiguration', package: vTrim, operation: key, object_path: matchedCanonical },
           evidenceLevel: 'anomaly_review',
           heuristicWeight: 25,
-          interpretation: `Campo estruturado '${key}' em ${isBplist ? 'bplist00' : 'XML plist'} corresponde exatamente a '${matchedCanonical}'.`,
+          interpretation: `Campo estruturado '${key}' em ${plistFormat} corresponde a '${matchedCanonical}'.`,
           alternativeExplanations: ['Perfil antigo salvo e inativo no momento da partida'],
           recommendedAction: 'Verificar em MCProfileEvents se o perfil estava ativo durante a partida.',
           snippet: { prev_line: '', current_line: `${key} = ${vTrim}`, next_line: '' },
           dedupKey: `IOS_PLIST_PROXY_PROFILE_001|${matchedCanonical.toLowerCase()}`
         }));
+      }
+
+      // 2. Endereços IP candidatos em campos estruturados de rede/proxy/DNS/VPN (sem reputação maliciosa permanente)
+      if (NETWORK_PLIST_KEYS.has(kLow) && matcher.networkIpRe) {
+        const ipMatches = matcher.findAllMatches(matcher.networkIpRe, vTrim);
+        for (const ip of ipMatches) {
+          const canonIp = matcher.networkIpMap.get(ip.toLowerCase()) || ip;
+          addSignal('network_ip_candidate', `Plist ${key}=${canonIp}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'NETWORK_IP_CANDIDATE_001',
+            domain: 'rede',
+            title: `Endereço IP Candidato em Plist de Rede/Proxy (${canonIp})`,
+            source: { path: filePath, format: plistFormat, line: 1 },
+            observed: { process: 'ManagedConfiguration', operation: key, outcome: 'candidate_ip_in_plist', object_path: canonIp },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `IP candidato '${canonIp}' encontrado em campo de configuração de rede '${key}'. Um endereço IP isolado não possui reputação maliciosa permanente sem validação independente.`,
+            alternativeExplanations: ['IP reciclado por provedor VPS/hosting ou configuração de rede inativa'],
+            recommendedAction: 'Validar se o perfil estava ativo no horário da partida e correlacionar com DNS/VPN.',
+            snippet: { prev_line: '', current_line: `${key} = ${vTrim}`, next_line: '' },
+            dedupKey: `NETWORK_IP_CANDIDATE_001|${canonIp}`
+          }));
+        }
+      }
+
+      // 3. Referências de perfil candidatas (Imazing.profile, 139.Spotifyx, 238.timx)
+      if (matcher.profileRefRe) {
+        let matchedProf = matcher.profileRefMap.get(vLow) || null;
+        if (!matchedProf) {
+          const pm = matcher.findAllMatches(matcher.profileRefRe, vTrim);
+          if (pm.length > 0) matchedProf = matcher.profileRefMap.get(pm[0].toLowerCase()) || pm[0];
+        }
+        if (matchedProf) {
+          addSignal('profile_ref_candidate', `Plist ${key}=${matchedProf}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'PROFILE_REFERENCE_CANDIDATE_001',
+            domain: 'rede',
+            title: `Referência de Perfil Candidata em Plist iOS (${matchedProf})`,
+            source: { path: filePath, format: plistFormat, line: 1 },
+            observed: { process: 'ManagedConfiguration', operation: key, outcome: 'profile_reference_candidate', object_path: matchedProf },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Campo estruturado '${key}' referencia o identificador de perfil candidato '${matchedProf}'. Requer verificação de conteúdo e período de ativação.`,
+            alternativeExplanations: ['Perfil instalado via iMazing para backup/gestão legítima ou perfil antigo inativo'],
+            recommendedAction: 'Inspecionar payload completo (DNS/Proxy/Certificado) e estado ativo em MCProfileEvents.',
+            snippet: { prev_line: '', current_line: `${key} = ${vTrim}`, next_line: '' },
+            dedupKey: `PROFILE_REFERENCE_CANDIDATE_001|${matchedProf.toLowerCase()}`
+          }));
+        }
+      }
+
+      // 4. Aliases textuais de proxy/bypass (com-luxebypass, dash-proxy, freefireproxy-xyz, com-xtremo-mobile)
+      if (matcher.textualAliasRe) {
+        let matchedAlias = matcher.textualAliasMap.get(vLow) || null;
+        if (!matchedAlias) {
+          const am = matcher.findAllMatches(matcher.textualAliasRe, vTrim);
+          if (am.length > 0) matchedAlias = matcher.textualAliasMap.get(am[0].toLowerCase()) || am[0];
+        }
+        if (matchedAlias) {
+          addSignal('proxy_alias_candidate', `Plist ${key}=${matchedAlias}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'PROXY_ALIAS_CANDIDATE_001',
+            domain: 'rede',
+            title: `Alias Textual de Proxy/Bypass em Plist iOS (${matchedAlias})`,
+            source: { path: filePath, format: plistFormat, line: 1 },
+            observed: { process: 'ManagedConfiguration', operation: key, outcome: 'textual_alias_in_plist', object_path: matchedAlias },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Alias textual '${matchedAlias}' encontrado no campo '${key}'. Não é tratado como pacote convencional, mas requer revisão no contexto de perfil/rede.`,
+            alternativeExplanations: ['Referência residual de perfil inativo'],
+            recommendedAction: 'Correlacionar com servidores proxy/DNS ativos e timestamp da partida.',
+            snippet: { prev_line: '', current_line: `${key} = ${vTrim}`, next_line: '' },
+            dedupKey: `PROXY_ALIAS_CANDIDATE_001|${matchedAlias.toLowerCase()}`
+          }));
+        }
+      }
+
+      // 5. Indicadores de ferramentas candidatas (ex.: TNTADB) em campo estruturado
+      if (matcher.toolIndicatorRe) {
+        const tm = matcher.findAllMatches(matcher.toolIndicatorRe, vTrim);
+        for (const t of tm) {
+          const canonTool = matcher.toolIndicatorMap.get(t.toLowerCase()) || t;
+          addSignal('tool_indicator_detected', `Plist ${key}=${canonTool}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'TOOL_INDICATOR_CANDIDATE_001',
+            domain: 'depuracao',
+            title: `Indicador de Ferramenta Candidata em Plist (${canonTool})`,
+            source: { path: filePath, format: plistFormat, line: 1 },
+            observed: { process: 'ManagedConfiguration', operation: key, outcome: 'tool_indicator', object_path: canonTool },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Identificador de ferramenta '${canonTool}' observado no campo '${key}'. Requer validação técnica independente.`,
+            alternativeExplanations: ['Ferramenta de teste/depuração sem relação com o jogo'],
+            recommendedAction: 'Correlacionar com execuções ou perfis ativos no período competitivo.',
+            snippet: { prev_line: '', current_line: `${key} = ${vTrim}`, next_line: '' },
+            dedupKey: `TOOL_INDICATOR_CANDIDATE_001|${canonTool.toLowerCase()}`
+          }));
+        }
       }
     }
   }
@@ -304,18 +448,31 @@ export function analyzeIosIpsText({ filePath, text, matcher, emitEvent, addSigna
   const firstNl = trimmed.indexOf('\n');
 
   try {
-    if (firstNl !== -1 && trimmed.startsWith('{')) {
-      const line1 = trimmed.slice(0, firstNl).trim();
-      const rest = trimmed.slice(firstNl + 1).trim();
-      header = JSON.parse(line1);
-      if (rest.startsWith('{')) {
-        body = JSON.parse(rest);
+    if (trimmed.startsWith('{')) {
+      try {
+        // Suporta .ips formatado como objeto JSON único (incluindo pretty-printed multi-linha)
+        const singleDoc = JSON.parse(trimmed);
+        if (singleDoc && typeof singleDoc === 'object') {
+          body = singleDoc;
+        }
+      } catch (_) {
+        // Formato nativo Apple .ips com 2 documentos JSON: header na linha 1 + body no restante
+        if (firstNl !== -1) {
+          const line1 = trimmed.slice(0, firstNl).trim();
+          const rest = trimmed.slice(firstNl + 1).trim();
+          header = JSON.parse(line1);
+          if (rest.startsWith('{')) {
+            body = JSON.parse(rest);
+          }
+        } else {
+          return;
+        }
       }
-    } else if (trimmed.startsWith('{')) {
-      body = JSON.parse(trimmed);
+    } else {
+      return;
     }
   } catch (_) {
-    // Caso o .ips não seja JSON padrão, cair para inspeção mínima segura
+    // Caso o .ips não seja JSON padrão, encerrar sem gerar falso positivo
     return;
   }
 
@@ -520,8 +677,11 @@ export function createIosTextAnalyzer({ filePath, format, matcher, emitEvent, ad
         }
       }
 
-      // 5. Proxies nomeados em logs iOS apenas com contexto de rede/DNS/perfil
-      if (NET_PROXY_RE.test(line) && matcher.proxyNamedRe) {
+      // 5. Proxies nomeados, IPs candidatos, aliases textuais e referências de perfil em logs iOS apenas com contexto de rede/DNS/perfil
+      const hasNetProxyCtx = NET_PROXY_RE.test(line);
+      const hasProfileCtx = PROFILE_LOG_CTX_RE.test(line);
+
+      if (hasNetProxyCtx && matcher.proxyNamedRe) {
         const pMatches = matcher.findAllMatches(matcher.proxyNamedRe, line);
         for (const tok of pMatches) {
           const canon = matcher.proxyNamedMap.get(tok.toLowerCase()) || tok;
@@ -539,6 +699,94 @@ export function createIosTextAnalyzer({ filePath, format, matcher, emitEvent, ad
             recommendedAction: 'Verificar horário e correlação com perfis ativos.',
             snippet: makeSnippet(prevLine, line, nextLine),
             dedupKey: `PROXY_NAMED_DOMAIN_001|${canon.toLowerCase()}`
+          }));
+        }
+      }
+
+      if (hasNetProxyCtx && matcher.networkIpRe) {
+        const ipMatches = matcher.findAllMatches(matcher.networkIpRe, line);
+        for (const ip of ipMatches) {
+          const canonIp = matcher.networkIpMap.get(ip.toLowerCase()) || ip;
+          addSignal('network_ip_candidate', `iOS network: ${canonIp}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'NETWORK_IP_CANDIDATE_001',
+            domain: 'rede',
+            title: `Endereço IP Candidato em Log de Rede iOS (${canonIp})`,
+            source: { path: filePath, format: format || 'ios_unified_log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'mDNSResponder/NE', operation: 'network_ip_ref', object_path: canonIp },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `IP candidato '${canonIp}' observado em evento de rede/proxy/DNS iOS. Endereços IP isolados não têm reputação maliciosa permanente.`,
+            alternativeExplanations: ['Endereço IP compartilhado ou tráfego sem relação com o jogo'],
+            recommendedAction: 'Validar janela temporal da partida e correlacionar com perfis ativos.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `NETWORK_IP_CANDIDATE_001|${canonIp}`
+          }));
+        }
+      }
+
+      if (hasNetProxyCtx && matcher.textualAliasRe) {
+        const aliasMatches = matcher.findAllMatches(matcher.textualAliasRe, line);
+        for (const al of aliasMatches) {
+          const canonAl = matcher.textualAliasMap.get(al.toLowerCase()) || al;
+          addSignal('proxy_alias_candidate', `iOS network/profile alias: ${canonAl}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'PROXY_ALIAS_CANDIDATE_001',
+            domain: 'rede',
+            title: `Alias Textual de Proxy/Bypass em Log iOS (${canonAl})`,
+            source: { path: filePath, format: format || 'ios_unified_log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'mDNSResponder/NE', operation: 'textual_alias_ref', object_path: canonAl },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Alias textual '${canonAl}' encontrado em log de rede/perfil iOS. Requer revisão contextual.`,
+            alternativeExplanations: ['Referência residual de perfil ou consulta sem sessão ativa'],
+            recommendedAction: 'Correlacionar com MCProfileEvents e servidores ativos no período.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `PROXY_ALIAS_CANDIDATE_001|${canonAl.toLowerCase()}`
+          }));
+        }
+      }
+
+      if ((hasNetProxyCtx || hasProfileCtx) && matcher.profileRefRe) {
+        const profMatches = matcher.findAllMatches(matcher.profileRefRe, line);
+        for (const pr of profMatches) {
+          const canonPr = matcher.profileRefMap.get(pr.toLowerCase()) || pr;
+          addSignal('profile_ref_candidate', `iOS profile ref: ${canonPr}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'PROFILE_REFERENCE_CANDIDATE_001',
+            domain: 'rede',
+            title: `Referência de Perfil Candidata em Log iOS (${canonPr})`,
+            source: { path: filePath, format: format || 'ios_unified_log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'profiled', operation: 'profile_reference', object_path: canonPr },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Referência de perfil '${canonPr}' observada em log de perfil/rede iOS.`,
+            alternativeExplanations: ['Perfil criado pelo iMazing para fins legítimos ou perfil antigo inativo'],
+            recommendedAction: 'Inspecionar payload e estado ativo do perfil.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `PROFILE_REFERENCE_CANDIDATE_001|${canonPr.toLowerCase()}`
+          }));
+        }
+      }
+
+      if ((ENV_OR_PROC_CTX_RE.test(line) || PROC_EVENT_RE.test(line)) && matcher.toolIndicatorRe) {
+        const toolMatches = matcher.findAllMatches(matcher.toolIndicatorRe, line);
+        for (const t of toolMatches) {
+          const canonTool = matcher.toolIndicatorMap.get(t.toLowerCase()) || t;
+          addSignal('tool_indicator_detected', `iOS tool ref: ${canonTool}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'TOOL_INDICATOR_CANDIDATE_001',
+            domain: 'depuracao',
+            title: `Indicador de Ferramenta Candidata em Log iOS (${canonTool})`,
+            source: { path: filePath, format: format || 'ios_unified_log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'iOS Process', operation: 'tool_indicator', object_path: canonTool },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Ferramenta candidata '${canonTool}' registrada em evento de processo/ambiente iOS.`,
+            alternativeExplanations: ['Ferramenta de teste sem relação com a partida'],
+            recommendedAction: 'Correlacionar com evidências de execução ou modificação.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `TOOL_INDICATOR_CANDIDATE_001|${canonTool.toLowerCase()}`
           }));
         }
       }

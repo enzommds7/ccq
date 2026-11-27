@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — DEDUPLICADOR DE EVENTOS
+   ccq scan — DEDUPLICADOR DE EVENTOS
    - 10.000 repetições do mesmo evento contam como 1 evento único
      com occurrence_count: 10000, sem multiplicar risco ou peso
    ══════════════════════════════════════════════════════════════════ */

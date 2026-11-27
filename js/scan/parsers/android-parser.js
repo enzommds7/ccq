@@ -40,8 +40,28 @@ const PKG_VERSION_RE = /\bversionName=([^\s,}]+)/;
 const PKG_INSTALLER_RE = /\binstallerPackageName=([^\s,}]+)/;
 
 const SETTINGS_PKG_RE = /\bpkg:(by4a\.setedit22|com\.android\.shell)\b/i;
-const SETTINGS_NAME_RE = /\bname=([^\s,}\]]+)/i;
-const SETTINGS_VALUE_RE = /\bvalue=([^\s,}\]]+)/i;
+const SETTINGS_NAME_RE = /\bname[:=]([^\s,}\]]+)/i;
+const SETTINGS_VALUE_RE = /\bvalue[:=]([^\s,}\]]+)/i;
+const SETTINGS_DEFAULT_RE = /\bdefault[:=]([^\s,}\]]+)/i;
+
+// Overlays Android (WindowManager / dumpsys window / SurfaceFlinger)
+const FOREGROUND_FOCUS_RE = /(?:mCurrentFocus=Window\{[0-9a-fA-F]+\s+u\d+\s+([a-zA-Z0-9_.-]+)\/|mFocusedApp=ActivityRecord\{[^}]+\s+u\d+\s+([a-zA-Z0-9_.-]+)\/)/;
+const WINDOW_TOKEN_2038_RE = /WindowToken\{[^}]*\b(?:type=2038|TYPE_APPLICATION_OVERLAY)\b[^}]*\}/;
+const OVERLAY_WINDOW_LINE_RE = /Window\{[0-9a-fA-F]+\s+u\d+\s+([^}:/]+)(?:\/([^}:]+))?\}|\b(?:package|mOwnerPackageName)=([a-zA-Z0-9_.-]+)|\bSurface\(name=([^)/:\s]+)(?:\/([^)\s]+))?/;
+const OVERLAY_TYPE_LINE_RE = /\b(?:ty|type)=2038\b|\bTYPE_APPLICATION_OVERLAY\b/;
+const OVERLAY_VIS_RE = /\bisVisible=(true|false)\b|\bmViewVisibility=(0x[0-9a-fA-F]+|\d+)\b|\bmHasSurface=(true|false)\b/i;
+const OVERLAY_INLINE_PKG_RE = /\b([a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z0-9_.-]+)\b/g;
+const OVERLAY_SYSTEM_IGNORED_RE = /^(?:android$|android\.os\.|android\.view\.|java\.|dalvik\.|com\.android\.|com\.google\.|com\.miui\.|com\.transsion\.|com\.samsung\.|com\.sec\.|com\.xiaomi\.|com\.coloros\.|com\.oplus\.|com\.vivo\.|com\.huawei\.|ShellDropTarget|Shell Root Leash|NavigationBar|StatusBar|ScreenDecor)/i;
+const OVERLAY_LEGITIMATE_APPS = new Set([
+  'com.whatsapp',
+  'com.whatsapp.w4b',
+  'com.facebook.orca',
+  'com.discord',
+  'com.instagram.android',
+  'com.spotify.music'
+]);
+const VALID_PKG_ID_RE = /^[a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z0-9_.-]+$/;
+const FF_COMPATIBLE_COMM_RE = /^(?:UnityMain|UnityGfxDevice|RenderThread|Job\.Worker|com\.dts\.freefire)/i;
 
 // GameAsset & JAR
 const FF_GAMEASSET_PATH_RE = /\/data\/(?:user\/0|data)\/(com\.dts\.freefire(?:max|th))\/files\/contentcache\/compulsory\/android\/gameassetbundles\/font\/sh-gpp2(?![A-Za-z0-9_.-])/i;
@@ -57,25 +77,38 @@ const BACKTRACE_LINE_RE = /#\d{2}\s+pc\s+[0-9a-fA-F]+\s+([^\s]+)/;
 const INJECTED_SO_RE = /(frida-gadget|libfrida|libzygisk|liblsposed|libsubstrate|\/data\/local\/tmp\/[^/\s]+\.so)/i;
 
 // ADB, Rede, Proxy, Root
-const ADB_PORT_IP_RE = /(?:(\d{1,3}(?:\.\d{1,3}){3}|\[::1\]|localhost):5555\b|adbd.*tcp.*5555)/i;
+const ADB_TCP_PROP_ACTIVE_RE = /\[?(?:service|persist)\.adb\.tcp\.port\]?\s*[:=]\s*\[?(\d{4,5})\]?/i;
+const ADB_TCP_PROP_ANY_RE = /\[?(?:service|persist)\.adb\.tcp\.port\]?\s*[:=]/i;
+const ADB_SVC_ACTIVE_RE = /(?:\[?init\.svc\.adbd\]?\s*[:=]\s*\[?running\]?|adbd\s+daemon\s+started|init:\s*starting\s+service\s+['"]?adbd['"]?|listening\s+on\s+tcp:5555)/i;
+const ADB_LOOPBACK_RE = /\b(127\.0\.0\.1|localhost|\[::1\]):5555\b/i;
+const ADB_REMOTE_CONN_RE = /(?:(?:client\s+connected|connected\s+from|adb\s+connect|remote\s+peer|auth\s+confirmed\s+from|socket\s+accepted\s+from)[^\r\n]*?(\d{1,3}(?:\.\d{1,3}){3}):(\d{4,5})|\b(\d{1,3}(?:\.\d{1,3}){3}):5555\b)/i;
+const ADB_USB_DEBUG_RE = /(?:\badb_enabled=1\b|\bUSB debugging connected\b|\b(?:persist\.sys\.usb\.config|sys\.usb\.state)[^\r\n]*\badb\b)/i;
+const ADB_WIRELESS_DEBUG_RE = /(?:\badb_wifi_enabled=1\b|\bservice\.adb\.tls\.port\b|AdbDebuggingManager[^\r\n]*wifi)/i;
+const ADB_PORT_FWD_RE = /\b(adb\s+(?:forward|reverse)\b[^\r\n]{0,80})/i;
 const GLOBAL_PROXY_HOST_RE = /\bglobal_http_proxy_host(?:[=:\s]+value=|[=:\s]+)([^\s,;]+)/i;
 const PROXY_TOOL_LINE_RE = /\b(mitmproxy|Burp Suite|Charles Proxy|httptoolkit|pcapdroid)\b/i;
-const NET_CONTEXT_RE = /(https?:\/\/|\bdns\b|\bproxy\b|\bhost=|\bsni\b|\bresolve\b|\bconnect\b|\bvpn\b|\broute\b|\bcert(?:ificate)?\b)/i;
-const USB_BENIGN_RE = /\b(USB connected|USB debugging connected|persist\.sys\.usb\.config=.*\b(?:mtp|ptp|adb)\b|sys\.usb\.state=.*\b(?:mtp|ptp)\b|DHCP\s+lease|InputDispatcher|InputReader|InputFlinger)\b/i;
-const ADB_TELEM_FLAG_RE = /\b(service\.adb\.tcp\.port|service\.adb\.tls\.port|adb_wifi_enabled=1|adb_enabled=1|adb\s+reverse|adb\s+forward)\b/i;
+const NET_CONTEXT_RE = /(https?:\/\/|\bdns\b|\bproxy\b|\bhost=|\bsni\b|\bresolve\b|\bconnect\b|\bvpn\b|\broute\b|\bsocket\b|\balias=|\bprofile=|\bcert(?:ificate)?\b)/i;
+const PROFILE_CTX_RE = /(\bprofile\b|\bcert(?:ificate)?\b|\bPayload|\bconfig\b|\.mobileconfig\b)/i;
+const USB_BENIGN_RE = /\b(USB connected|persist\.sys\.usb\.config=.*\b(?:mtp|ptp)\b|sys\.usb\.state=.*\b(?:mtp|ptp)\b|DHCP\s+lease|InputDispatcher|InputReader|InputFlinger)\b/i;
 const INPUT_INJ_RE = /\b(shell input tap|shell input swipe|injectInputEvent)\b/i;
-const PROCESS_CTX_RE = /(\/data\/adb\/modules|init:\s*starting\s+service|Start proc|comm=|Cmdline:|Package\s+\[|mountinfo|binder:|app_process)/i;
+const PROCESS_CTX_RE = /(\/data\/adb\/modules|init:\s*starting\s+service|Start proc|comm=|Cmdline:|Package\s+\[|mountinfo|binder:|app_process|\bshell:|\badb\b)/i;
 
-const DEFAULT_BENIGN_SETTINGS = Object.freeze({
-  long_press_timeout: new Set(['400', '500']),
-  peak_refresh_rate: new Set(['60', '60.0', '90', '90.0', '120', '120.0', '144', '144.0']),
-  min_refresh_rate: new Set(['60', '60.0', '90', '90.0', '120', '120.0']),
-  pointer_speed: new Set(['0']),
-  window_animation_scale: new Set(['1', '1.0', '0.5', '0']),
-  transition_animation_scale: new Set(['1', '1.0', '0.5', '0']),
-  animator_duration_scale: new Set(['1', '1.0', '0.5', '0']),
-  adb_enabled: new Set(['0']),
-  development_settings_enabled: new Set(['0'])
+const SETTINGS_BASELINES = Object.freeze({
+  long_press_timeout: { defaults: new Set(['400', '500']), domain: 'integridade_do_jogo' },
+  multi_press_timeout: { defaults: new Set(['300']), domain: 'integridade_do_jogo' },
+  touch_slop: { defaults: new Set(['8', '16', '24']), domain: 'integridade_do_jogo' },
+  pointer_speed: { defaults: new Set(['0']), domain: 'integridade_do_jogo' },
+  peak_refresh_rate: { defaults: new Set(['60', '60.0', '90', '90.0', '120', '120.0', '144', '144.0']), domain: 'seguranca_do_dispositivo' },
+  min_refresh_rate: { defaults: new Set(['60', '60.0', '90', '90.0', '120', '120.0']), domain: 'seguranca_do_dispositivo' },
+  window_animation_scale: { defaults: new Set(['1', '1.0', '0.5', '0']), domain: 'seguranca_do_dispositivo' },
+  transition_animation_scale: { defaults: new Set(['1', '1.0', '0.5', '0']), domain: 'seguranca_do_dispositivo' },
+  animator_duration_scale: { defaults: new Set(['1', '1.0', '0.5', '0']), domain: 'seguranca_do_dispositivo' },
+  activity_starts_logging_enabled: { defaults: new Set(['1', 'true']), domain: 'seguranca_do_dispositivo' },
+  upload_log_pref: { defaults: new Set(['1', 'true']), domain: 'seguranca_do_dispositivo' },
+  upload_debug_log_pref: { defaults: new Set(['1', 'true']), domain: 'seguranca_do_dispositivo' },
+  adb_enabled: { defaults: new Set(['0']), domain: 'depuracao', isDebugFlag: true },
+  adb_wifi_enabled: { defaults: new Set(['0']), domain: 'depuracao', isDebugFlag: true },
+  development_settings_enabled: { defaults: new Set(['0']), domain: 'depuracao', isDebugFlag: true }
 });
 
 export function canonicalizeAndroidPath(p) {
@@ -126,6 +159,119 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
 
   let currentPkg = null;
   let crashCmdline = '';
+  let currentForegroundApp = '';
+  let pendingOverlay = null;
+
+  const parseOverlayOwnerFromLine = (text) => {
+    const cleaned = text.replace(WINDOW_TOKEN_2038_RE, ' ');
+    if (/\b(?:ShellDropTarget|Shell Root Leash)\b/i.test(cleaned)) {
+      return { status: 'system_ignored', owner: 'system_shell_overlay', windowName: '' };
+    }
+    const m = OVERLAY_WINDOW_LINE_RE.exec(cleaned);
+    if (m) {
+      const candidate = (m[1] || m[3] || m[4] || '').trim();
+      const comp = (m[2] || m[5] || '').trim();
+      const windowName = comp ? `${candidate}/${comp}` : candidate;
+      if (candidate) {
+        if (OVERLAY_SYSTEM_IGNORED_RE.test(candidate)) {
+          return { status: 'system_ignored', owner: candidate, windowName };
+        }
+        if (VALID_PKG_ID_RE.test(candidate)) {
+          return { status: 'pkg', owner: candidate, windowName };
+        }
+      }
+    }
+    OVERLAY_INLINE_PKG_RE.lastIndex = 0;
+    let im;
+    while ((im = OVERLAY_INLINE_PKG_RE.exec(cleaned)) !== null) {
+      const cand = im[1];
+      if (OVERLAY_SYSTEM_IGNORED_RE.test(cand)) {
+        return { status: 'system_ignored', owner: cand, windowName: cand };
+      }
+      if (VALID_PKG_ID_RE.test(cand)) {
+        return { status: 'pkg', owner: cand, windowName: cand };
+      }
+    }
+    return null;
+  };
+
+  const flushOverlayBlock = () => {
+    if (!pendingOverlay || !pendingOverlay.owner || pendingOverlay.status !== 'pkg') {
+      pendingOverlay = null;
+      return;
+    }
+    const ov = pendingOverlay;
+    pendingOverlay = null;
+
+    const ownerLow = ov.owner.toLowerCase();
+    const isCandidateCatalog =
+      (matcher.overlayCandidateMap && matcher.overlayCandidateMap.has(ownerLow)) ||
+      matcher.androidPackageMap.has(ownerLow) ||
+      matcher.proxyNamedMap.has(ownerLow);
+    const isLegitKnown = !isCandidateCatalog && OVERLAY_LEGITIMATE_APPS.has(ownerLow);
+
+    if (isLegitKnown) {
+      emitEvent(buildCanonicalEvent({
+        ruleId: 'ANDROID_OVERLAY_LEGITIMATE_001',
+        domain: 'estabilidade',
+        title: `Overlay de Aplicativo Comum (${ov.owner}) — Informativo`,
+        source: { path: filePath, format: ov.executionContext, line: ov.lineNo },
+        observed: {
+          timestamp: ov.timestamp,
+          process: ov.process,
+          package: ov.owner,
+          window_name: ov.windowName,
+          window_type: ov.windowType,
+          visibility: ov.visibility,
+          execution_context: ov.executionContext,
+          foreground_app: ov.foregroundApp || 'Não identificado',
+          operation: ov.windowType,
+          outcome: 'legitimate_known_overlay',
+          object_path: ov.windowName || ov.owner
+        },
+        evidenceLevel: 'informational',
+        heuristicWeight: 0,
+        interpretation: `Janela sobreposta pertencente a aplicativo comum (${ov.owner}); presença de overlay legítimo não indica trapaça.`,
+        alternativeExplanations: ['Bolha de chamada, chat flutuante ou player de mídia'],
+        recommendedAction: 'Nenhuma ação necessária.',
+        snippet: makeSnippet(ov.tokenLine === ov.detailLine ? '' : ov.tokenLine, ov.detailLine, ov.nextLine),
+        dedupKey: `ANDROID_OVERLAY_LEGITIMATE_001|${ownerLow}`
+      }));
+      return;
+    }
+
+    addSignal('android_overlay_active', `${ov.windowType} (${ov.owner}${ov.foregroundApp ? `, foco: ${ov.foregroundApp}` : ''})`);
+    emitEvent(buildCanonicalEvent({
+      ruleId: 'ANDROID_OVERLAY_ACTIVE_001',
+      domain: 'integridade_do_jogo',
+      title: isCandidateCatalog
+        ? `Overlay Candidato Detectado (${ov.owner})`
+        : `Janela Sobreposta de Terceiros (${ov.owner})`,
+      source: { path: filePath, format: ov.executionContext, line: ov.lineNo },
+      observed: {
+        timestamp: ov.timestamp,
+        process: ov.process,
+        package: ov.owner,
+        window_name: ov.windowName,
+        window_type: ov.windowType,
+        visibility: ov.visibility,
+        execution_context: ov.executionContext,
+        foreground_app: ov.foregroundApp || 'Não identificado',
+        operation: ov.windowType,
+        outcome: isCandidateCatalog ? 'catalog_overlay_candidate' : 'third_party_overlay',
+        object_path: ov.windowName || ov.owner
+      },
+      evidenceLevel: 'anomaly_review',
+      heuristicWeight: 15,
+      interpretation: `Janela sobreposta ${ov.windowType} vinculada ao pacote '${ov.owner}' (visibilidade: ${ov.visibility}${ov.foregroundApp ? `, app em primeiro plano: ${ov.foregroundApp}` : ''}). A existência isolada de overlay não comprova trapaça e requer correlação com PackageManager e demais fontes.`,
+      alternativeExplanations: [
+        'Gravador de tela, contador de FPS, bolha de chat ou utilitário de tela do usuário'
+      ],
+      recommendedAction: 'Correlacionar o pacote com PackageManager, horário da partida e eventuais evidências independentes.',
+      snippet: makeSnippet(ov.tokenLine === ov.detailLine ? '' : ov.tokenLine, ov.detailLine, ov.nextLine),
+      dedupKey: `ANDROID_OVERLAY_ACTIVE_001|${ownerLow}`
+    }));
+  };
 
   const flushPackageBlock = () => {
     if (!currentPkg) return;
@@ -186,9 +332,9 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
       }
     }
 
-    // 2. Match exato de pacotes candidatos no PackageManager
-    if (matcher.androidPackageMap.has(pkgLow)) {
-      const canonical = matcher.androidPackageMap.get(pkgLow);
+    // 2. Match exato de pacotes candidatos no PackageManager (incluindo candidatos de overlay)
+    if (matcher.androidPackageMap.has(pkgLow) || (matcher.overlayCandidateMap && matcher.overlayCandidateMap.has(pkgLow))) {
+      const canonical = matcher.androidPackageMap.get(pkgLow) || matcher.overlayCandidateMap.get(pkgLow);
       addSignal('android_candidate_pkg', `PackageManager: ${canonical}`);
       emitEvent(buildCanonicalEvent({
         ruleId: 'ANDROID_PKG_CANDIDATE_001',
@@ -276,6 +422,9 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
         if (currentPkg) {
           currentPkg.countdown--;
           if (currentPkg.countdown <= 0) flushPackageBlock();
+        }
+        if (pendingOverlay) {
+          flushOverlayBlock();
         }
         hexParser.feedLine(line, lineNo);
         return;
@@ -460,52 +609,223 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
         checkBoot();
       }
 
-      // 4. Settings (pkg:by4a.setedit22 e pkg:com.android.shell)
+      // 4. Settings (pkg:by4a.setedit22 e pkg:com.android.shell — formatos '=' e ':')
       if (line.includes('pkg:by4a.setedit22') || line.includes('pkg:com.android.shell')) {
         const mPkg = SETTINGS_PKG_RE.exec(line);
         if (mPkg) {
           const pkgOrigin = mPkg[1];
+          const pkgOriginLow = pkgOrigin.toLowerCase();
           const mKey = SETTINGS_NAME_RE.exec(line);
           const mVal = SETTINGS_VALUE_RE.exec(line);
-          const keyName = mKey ? mKey[1] : 'unknown_setting';
-          const keyVal = mVal ? mVal[1] : '';
-          const defaultSet = DEFAULT_BENIGN_SETTINGS[keyName.toLowerCase()];
-          const isDefault = defaultSet ? defaultSet.has(keyVal) : false;
+          // Não emitir anomalias por falha de parsing ou campos ausentes
+          if (mKey && mVal) {
+            const keyName = mKey[1];
+            const keyLow = keyName.toLowerCase();
+            const keyVal = mVal[1];
+            const mDef = SETTINGS_DEFAULT_RE.exec(line);
+            const inlineDefault = mDef ? mDef[1] : null;
+            const baseline = SETTINGS_BASELINES[keyLow] || null;
+            const isDefault = Boolean(
+              (baseline && baseline.defaults.has(keyVal)) ||
+              (inlineDefault !== null && keyVal === inlineDefault)
+            );
 
-          if (isDefault) {
-            emitEvent(buildCanonicalEvent({
-              ruleId: 'ANDROID_SETTINGS_DEFAULT_001',
-              domain: 'seguranca_do_dispositivo',
-              title: `Configuração padrão registrada em ${pkgOrigin} (${keyName}=${keyVal})`,
-              source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
-              observed: { timestamp: meta.timestamp, process: 'SettingsProvider', package: pkgOrigin, operation: keyName, outcome: keyVal },
-              evidenceLevel: 'informational',
-              heuristicWeight: 0,
-              interpretation: `Valor ${keyName}=${keyVal} está dentro dos valores padrão do Android.`,
-              alternativeExplanations: ['Configuração nativa do sistema'],
-              recommendedAction: 'Nenhuma ação necessária.',
-              snippet: makeSnippet(prevLine, line, nextLine),
-              dedupKey: `ANDROID_SETTINGS_DEFAULT_001|${pkgOrigin}|${keyName}|${keyVal}`
-            }));
-          } else if (pkgOrigin === 'by4a.setedit22') {
-            addSignal('android_setedit_anomaly', `SetEdit (${keyName}=${keyVal})`);
-            emitEvent(buildCanonicalEvent({
-              ruleId: 'ANDROID_SETTINGS_SETEDIT_ANOMALY_001',
-              domain: 'integridade_do_jogo',
-              title: `Alteração via SetEdit (${keyName}=${keyVal})`,
-              source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
-              observed: { timestamp: meta.timestamp, process: 'SettingsProvider', package: pkgOrigin, operation: keyName, outcome: keyVal },
-              evidenceLevel: 'anomaly_review',
-              heuristicWeight: 15,
-              interpretation: `Parâmetro '${keyName}' foi modificado via pacote ${pkgOrigin} com valor não padrão (${keyVal || 'vazio'}).`,
-              alternativeExplanations: [
-                'Ajuste de acessibilidade, tela ou taxa de atualização pelo usuário'
-              ],
-              recommendedAction: 'Verificar se a chave alterada impacta entrada/sensibilidade e buscar evidências independentes.',
-              snippet: makeSnippet(prevLine, line, nextLine),
-              dedupKey: `ANDROID_SETTINGS_SETEDIT_ANOMALY_001|${keyName}|${keyVal}`
-            }));
+            if (isDefault) {
+              emitEvent(buildCanonicalEvent({
+                ruleId: 'ANDROID_SETTINGS_DEFAULT_001',
+                domain: baseline ? baseline.domain : 'seguranca_do_dispositivo',
+                title: `Configuração padrão em ${pkgOrigin} (${keyName}=${keyVal})`,
+                source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
+                observed: {
+                  timestamp: meta.timestamp,
+                  process: 'SettingsProvider',
+                  package: pkgOrigin,
+                  operation: keyName,
+                  outcome: keyVal,
+                  object_path: `${pkgOrigin}:${keyName}`,
+                  raw_detail: inlineDefault !== null ? `default=${inlineDefault}` : 'baseline_match'
+                },
+                evidenceLevel: 'informational',
+                heuristicWeight: 0,
+                interpretation: `Valor ${keyName}=${keyVal} compatível com o baseline padrão do Android.`,
+                alternativeExplanations: ['Configuração nativa do sistema'],
+                recommendedAction: 'Nenhuma ação necessária.',
+                snippet: makeSnippet(prevLine, line, nextLine),
+                dedupKey: `ANDROID_SETTINGS_DEFAULT_001|${pkgOriginLow}|${keyLow}|${keyVal}`
+              }));
+            } else if (baseline) {
+              if (baseline.isDebugFlag && pkgOriginLow === 'com.android.shell') {
+                const isWifi = keyLow === 'adb_wifi_enabled';
+                emitEvent(buildCanonicalEvent({
+                  ruleId: isWifi ? 'ANDROID_ADB_WIRELESS_DEBUGGING_001' : 'ANDROID_ADB_USB_DEBUGGING_001',
+                  domain: 'depuracao',
+                  title: isWifi ? `Depuração Wireless via settings (${keyName}=${keyVal})` : `Depuração USB via settings (${keyName}=${keyVal})`,
+                  source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
+                  observed: { timestamp: meta.timestamp, process: 'SettingsProvider', package: pkgOrigin, operation: keyName, outcome: keyVal },
+                  evidenceLevel: 'informational',
+                  heuristicWeight: 0,
+                  interpretation: `Sinalizador de depuração ${keyName}=${keyVal} registrado por ${pkgOrigin}. Não comprova conexão remota nem trapaça.`,
+                  alternativeExplanations: ['Depuração ativada pelo usuário ou utilitário local (Brevent/Shizuku)'],
+                  recommendedAction: 'Apenas contexto de depuração.',
+                  snippet: makeSnippet(prevLine, line, nextLine),
+                  dedupKey: `ANDROID_SETTINGS_DEBUG|${keyLow}|${keyVal}`
+                }));
+              } else if (pkgOriginLow === 'by4a.setedit22') {
+                addSignal('android_setedit_anomaly', `SetEdit (${keyName}=${keyVal})`);
+                emitEvent(buildCanonicalEvent({
+                  ruleId: 'ANDROID_SETTINGS_SETEDIT_ANOMALY_001',
+                  domain: baseline.domain,
+                  title: `Alteração não padrão via SetEdit (${keyName}=${keyVal})`,
+                  source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
+                  observed: {
+                    timestamp: meta.timestamp,
+                    process: 'SettingsProvider',
+                    package: pkgOrigin,
+                    operation: keyName,
+                    outcome: keyVal,
+                    object_path: `${pkgOrigin}:${keyName}`
+                  },
+                  evidenceLevel: 'anomaly_review',
+                  heuristicWeight: 15,
+                  interpretation: `Parâmetro '${keyName}' foi modificado via ${pkgOrigin} para '${keyVal}', divergindo do baseline conhecido.`,
+                  alternativeExplanations: [
+                    'Ajuste de acessibilidade, tela ou preferência do usuário via SetEdit'
+                  ],
+                  recommendedAction: 'Verificar impacto do parâmetro e correlacionar com evidências independentes.',
+                  snippet: makeSnippet(prevLine, line, nextLine),
+                  dedupKey: `ANDROID_SETTINGS_SETEDIT_ANOMALY_001|${keyLow}|${keyVal}`
+                }));
+              } else {
+                addSignal('android_shell_settings_anomaly', `com.android.shell (${keyName}=${keyVal})`);
+                emitEvent(buildCanonicalEvent({
+                  ruleId: 'ANDROID_SETTINGS_SHELL_ANOMALY_001',
+                  domain: baseline.domain,
+                  title: `Alteração não padrão via Android Shell (${keyName}=${keyVal})`,
+                  source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
+                  observed: {
+                    timestamp: meta.timestamp,
+                    process: 'SettingsProvider',
+                    package: pkgOrigin,
+                    operation: keyName,
+                    outcome: keyVal,
+                    object_path: `${pkgOrigin}:${keyName}`
+                  },
+                  evidenceLevel: 'anomaly_review',
+                  heuristicWeight: 10,
+                  interpretation: `Parâmetro '${keyName}' foi alterado via ${pkgOrigin} para '${keyVal}', divergindo do baseline conhecido (pode envolver ajuste de toque/entrada ou supressão de logs de telemetria).`,
+                  alternativeExplanations: [
+                    'Alteração via ADB shell, Shizuku ou Brevent fora do contexto de trapaça',
+                    'Preferência de acessibilidade ou economia de bateria/telemetria'
+                  ],
+                  recommendedAction: 'Revisar contexto da alteração e buscar correlação com fontes independentes.',
+                  snippet: makeSnippet(prevLine, line, nextLine),
+                  dedupKey: `ANDROID_SETTINGS_SHELL_ANOMALY_001|${keyLow}|${keyVal}`
+                }));
+              }
+            } else {
+              // Configuração sem baseline oficial -> referência não validada, peso 0
+              emitEvent(buildCanonicalEvent({
+                ruleId: 'ANDROID_SETTINGS_UNKNOWN_001',
+                domain: 'seguranca_do_dispositivo',
+                title: `Configuração sem baseline conhecido em ${pkgOrigin} (${keyName}=${keyVal})`,
+                source: { path: filePath, format: 'dumpsys_settings', line: lineNo },
+                observed: {
+                  timestamp: meta.timestamp,
+                  process: 'SettingsProvider',
+                  package: pkgOrigin,
+                  operation: keyName,
+                  outcome: keyVal,
+                  object_path: `${pkgOrigin}:${keyName}`
+                },
+                evidenceLevel: 'unvalidated_reference',
+                heuristicWeight: 0,
+                interpretation: `Chave '${keyName}' modificada por ${pkgOrigin} (valor '${keyVal}') não possui baseline oficial mapeado; registrada apenas para referência sem pontuação.`,
+                alternativeExplanations: ['Chave proprietária de fabricante/OEM ou ajuste comum de sistema'],
+                recommendedAction: 'Apenas referência; não classificar como trapaça sem validação do parâmetro.',
+                snippet: makeSnippet(prevLine, line, nextLine),
+                dedupKey: `ANDROID_SETTINGS_UNKNOWN_001|${pkgOriginLow}|${keyLow}|${keyVal}`
+              }));
+            }
           }
+        }
+      }
+
+      // 4b. Overlays Android (WindowManager / dumpsys window / SurfaceFlinger)
+      if (line.includes('mCurrentFocus=') || line.includes('mFocusedApp=')) {
+        const fm = FOREGROUND_FOCUS_RE.exec(line);
+        if (fm) currentForegroundApp = (fm[1] || fm[2] || '').trim();
+      }
+
+      if (pendingOverlay) {
+        if (line.includes('WindowToken{') || /^\s*Window\s+#\d+/.test(line) && pendingOverlay.owner) {
+          flushOverlayBlock();
+        } else {
+          pendingOverlay.countdown--;
+          const vm = OVERLAY_VIS_RE.exec(line);
+          if (vm) {
+            if (vm[1]) pendingOverlay.visibility = vm[1].toLowerCase() === 'true' ? 'visible' : 'hidden';
+            else if (vm[2]) pendingOverlay.visibility = (vm[2] === '0x0' || vm[2] === '0') ? 'visible' : `visibility=${vm[2]}`;
+            else if (vm[3] && pendingOverlay.visibility === 'desconhecida') pendingOverlay.visibility = vm[3].toLowerCase() === 'true' ? 'surface_active' : 'no_surface';
+          }
+          if (!pendingOverlay.owner) {
+            const parsed = parseOverlayOwnerFromLine(line);
+            if (parsed) {
+              pendingOverlay.status = parsed.status;
+              pendingOverlay.owner = parsed.owner;
+              pendingOverlay.windowName = parsed.windowName;
+              pendingOverlay.detailLine = line;
+              pendingOverlay.lineNo = lineNo;
+              pendingOverlay.nextLine = nextLine;
+              if (parsed.status === 'system_ignored') {
+                pendingOverlay = null;
+              }
+            }
+          }
+          if (pendingOverlay && pendingOverlay.countdown <= 0) {
+            flushOverlayBlock();
+          }
+        }
+      }
+
+      const isNewTokenLine = line.includes('WindowToken{') && (line.includes('type=2038') || line.includes('TYPE_APPLICATION_OVERLAY'));
+      const isStandaloneOverlayLine = !pendingOverlay && (
+        (line.includes('ty=2038') || line.includes('type=2038') || line.includes('TYPE_APPLICATION_OVERLAY')) ||
+        (line.includes('com.zayon.optimize') && (line.includes('Window') || line.includes('Surface') || line.includes('Layer')))
+      );
+      if (isNewTokenLine || isStandaloneOverlayLine) {
+        flushOverlayBlock();
+        const isSf = line.includes('SurfaceFlinger') || line.includes('Surface(name=') || /^\s*Layer\b/.test(line);
+        const execCtx = isSf ? 'surfaceflinger' : 'dumpsys_window';
+        const windowType = line.includes('TYPE_APPLICATION_OVERLAY')
+          ? 'TYPE_APPLICATION_OVERLAY'
+          : (line.includes('2038') ? 'TYPE_APPLICATION_OVERLAY (2038)' : 'OVERLAY_LAYER');
+        const inlineParsed = parseOverlayOwnerFromLine(line);
+        const vm = OVERLAY_VIS_RE.exec(line);
+        let vis = 'desconhecida';
+        if (vm) {
+          if (vm[1]) vis = vm[1].toLowerCase() === 'true' ? 'visible' : 'hidden';
+          else if (vm[2]) vis = (vm[2] === '0x0' || vm[2] === '0') ? 'visible' : `visibility=${vm[2]}`;
+        }
+
+        if (inlineParsed && inlineParsed.status === 'system_ignored') {
+          pendingOverlay = null;
+        } else {
+          pendingOverlay = {
+            status: inlineParsed ? inlineParsed.status : '',
+            owner: inlineParsed ? inlineParsed.owner : '',
+            windowName: inlineParsed ? inlineParsed.windowName : '',
+            windowType,
+            process: meta.process || (isSf ? 'SurfaceFlinger' : 'WindowManager'),
+            visibility: vis,
+            timestamp: meta.timestamp,
+            executionContext: execCtx,
+            foregroundApp: currentForegroundApp,
+            tokenLine: line,
+            detailLine: line,
+            nextLine,
+            lineNo,
+            countdown: 8
+          };
         }
       }
 
@@ -515,50 +835,28 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
         const audit = parseAuditdLine(line);
         if (audit && audit.canonical_path) {
           const cpathLow = audit.canonical_path.toLowerCase();
-          const appLow = (audit.app || '').toLowerCase();
-          const comm = audit.comm || '';
+          const pathPkgM = FF_DATA_PATH_RE.exec(cpathLow);
+          const pathOwnerPkg = pathPkgM ? pathPkgM[1] : '';
+          const actorApp = (audit.app || '').trim();
+          const comm = (audit.comm || '').trim();
           const action = audit.avc_action || '';
           const ops = audit.operations || [];
 
-          if (matcher.gameArtifactPaths.shGpp2Targets.includes(cpathLow) && matcher.freeFirePackages.has(appLow)) {
-            if (action === 'granted' && ops.includes('execute') && comm === 'UnityMain') {
-              addSignal('ff_sh_gpp2_exec', `auditd granted execute SH-Gpp2 (${audit.app})`);
-              emitEvent(buildCanonicalEvent({
-                ruleId: 'ANDROID_GAME_SH_GPP2_EXEC_001',
-                domain: 'integridade_do_jogo',
-                title: `Execução em GameAsset SH-Gpp2 (${audit.app})`,
-                source: { path: filePath, format: 'selinux_audit', line: lineNo },
-                observed: {
-                  timestamp: audit.timestamp || meta.timestamp,
-                  process: comm,
-                  package: audit.app,
-                  operation: ops.join(', '),
-                  outcome: action,
-                  object_path: audit.canonical_path
-                },
-                evidenceLevel: 'anomaly_review',
-                heuristicWeight: 30,
-                interpretation: `SELinux permitiu (granted) operação de execução para UnityMain no caminho ${audit.canonical_path}; requer comparação com baseline oficial.`,
-                alternativeExplanations: [
-                  'Recurso específico de build/fonte da versão atual do jogo',
-                  'Evento histórico anterior a reinstalação limpa'
-                ],
-                recommendedAction: 'Verificar integridade/versão do jogo e buscar evidências independentes (ex.: PackageManager/hooking).',
-                snippet: makeSnippet(prevLine, line, nextLine),
-                dedupKey: `ANDROID_GAME_SH_GPP2_EXEC_001|${cpathLow}|${action}`
-              }));
-              return;
-            }
+          if (matcher.gameArtifactPaths.shGpp2Targets.includes(cpathLow) && pathOwnerPkg && matcher.freeFirePackages.has(pathOwnerPkg.toLowerCase())) {
+            const actorMatchesOwner = !actorApp || actorApp.toLowerCase() === pathOwnerPkg.toLowerCase();
+            const commCompatible = comm ? FF_COMPATIBLE_COMM_RE.test(comm) : false;
+
             if (action === 'denied') {
               emitEvent(buildCanonicalEvent({
                 ruleId: 'ANDROID_GAME_SH_GPP2_DENIED_001',
                 domain: 'integridade_do_jogo',
-                title: `Tentativa SELinux negada em SH-Gpp2 (${audit.app})`,
+                title: `Tentativa SELinux negada em SH-Gpp2 (${pathOwnerPkg})`,
                 source: { path: filePath, format: 'selinux_audit', line: lineNo },
                 observed: {
                   timestamp: audit.timestamp || meta.timestamp,
                   process: comm || meta.process,
-                  package: audit.app,
+                  package: pathOwnerPkg,
+                  actor_app: actorApp || 'ausente (inferido via canonical_path)',
                   operation: ops.join(', '),
                   outcome: 'denied',
                   object_path: audit.canonical_path
@@ -573,6 +871,115 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
               }));
               return;
             }
+
+            if (action === 'granted' && ops.includes('execute')) {
+              if (!comm) {
+                // Ausência de informações suficientes sobre processo responsável: não presumir execução
+                emitEvent(buildCanonicalEvent({
+                  ruleId: 'ANDROID_GAME_SH_GPP2_PATH_REF_001',
+                  domain: 'integridade_do_jogo',
+                  title: `Registro auditd incompleto em SH-Gpp2 (${pathOwnerPkg})`,
+                  source: { path: filePath, format: 'selinux_audit', line: lineNo },
+                  observed: {
+                    timestamp: audit.timestamp || meta.timestamp,
+                    process: 'Não identificado',
+                    package: pathOwnerPkg,
+                    actor_app: actorApp || 'ausente',
+                    operation: ops.join(', '),
+                    outcome: action,
+                    object_path: audit.canonical_path
+                  },
+                  evidenceLevel: 'unvalidated_reference',
+                  heuristicWeight: 0,
+                  interpretation: 'Registro auditd sem campo comm= suficiente para confirmar processo responsável; execução não presumida.',
+                  alternativeExplanations: ['Log truncado ou incompleto'],
+                  recommendedAction: 'Verificar logs completos antes de concluir execução.',
+                  snippet: makeSnippet(prevLine, line, nextLine),
+                  dedupKey: `ANDROID_GAME_SH_GPP2_PATH_REF_001|${cpathLow}|incomplete`
+                }));
+                return;
+              }
+
+              if (!actorMatchesOwner || !commCompatible) {
+                addSignal('ff_sh_gpp2_mismatch', `Inconsistência auditd SH-Gpp2 (dono=${pathOwnerPkg}, comm=${comm}, app=${actorApp || 'ausente'})`);
+                emitEvent(buildCanonicalEvent({
+                  ruleId: 'ANDROID_GAME_SH_GPP2_CTX_MISMATCH_001',
+                  domain: 'integridade_do_jogo',
+                  title: `Inconsistência Contextual em SH-Gpp2 (dono: ${pathOwnerPkg}, processo: ${comm})`,
+                  source: { path: filePath, format: 'selinux_audit', line: lineNo },
+                  observed: {
+                    timestamp: audit.timestamp || meta.timestamp,
+                    process: comm,
+                    package: pathOwnerPkg,
+                    actor_app: actorApp || 'ausente (inferido via canonical_path)',
+                    operation: ops.join(', '),
+                    outcome: `${action} (context_mismatch)`,
+                    object_path: audit.canonical_path
+                  },
+                  evidenceLevel: 'anomaly_review',
+                  heuristicWeight: 30,
+                  interpretation: `Operação execute permitida em arquivo cujo proprietário é '${pathOwnerPkg}', porém realizada por processo/app incompatível (comm='${comm}', app='${actorApp || 'ausente'}').`,
+                  alternativeExplanations: ['Ferramenta de sistema/backup ou contexto SELinux herdado fora da partida'],
+                  recommendedAction: 'Investigar processo responsável pela operação e correlacionar com fontes independentes.',
+                  snippet: makeSnippet(prevLine, line, nextLine),
+                  dedupKey: `ANDROID_GAME_SH_GPP2_CTX_MISMATCH_001|${cpathLow}|${comm}|${actorApp}`
+                }));
+                return;
+              }
+
+              addSignal('ff_sh_gpp2_exec', `auditd granted execute SH-Gpp2 (${pathOwnerPkg}, comm=${comm})`);
+              emitEvent(buildCanonicalEvent({
+                ruleId: 'ANDROID_GAME_SH_GPP2_EXEC_001',
+                domain: 'integridade_do_jogo',
+                title: `Execução em GameAsset SH-Gpp2 (${pathOwnerPkg})`,
+                source: { path: filePath, format: 'selinux_audit', line: lineNo },
+                observed: {
+                  timestamp: audit.timestamp || meta.timestamp,
+                  process: comm,
+                  package: pathOwnerPkg,
+                  actor_app: actorApp || 'ausente (inferido via canonical_path)',
+                  operation: ops.join(', '),
+                  outcome: action,
+                  object_path: audit.canonical_path
+                },
+                evidenceLevel: 'anomaly_review',
+                heuristicWeight: 30,
+                interpretation: `SELinux permitiu (granted) operação de execução pelo processo '${comm}' no caminho de propriedade de '${pathOwnerPkg}' (${audit.canonical_path}); requer comparação com baseline oficial.`,
+                alternativeExplanations: [
+                  'Recurso específico de build/fonte da versão atual do jogo',
+                  'Evento histórico anterior a reinstalação limpa'
+                ],
+                recommendedAction: 'Verificar integridade/versão do jogo e buscar evidências independentes (ex.: PackageManager/hooking).',
+                snippet: makeSnippet(prevLine, line, nextLine),
+                dedupKey: `ANDROID_GAME_SH_GPP2_EXEC_001|${cpathLow}|${action}`
+              }));
+              return;
+            }
+
+            // Operação sem execute (ex.: read/getattr): não presumir execução
+            emitEvent(buildCanonicalEvent({
+              ruleId: 'ANDROID_GAME_SH_GPP2_PATH_REF_001',
+              domain: 'integridade_do_jogo',
+              title: `Acesso não-executável a SH-Gpp2 (${pathOwnerPkg})`,
+              source: { path: filePath, format: 'selinux_audit', line: lineNo },
+              observed: {
+                timestamp: audit.timestamp || meta.timestamp,
+                process: comm || meta.process || 'Não identificado',
+                package: pathOwnerPkg,
+                actor_app: actorApp || 'ausente (inferido via canonical_path)',
+                operation: ops.join(', '),
+                outcome: action,
+                object_path: audit.canonical_path
+              },
+              evidenceLevel: 'unvalidated_reference',
+              heuristicWeight: 0,
+              interpretation: `Operação '${ops.join(', ')}' sem 'execute' em ${audit.canonical_path}; não comprova execução.`,
+              alternativeExplanations: ['Leitura regular de recurso pelo aplicativo ou sistema'],
+              recommendedAction: 'Apenas referência; verificar se existe operação execute correspondente.',
+              snippet: makeSnippet(prevLine, line, nextLine),
+              dedupKey: `ANDROID_GAME_SH_GPP2_PATH_REF_001|${cpathLow}|${ops.join('_')}`
+            }));
+            return;
           }
 
           if (cpathLow.includes('-shgap-') && FF_DATA_PATH_RE.test(cpathLow)) {
@@ -766,8 +1173,8 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
         }));
       }
 
-      // 8. ADB / USB / Rede (distinguir 127.0.0.1:5555 de IP remoto; USB/MTP/PTP/DHCP nunca pontuam)
-      if (USB_BENIGN_RE.test(line)) {
+      // 8. ADB / USB / Depuração (7 estados distintos; nunca confundir porta configurada com conexão remota)
+      if (USB_BENIGN_RE.test(line) && !ADB_USB_DEBUG_RE.test(line)) {
         emitEvent(buildCanonicalEvent({
           ruleId: 'ANDROID_TELEMETRY_BENIGN_USB_001',
           domain: 'depuracao',
@@ -784,43 +1191,143 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
         }));
       }
 
-      if (lowLine.includes('5555') || lowLine.includes('adbd') || ADB_TELEM_FLAG_RE.test(line) || INPUT_INJ_RE.test(line)) {
-        const adbM = ADB_PORT_IP_RE.exec(line);
-        if (adbM) {
-          const ip = (adbM[1] || '').toLowerCase();
-          const isLoopback = !ip || ip === '127.0.0.1' || ip === 'localhost' || ip === '[::1]';
-          if (isLoopback && (lowLine.includes('127.0.0.1') || lowLine.includes('localhost') || lowLine.includes('[::1]'))) {
-            emitEvent(buildCanonicalEvent({
-              ruleId: 'ANDROID_ADB_LOCAL_LOOPBACK_001',
-              domain: 'depuracao',
-              title: `ADB em loopback local (${ip || '127.0.0.1'}:5555)`,
-              source: { path: filePath, format: format || 'log', line: lineNo },
-              observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: 'adb_loopback', outcome: `${ip}:5555` },
-              evidenceLevel: 'informational',
-              heuristicWeight: 0,
-              interpretation: `Socket ADB local em ${ip}:5555, padrão comum de utilitários locais no dispositivo (ex.: Shizuku, Brevent).`,
-              alternativeExplanations: ['Brevent / Shizuku para controle de apps em segundo plano'],
-              recommendedAction: 'Não tratar como acesso remoto externo.',
-              snippet: makeSnippet(prevLine, line, nextLine),
-              dedupKey: `ANDROID_ADB_LOCAL_LOOPBACK_001|${ip}`
-            }));
-          } else if (ip) {
-            addSignal('android_adb_remote', `ADB TCP remoto (${ip}:5555)`);
+      if (lowLine.includes('adb') || lowLine.includes('5555') || lowLine.includes('usb') || INPUT_INJ_RE.test(line)) {
+        const tcpPropActive = ADB_TCP_PROP_ACTIVE_RE.exec(line);
+        const tcpPortNum = tcpPropActive ? parseInt(tcpPropActive[1], 10) : 0;
+
+        if (tcpPortNum > 0) {
+          addSignal('android_adb_tcp_port', `Porta ADB TCP configurada (${tcpPortNum})`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_TCP_PORT_CONFIGURED_001',
+            domain: 'depuracao',
+            title: `Porta ADB TCP Configurada (${tcpPortNum})`,
+            source: { path: filePath, format: format || 'getprop', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'getprop', operation: 'adb_tcp_port_configured', outcome: String(tcpPortNum) },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 8,
+            interpretation: `Propriedade de porta ADB TCP configurada na porta ${tcpPortNum} (diferente de valor vazio '[]' ou '-1'). Isso indica configuração de porta, mas NÃO comprova conexão remota estabelecida.`,
+            alternativeExplanations: [
+              'Utilitário local legítimo (Brevent ou Shizuku) operando em loopback',
+              'Depuração sem fio Android ativada anteriormente pelo usuário'
+            ],
+            recommendedAction: 'Verificar se há registro independente de conexão remota ou execução ADB durante a partida.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_TCP_PORT_CONFIGURED_001|${tcpPortNum}`
+          }));
+        } else if (ADB_TCP_PROP_ANY_RE.test(line)) {
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_STATE_TELEMETRY_001',
+            domain: 'depuracao',
+            title: 'Propriedade ADB TCP inativa (vazia / -1)',
+            source: { path: filePath, format: format || 'getprop', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'getprop', operation: 'adb_tcp_port_inactive', outcome: 'inactive' },
+            evidenceLevel: 'informational',
+            heuristicWeight: 0,
+            interpretation: 'Propriedade de porta ADB TCP sem porta ativa (vazia, 0 ou -1).',
+            alternativeExplanations: ['Estado padrão do Android'],
+            recommendedAction: 'Nenhuma ação necessária.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_STATE_TELEMETRY_001|adb_tcp_inactive`
+          }));
+        } else if (ADB_LOOPBACK_RE.test(line)) {
+          const lm = ADB_LOOPBACK_RE.exec(line);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_LOCAL_LOOPBACK_001',
+            domain: 'depuracao',
+            title: `ADB em loopback local (${lm[1]}:5555)`,
+            source: { path: filePath, format: format || 'log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: 'adb_loopback', outcome: `${lm[1]}:5555` },
+            evidenceLevel: 'informational',
+            heuristicWeight: 0,
+            interpretation: `Socket ADB em loopback local (${lm[1]}:5555), padrão compatível com ferramentas legítimas locais (Brevent/Shizuku).`,
+            alternativeExplanations: ['Brevent / Shizuku operando localmente no aparelho'],
+            recommendedAction: 'Não tratar como acesso remoto externo.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_LOCAL_LOOPBACK_001|${lm[1].toLowerCase()}`
+          }));
+        } else if (ADB_REMOTE_CONN_RE.test(line)) {
+          const rm = ADB_REMOTE_CONN_RE.exec(line);
+          const remoteIp = rm[1] || rm[3] || '';
+          const remotePort = rm[2] || '5555';
+          if (remoteIp && remoteIp !== '127.0.0.1' && remoteIp !== '0.0.0.0') {
+            addSignal('android_adb_remote', `Conexão remota ADB (${remoteIp}:${remotePort})`);
             emitEvent(buildCanonicalEvent({
               ruleId: 'ANDROID_ADB_REMOTE_001',
               domain: 'depuracao',
-              title: `ADB TCP em IP de rede não-loopback (${ip}:5555)`,
+              title: `Conexão Remota ADB Registrada (${remoteIp}:${remotePort})`,
               source: { path: filePath, format: format || 'log', line: lineNo },
-              observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: 'adb_remote_tcp', outcome: `${ip}:5555` },
+              observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: 'adb_remote_connection', outcome: `${remoteIp}:${remotePort}` },
               evidenceLevel: 'anomaly_review',
-              heuristicWeight: 10,
-              interpretation: `Conexão/escuta ADB associada a endereço não-loopback (${ip}:5555).`,
-              alternativeExplanations: ['Depuração sem fio Android Studio ou espelhamento scrcpy local em Wi-Fi'],
-              recommendedAction: 'Verificar horário da conexão em relação à partida e outros indícios.',
+              heuristicWeight: 12,
+              interpretation: `Conexão ADB registrada com endereço de rede não-loopback (${remoteIp}:${remotePort}).`,
+              alternativeExplanations: ['Depuração sem fio Android Studio ou espelhamento scrcpy em rede local'],
+              recommendedAction: 'Verificar horário da conexão em relação à partida e correlacionar com outros indícios.',
               snippet: makeSnippet(prevLine, line, nextLine),
-              dedupKey: `ANDROID_ADB_REMOTE_001|${ip}`
+              dedupKey: `ANDROID_ADB_REMOTE_001|${remoteIp}:${remotePort}`
             }));
           }
+        } else if (ADB_PORT_FWD_RE.test(line)) {
+          const fm = ADB_PORT_FWD_RE.exec(line);
+          addSignal('android_adb_forward', fm[1].trim());
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_PORT_FORWARD_001',
+            domain: 'depuracao',
+            title: `Encaminhamento de Porta ADB (${fm[1].trim()})`,
+            source: { path: filePath, format: format || 'log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: 'adb_port_forward', outcome: fm[1].trim() },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 10,
+            interpretation: `Registro de redirecionamento de porta ADB (${fm[1].trim()}).`,
+            alternativeExplanations: ['Túnel de desenvolvimento local, depuração de webview ou scrcpy'],
+            recommendedAction: 'Verificar destino da porta encaminhada e horário do evento.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_PORT_FORWARD_001|${fm[1].trim().toLowerCase()}`
+          }));
+        } else if (ADB_SVC_ACTIVE_RE.test(line)) {
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_SERVICE_ACTIVE_001',
+            domain: 'depuracao',
+            title: 'Serviço ADB (adbd) ativo sem conexão remota confirmada',
+            source: { path: filePath, format: format || 'log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: 'adbd_service_active', outcome: 'running' },
+            evidenceLevel: 'informational',
+            heuristicWeight: 0,
+            interpretation: 'Daemon adbd em execução no dispositivo; por si só não comprova conexão externa nem interferência.',
+            alternativeExplanations: ['Depuração USB/wireless ativada pelo usuário ou coleta do próprio bugreport'],
+            recommendedAction: 'Apenas contexto operacional.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_SERVICE_ACTIVE_001`
+          }));
+        } else if (ADB_WIRELESS_DEBUG_RE.test(line)) {
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_WIRELESS_DEBUGGING_001',
+            domain: 'depuracao',
+            title: 'Depuração Wireless (ADB Wi-Fi) habilitada',
+            source: { path: filePath, format: format || 'log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'AdbDebuggingManager', operation: 'adb_wireless_debugging', outcome: 'enabled' },
+            evidenceLevel: 'informational',
+            heuristicWeight: 0,
+            interpretation: 'Recurso de Depuração por Wi-Fi habilitado no Android. Frequente em usuários de Brevent/Shizuku e desenvolvedores.',
+            alternativeExplanations: ['Brevent / Shizuku / Depuração sem fio Android'],
+            recommendedAction: 'Apenas contexto de depuração.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_WIRELESS_DEBUGGING_001`
+          }));
+        } else if (ADB_USB_DEBUG_RE.test(line)) {
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'ANDROID_ADB_USB_DEBUGGING_001',
+            domain: 'depuracao',
+            title: 'Depuração USB habilitada',
+            source: { path: filePath, format: format || 'log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'UsbService', operation: 'adb_usb_debugging', outcome: 'enabled' },
+            evidenceLevel: 'informational',
+            heuristicWeight: 0,
+            interpretation: 'Modo de depuração USB habilitado no dispositivo (frequentemente necessário para gerar bugreport).',
+            alternativeExplanations: ['Ativado pelo próprio jogador para coletar o bugreport ou uso cotidiano'],
+            recommendedAction: 'Nenhuma ação punitiva.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `ANDROID_ADB_USB_DEBUGGING_001`
+          }));
         } else if (INPUT_INJ_RE.test(line)) {
           const im = INPUT_INJ_RE.exec(line);
           emitEvent(buildCanonicalEvent({
@@ -837,26 +1344,10 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
             snippet: makeSnippet(prevLine, line, nextLine),
             dedupKey: `ANDROID_INPUT_TELEMETRY_001|${im[1].toLowerCase()}`
           }));
-        } else if (ADB_TELEM_FLAG_RE.test(line)) {
-          const fm = ADB_TELEM_FLAG_RE.exec(line);
-          emitEvent(buildCanonicalEvent({
-            ruleId: 'ANDROID_ADB_STATE_TELEMETRY_001',
-            domain: 'depuracao',
-            title: `Telemetria de Estado ADB (${fm[1]})`,
-            source: { path: filePath, format: format || 'log', line: lineNo },
-            observed: { timestamp: meta.timestamp, process: meta.process || 'adbd', operation: fm[1] },
-            evidenceLevel: 'informational',
-            heuristicWeight: 0,
-            interpretation: `Sinalizador de estado de depuração Android (${fm[1]}). Depuração ativada sozinha não comprova trapaça.`,
-            alternativeExplanations: ['Depuração USB ativada pelo usuário'],
-            recommendedAction: 'Apenas contexto operacional.',
-            snippet: makeSnippet(prevLine, line, nextLine),
-            dedupKey: `ANDROID_ADB_STATE_TELEMETRY_001|${fm[1].toLowerCase()}`
-          }));
         }
       }
 
-      // 9. Proxy / MITM / Domínios nomeados (PROXY_SHORT_TOKENS NUNCA é usado)
+      // 9. Proxy / MITM / Domínios nomeados / IPs / Aliases / Perfis / Ferramentas (PROXY_SHORT_TOKENS NUNCA é usado)
       const gProxyM = GLOBAL_PROXY_HOST_RE.exec(line);
       if (gProxyM) {
         const hostVal = gProxyM[1].trim().toLowerCase();
@@ -896,24 +1387,114 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
         }));
       }
 
-      if (matcher.proxyNamedRe && NET_CONTEXT_RE.test(line)) {
-        const pMatches = matcher.findAllMatches(matcher.proxyNamedRe, line);
-        for (const token of pMatches) {
-          const canon = matcher.proxyNamedMap.get(token.toLowerCase()) || token;
-          addSignal('proxy_named_domain', `Contexto Rede/DNS: ${canon}`);
+      if (NET_CONTEXT_RE.test(line)) {
+        if (matcher.proxyNamedRe) {
+          const pMatches = matcher.findAllMatches(matcher.proxyNamedRe, line);
+          for (const token of pMatches) {
+            const canon = matcher.proxyNamedMap.get(token.toLowerCase()) || token;
+            addSignal('proxy_named_domain', `Contexto Rede/DNS: ${canon}`);
+            emitEvent(buildCanonicalEvent({
+              ruleId: 'PROXY_NAMED_DOMAIN_001',
+              domain: 'rede',
+              title: `Indicador de Domínio/Proxy em Contexto de Rede (${canon})`,
+              source: { path: filePath, format: format || 'network', line: lineNo },
+              observed: { timestamp: meta.timestamp, process: meta.process || 'Network', operation: 'domain_dns_ref', object_path: canon },
+              evidenceLevel: 'anomaly_review',
+              heuristicWeight: 20,
+              interpretation: `Indicador '${canon}' detectado com fronteira exata em registro com contexto de rede/DNS/URL.`,
+              alternativeExplanations: ['Cache DNS histórico sem tráfego ativo'],
+              recommendedAction: 'Correlacionar com horário da partida e pacotes instalados.',
+              snippet: makeSnippet(prevLine, line, nextLine),
+              dedupKey: `PROXY_NAMED_DOMAIN_001|${canon.toLowerCase()}`
+            }));
+          }
+        }
+
+        if (matcher.networkIpRe) {
+          const ipMatches = matcher.findAllMatches(matcher.networkIpRe, line);
+          for (const ip of ipMatches) {
+            const canon = matcher.networkIpMap.get(ip.toLowerCase()) || ip;
+            addSignal('network_ip_candidate', `Contexto Rede/IP: ${canon}`);
+            emitEvent(buildCanonicalEvent({
+              ruleId: 'NETWORK_IP_CANDIDATE_001',
+              domain: 'rede',
+              title: `Endereço IP Candidato em Contexto de Rede (${canon})`,
+              source: { path: filePath, format: format || 'network', line: lineNo },
+              observed: { timestamp: meta.timestamp, process: meta.process || 'Network', operation: 'ip_endpoint_ref', object_path: canon },
+              evidenceLevel: 'anomaly_review',
+              heuristicWeight: 10,
+              interpretation: `Endereço IP '${canon}' registrado em contexto de rede/conexão. IPs não possuem reputação maliciosa permanente e podem pertencer a infraestrutura compartilhada/reatribuída.`,
+              alternativeExplanations: ['IP compartilhado, CDN, VPS reatribuído ou rota temporária'],
+              recommendedAction: 'Validar horário da conexão e correlacionar com outras evidências independentes.',
+              snippet: makeSnippet(prevLine, line, nextLine),
+              dedupKey: `NETWORK_IP_CANDIDATE_001|${canon}`
+            }));
+          }
+        }
+
+        if (matcher.textualAliasRe) {
+          const aMatches = matcher.findAllMatches(matcher.textualAliasRe, line);
+          for (const alias of aMatches) {
+            const canon = matcher.textualAliasMap.get(alias.toLowerCase()) || alias;
+            addSignal('proxy_alias_candidate', `Alias Rede/Perfil: ${canon}`);
+            emitEvent(buildCanonicalEvent({
+              ruleId: 'PROXY_ALIAS_CANDIDATE_001',
+              domain: 'rede',
+              title: `Alias Textual de Proxy/Perfil (${canon})`,
+              source: { path: filePath, format: format || 'network', line: lineNo },
+              observed: { timestamp: meta.timestamp, process: meta.process || 'Network', operation: 'textual_alias_ref', object_path: canon },
+              evidenceLevel: 'anomaly_review',
+              heuristicWeight: 15,
+              interpretation: `Alias hifenizado '${canon}' detectado com fronteira exata em contexto de rede/DNS/perfil (não tratado como nome de pacote Android).`,
+              alternativeExplanations: ['Registro histórico ou referência de configuração inativa'],
+              recommendedAction: 'Confirmar uso ativo simultâneo à partida e buscar evidências independentes.',
+              snippet: makeSnippet(prevLine, line, nextLine),
+              dedupKey: `PROXY_ALIAS_CANDIDATE_001|${canon.toLowerCase()}`
+            }));
+          }
+        }
+      }
+
+      if (matcher.profileRefRe && (PROFILE_CTX_RE.test(line) || NET_CONTEXT_RE.test(line))) {
+        const prMatches = matcher.findAllMatches(matcher.profileRefRe, line);
+        for (const refTok of prMatches) {
+          const canon = matcher.profileRefMap.get(refTok.toLowerCase()) || refTok;
+          addSignal('profile_ref_candidate', `Perfil/Referência: ${canon}`);
           emitEvent(buildCanonicalEvent({
-            ruleId: 'PROXY_NAMED_DOMAIN_001',
+            ruleId: 'PROFILE_REFERENCE_CANDIDATE_001',
             domain: 'rede',
-            title: `Indicador de Domínio/Proxy em Contexto de Rede (${canon})`,
-            source: { path: filePath, format: format || 'network', line: lineNo },
-            observed: { timestamp: meta.timestamp, process: meta.process || 'Network', operation: 'domain_dns_ref', object_path: canon },
+            title: `Referência de Perfil Candidata (${canon})`,
+            source: { path: filePath, format: format || 'profile', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'Config', operation: 'profile_reference', object_path: canon },
             evidenceLevel: 'anomaly_review',
-            heuristicWeight: 20,
-            interpretation: `Indicador '${canon}' detectado com fronteira exata em registro com contexto de rede/DNS/URL.`,
-            alternativeExplanations: ['Cache DNS histórico sem tráfego ativo'],
-            recommendedAction: 'Correlacionar com horário da partida e pacotes instalados.',
+            heuristicWeight: 15,
+            interpretation: `Identificador candidato '${canon}' encontrado em contexto de perfil/certificado/configuração.`,
+            alternativeExplanations: ['Perfil inativo ou arquivo residual'],
+            recommendedAction: 'Validar estado ativo e origem do perfil.',
             snippet: makeSnippet(prevLine, line, nextLine),
-            dedupKey: `PROXY_NAMED_DOMAIN_001|${canon.toLowerCase()}`
+            dedupKey: `PROFILE_REFERENCE_CANDIDATE_001|${canon.toLowerCase()}`
+          }));
+        }
+      }
+
+      if (matcher.toolIndicatorRe && PROCESS_CTX_RE.test(line)) {
+        const tMatches = matcher.findAllMatches(matcher.toolIndicatorRe, line);
+        for (const toolTok of tMatches) {
+          const canon = matcher.toolIndicatorMap.get(toolTok.toLowerCase()) || toolTok;
+          addSignal('tool_indicator_detected', `Processo/ADB: ${canon}`);
+          emitEvent(buildCanonicalEvent({
+            ruleId: 'TOOL_INDICATOR_CANDIDATE_001',
+            domain: 'depuracao',
+            title: `Indicador de Ferramenta Detectado (${canon})`,
+            source: { path: filePath, format: format || 'log', line: lineNo },
+            observed: { timestamp: meta.timestamp, process: meta.process || 'shell', operation: 'tool_context', object_path: canon },
+            evidenceLevel: 'anomaly_review',
+            heuristicWeight: 15,
+            interpretation: `Indicador de ferramenta '${canon}' observado em contexto de processo, serviço ou comando ADB/shell.`,
+            alternativeExplanations: ['Utilitário de depuração executado fora da partida'],
+            recommendedAction: 'Correlacionar horário e atividade com evidências independentes.',
+            snippet: makeSnippet(prevLine, line, nextLine),
+            dedupKey: `TOOL_INDICATOR_CANDIDATE_001|${canon.toLowerCase()}`
           }));
         }
       }
@@ -944,6 +1525,7 @@ export function createAndroidFileAnalyzer({ filePath, format, matcher, emitEvent
 
     finish() {
       flushPackageBlock();
+      flushOverlayBlock();
       hexParser.finish();
     }
   };

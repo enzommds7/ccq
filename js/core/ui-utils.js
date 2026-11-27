@@ -1,8 +1,9 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE CORE — UI UTILS, ANTI-XSS, CRIPTOGRAFIA & NAVEGAÇÃO
+   ccq scan — UI UTILS, ANTI-XSS, CRIPTOGRAFIA & NAVEGAÇÃO
    ══════════════════════════════════════════════════════════════════ */
 
 let boundSoundCtrl = null;
+let navInitialized = false;
 
 export function bindCopySound(soundCtrl) {
   boundSoundCtrl = soundCtrl || null;
@@ -183,95 +184,10 @@ export async function sha256Hex(str) {
   return pureJsSha256(str);
 }
 
-export function generateRandomSeedHex() {
-  const bytes = new Uint8Array(16);
-  window.crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-export class HeroCanvas {
-  constructor(canvasId) {
-    this.canvas = document.getElementById(canvasId);
-    if (!this.canvas) return;
-    this.ctx = this.canvas.getContext('2d');
-    this.particles = [];
-    this.running = true;
-    this.angle = 0;
-    this.init();
-  }
-
-  init() {
-    this.resize();
-    window.addEventListener('resize', () => this.resize(), { passive: true });
-
-    const count = Math.min(40, Math.floor(window.innerWidth / 30));
-    for (let i = 0; i < count; i++) {
-      this.particles.push({
-        x: Math.random() * this.canvas.width,
-        y: Math.random() * this.canvas.height,
-        vx: (Math.random() - 0.5) * 0.35,
-        vy: -Math.random() * 0.4 - 0.1,
-        size: Math.random() * 2 + 1,
-        alpha: Math.random() * 0.5 + 0.2
-      });
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      this.running = entry.isIntersecting;
-      if (this.running) this.loop();
-    });
-    observer.observe(this.canvas);
-    this.loop();
-  }
-
-  resize() {
-    this.canvas.width = this.canvas.parentElement.offsetWidth;
-    this.canvas.height = this.canvas.parentElement.offsetHeight;
-  }
-
-  loop() {
-    if (!this.running) return;
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-
-    this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
-    this.ctx.lineWidth = 1;
-    const step = 80;
-    for (let x = 0; x < w; x += step) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, 0);
-      this.ctx.lineTo(x, h);
-      this.ctx.stroke();
-    }
-    for (let y = 0; y < h; y += step) {
-      this.ctx.beginPath();
-      this.ctx.moveTo(0, y);
-      this.ctx.lineTo(w, y);
-      this.ctx.stroke();
-    }
-
-    this.ctx.fillStyle = '#e5484d';
-    this.particles.forEach(p => {
-      p.x += p.vx;
-      p.y += p.vy;
-      if (p.y < 0) {
-        p.y = h;
-        p.x = Math.random() * w;
-      }
-      this.ctx.globalAlpha = p.alpha;
-      this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      this.ctx.fill();
-    });
-    this.ctx.globalAlpha = 1;
-
-    requestAnimationFrame(() => this.loop());
-  }
-}
-
 export function initNavigationAndSocial(sfx) {
+  if (navInitialized) return;
+  navInitialized = true;
+
   const header = document.getElementById('header');
   if (header) {
     window.addEventListener('scroll', () => {
@@ -311,32 +227,6 @@ export function initNavigationAndSocial(sfx) {
         if (modal) modal.style.display = 'none';
       }
       if (sfx) sfx.tick(700);
-    });
-  });
-
-  // Redes Sociais: Abas & Cópia de Links Oficiais
-  const redeTabBtns = document.querySelectorAll('.rede-tab-btn');
-  const redeTabContents = document.querySelectorAll('.redes-tab-content');
-
-  redeTabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTab = btn.dataset.tab;
-      redeTabBtns.forEach(b => b.classList.remove('active'));
-      redeTabContents.forEach(c => c.classList.remove('active'));
-
-      btn.classList.add('active');
-      const activeContent = document.getElementById(`tab-${targetTab}`);
-      if (activeContent) activeContent.classList.add('active');
-      if (sfx) sfx.tick(850);
-    });
-  });
-
-  document.querySelectorAll('.rede-copy-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const copyVal = e.currentTarget.dataset.copy;
-      if (copyVal) {
-        performCopy(copyVal, e.currentTarget, 'Copiado!', sfx);
-      }
     });
   });
 }

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE CORE — AUTENTICAÇÃO UNIFICADA DE ADM (BACKEND + SHA-256)
+   ccq scan — AUTENTICAÇÃO UNIFICADA DE ADM (BACKEND + SHA-256)
    ══════════════════════════════════════════════════════════════════ */
 import { sha256Hex, showToast } from './ui-utils.js';
 import { sfx } from './sound.js';
@@ -11,6 +11,8 @@ const AUTH_STORAGE_KEY = 'cacique_unified_adm_auth';
 let admAuthenticated = false;
 let adminSessionToken = null;
 let authChangeCallback = null;
+let authInitialized = false;
+let loginInFlight = false;
 
 export function isAdminAuthenticated() {
   return admAuthenticated;
@@ -51,7 +53,7 @@ function updateAuthUI() {
   if (roleBadgeBtn && roleBadgeText) {
     if (admAuthenticated) {
       roleBadgeBtn.classList.add('is-admin');
-      roleBadgeText.textContent = 'ADM Tribo';
+      roleBadgeText.textContent = 'Operador ADM';
       if (btnAuthLogout) btnAuthLogout.style.display = 'inline-flex';
       if (btnAuthSubmit) btnAuthSubmit.textContent = 'Autenticado';
     } else {
@@ -64,6 +66,7 @@ function updateAuthUI() {
 }
 
 export async function handleAdminLogin(userVal, passVal) {
+  if (loginInFlight) return false;
   const cleanUser = (userVal || '').trim().toUpperCase();
   const cleanPass = (passVal || '').trim();
 
@@ -73,61 +76,66 @@ export async function handleAdminLogin(userVal, passVal) {
     return false;
   }
 
+  loginInFlight = true;
   let isMatch = false;
 
-  // 1. Tentar validação via API Backend (quando executando sob servidor Flask)
   try {
-    const resp = await fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user: cleanUser, pass: cleanPass })
-    });
-
-    if (resp.status === 429) {
-      const errData = await resp.json().catch(() => ({}));
-      sfx.error();
-      showToast('error', 'Bloqueio de Segurança', errData.message || 'Muitas tentativas. IP temporariamente bloqueado.');
-      return false;
-    }
-
-    if (resp.ok) {
-      const data = await resp.json();
-      if (data && data.status === 'success') {
-        isMatch = true;
-        adminSessionToken = data.token || null;
-      }
-    }
-  } catch (_) {}
-
-  // 2. Validação client-side puramente criptográfica (GitHub Pages / estático)
-  if (!isMatch) {
+    // 1. Tentar validação via API Backend (quando executando sob servidor Flask)
     try {
-      const userH = await sha256Hex(cleanUser);
-      const passH = await sha256Hex(cleanPass);
-      if (userH === ADMIN_USER_HASH && passH === ADMIN_PASS_HASH) {
-        isMatch = true;
+      const resp = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: cleanUser, pass: cleanPass })
+      });
+
+      if (resp.status === 429) {
+        const errData = await resp.json().catch(() => ({}));
+        sfx.error();
+        showToast('error', 'Bloqueio de Segurança', errData.message || 'Muitas tentativas. IP temporariamente bloqueado.');
+        return false;
+      }
+
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.status === 'success') {
+          isMatch = true;
+          adminSessionToken = data.token || null;
+        }
       }
     } catch (_) {}
+
+    // 2. Validação client-side puramente criptográfica (GitHub Pages / estático)
+    if (!isMatch) {
+      try {
+        const userH = await sha256Hex(cleanUser);
+        const passH = await sha256Hex(cleanPass);
+        if (userH === ADMIN_USER_HASH && passH === ADMIN_PASS_HASH) {
+          isMatch = true;
+        }
+      } catch (_) {}
+    }
+
+    const modalAuthBackdrop = document.getElementById('modalAuthBackdrop');
+    const authPassInput = document.getElementById('authPassInput');
+
+    if (isMatch) {
+      admAuthenticated = true;
+      updateAuthUI();
+      sfx.done();
+      showToast('success', 'Acesso Autorizado', 'Modo operador ADM do ccq scan ativado com sucesso.');
+      if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
+      if (authPassInput) authPassInput.value = '';
+      unlockScanDashboard();
+      if (authChangeCallback) authChangeCallback(true);
+      return true;
+    }
+
+    sfx.error();
+    showToast('error', 'Acesso Negado', 'Usuário ou senha de ADM incorretos.');
+    return false;
+  } finally {
+    loginInFlight = false;
   }
-
-  const modalAuthBackdrop = document.getElementById('modalAuthBackdrop');
-  const authPassInput = document.getElementById('authPassInput');
-
-  if (isMatch) {
-    admAuthenticated = true;
-    updateAuthUI();
-    sfx.done();
-    showToast('success', 'Acesso Autorizado', 'Modo Operador ADM da Tribo ativado com sucesso.');
-    if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'none';
-    if (authPassInput) authPassInput.value = '';
-    unlockScanDashboard();
-    if (authChangeCallback) authChangeCallback(true);
-    return true;
-  }
-
-  sfx.error();
-  showToast('error', 'Acesso Negado', 'Usuário ou senha de ADM incorretos.');
-  return false;
 }
 
 export async function performAdminLogout() {
@@ -162,6 +170,8 @@ export async function performAdminLogout() {
 
 export function initAuth({ onAuthChange } = {}) {
   authChangeCallback = onAuthChange || null;
+  if (authInitialized) return;
+  authInitialized = true;
 
   // Nunca iniciar logado automaticamente
   try {
@@ -182,6 +192,13 @@ export function initAuth({ onAuthChange } = {}) {
   const btnAuthSubmit = document.getElementById('btnAuthSubmit');
   const btnAuthLogout = document.getElementById('btnAuthLogout');
 
+  const safeRunAuth = (promise) => {
+    Promise.resolve(promise).catch((err) => {
+      console.error('[ccq scan auth]', err);
+      showToast('error', 'Erro de Autenticação', 'Falha inesperada ao processar sessão.');
+    });
+  };
+
   if (roleBadgeBtn) {
     roleBadgeBtn.addEventListener('click', () => {
       if (modalAuthBackdrop) modalAuthBackdrop.style.display = 'flex';
@@ -191,7 +208,7 @@ export function initAuth({ onAuthChange } = {}) {
 
   if (btnAuthSubmit) {
     btnAuthSubmit.addEventListener('click', () => {
-      handleAdminLogin(authUserInput ? authUserInput.value : '', authPassInput ? authPassInput.value : '');
+      safeRunAuth(handleAdminLogin(authUserInput ? authUserInput.value : '', authPassInput ? authPassInput.value : ''));
     });
   }
 
@@ -200,14 +217,14 @@ export function initAuth({ onAuthChange } = {}) {
       inp.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
-          handleAdminLogin(authUserInput ? authUserInput.value : '', authPassInput ? authPassInput.value : '');
+          safeRunAuth(handleAdminLogin(authUserInput ? authUserInput.value : '', authPassInput ? authPassInput.value : ''));
         }
       });
     }
   });
 
   if (btnAuthLogout) {
-    btnAuthLogout.addEventListener('click', performAdminLogout);
+    btnAuthLogout.addEventListener('click', () => safeRunAuth(performAdminLogout()));
   }
 
   const scanUser = document.getElementById('scanUser');
@@ -217,14 +234,14 @@ export function initAuth({ onAuthChange } = {}) {
 
   const triggerScanLogin = () => {
     if (!scanUser || !scanPass) return;
-    handleAdminLogin(scanUser.value, scanPass.value).then((ok) => {
+    safeRunAuth(handleAdminLogin(scanUser.value, scanPass.value).then((ok) => {
       if (ok) {
         scanPass.value = '';
       } else {
         scanPass.classList.add('input-invalid');
         setTimeout(() => scanPass.classList.remove('input-invalid'), 600);
       }
-    });
+    }));
   };
 
   if (scanBtnLogin && scanUser && scanPass) {
@@ -243,6 +260,6 @@ export function initAuth({ onAuthChange } = {}) {
   }
 
   if (scanBtnLogout) {
-    scanBtnLogout.addEventListener('click', performAdminLogout);
+    scanBtnLogout.addEventListener('click', () => safeRunAuth(performAdminLogout()));
   }
 }

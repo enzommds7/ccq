@@ -1,11 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — MATCHER & COMPILADOR DE REGRAS (BOOT ÚNICO)
+   ccq scan v5.1 — MATCHER & COMPILADOR DE REGRAS (BOOT ÚNICO)
    - Pré-compila RegExp, Sets e Maps uma única vez no boot do Worker
+   - Consome todas as categorias ativas separadas do catálogo v5.1
    - Mantém PROXY_SHORT_TOKENS (disabled/inactive_research_only) fora de uso
-   - Padroniza eventos no Contrato Canônico v5.0
+   - Padroniza eventos no Contrato Canônico v5.1
    ══════════════════════════════════════════════════════════════════ */
 
-export const RULE_VERSION = '5.0.0';
+export const RULE_VERSION = '5.1.0';
 
 export const DOMAIN_LABELS = Object.freeze({
   seguranca_do_dispositivo: 'Segurança do Dispositivo',
@@ -99,6 +100,11 @@ export function createMatcher(catalog) {
   const androidPackageItems = getActiveItems('ANDROID_PACKAGE_CANDIDATES');
   const androidRootItems = getActiveItems('ANDROID_ROOT_MODULE_NAMES');
   const proxyNamedItems = getActiveItems('PROXY_NAMED_CANDIDATES');
+  const overlayCandidateItems = getActiveItems('ANDROID_OVERLAY_CANDIDATES');
+  const networkIpItems = getActiveItems('NETWORK_IP_CANDIDATES');
+  const profileRefItems = getActiveItems('PROFILE_REFERENCE_CANDIDATES');
+  const toolIndicatorItems = getActiveItems('TOOL_INDICATORS_CANDIDATES');
+  const textualAliasItems = getActiveItems('TEXTUAL_ALIAS_CANDIDATES');
   const androidTelemetryItems = getActiveItems('ANDROID_TELEMETRY_USB_ADB_NET');
   const androidLogDiagItems = getActiveItems('ANDROID_LOGGING_DIAGNOSTICS');
 
@@ -122,6 +128,11 @@ export function createMatcher(catalog) {
     // Sets exatos (lowercase -> canonical item)
     androidPackageMap: buildItemMap(androidPackageItems),
     proxyNamedMap: buildItemMap(proxyNamedItems),
+    overlayCandidateMap: buildItemMap(overlayCandidateItems),
+    networkIpMap: buildItemMap(networkIpItems),
+    profileRefMap: buildItemMap(profileRefItems),
+    toolIndicatorMap: buildItemMap(toolIndicatorItems),
+    textualAliasMap: buildItemMap(textualAliasItems),
     androidRootMap: buildItemMap(androidRootItems),
     rootManagerPackages,
 
@@ -131,6 +142,10 @@ export function createMatcher(catalog) {
     iosBackupRe: buildBoundaryRegex(iosBackupItems),
     androidRootModuleRe: buildBoundaryRegex(androidRootItems),
     proxyNamedRe: buildBoundaryRegex(proxyNamedItems),
+    networkIpRe: buildBoundaryRegex(networkIpItems),
+    profileRefRe: buildBoundaryRegex(profileRefItems),
+    toolIndicatorRe: buildBoundaryRegex(toolIndicatorItems),
+    textualAliasRe: buildBoundaryRegex(textualAliasItems),
     androidTelemetryRe: buildBoundaryRegex(androidTelemetryItems),
     androidLoggingDiagRe: buildBoundaryRegex(androidLogDiagItems),
 
@@ -193,6 +208,7 @@ export function buildCanonicalEvent({
       line: source && source.line ? source.line : 0
     },
     observed: {
+      ...(observed || {}),
       timestamp: (observed && observed.timestamp) || 'Não disponível',
       process: (observed && observed.process) || 'Não identificado',
       package: pkg || 'Não identificado',

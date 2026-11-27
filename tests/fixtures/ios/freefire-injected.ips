@@ -1,0 +1,10 @@
+{
+  "bundleID": "com.dts.freefireth",
+  "procName": "FreeFire",
+  "distributorID": "com.altstore.AltStore",
+  "itemID": "9999999999",
+  "usedImages": [
+    { "path": "/System/Library/Frameworks/Foundation.framework/Foundation" },
+    { "path": "/var/jb/basebin/launchdhook.dylib" }
+  ]
+}

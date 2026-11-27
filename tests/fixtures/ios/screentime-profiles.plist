@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>ProductType</key>
+  <string>iPhone15,3</string>
+  <key>ProductVersion</key>
+  <string>18.1</string>
+  <key>Profiles</key>
+  <array>
+    <dict>
+      <key>PayloadIdentifier</key>
+      <string>system.dateandtime.force_date_time_configuration_abc123-restrictions</string>
+    </dict>
+    <dict>
+      <key>PayloadIdentifier</key>
+      <string>system.web.contentfilter.basic.digital_health_restrictions</string>
+    </dict>
+    <dict>
+      <key>PayloadIdentifier</key>
+      <string>com.apple.webcontentfilter.basic-restrictions</string>
+    </dict>
+  </array>
+</dict>
+</plist>

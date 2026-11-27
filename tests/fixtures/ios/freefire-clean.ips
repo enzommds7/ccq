@@ -1,0 +1,11 @@
+{
+  "bundleID": "com.dts.freefiremax",
+  "procName": "FreeFireMAX",
+  "distributorID": "com.apple.AppStore",
+  "itemID": "1480516829",
+  "teamID": "98573T3W6L",
+  "usedImages": [
+    { "path": "/private/var/containers/Bundle/Application/AAAA-BBBB/FreeFireMAX.app/FreeFireMAX" },
+    { "path": "/System/Library/Frameworks/UIKit.framework/UIKit" }
+  ]
+}

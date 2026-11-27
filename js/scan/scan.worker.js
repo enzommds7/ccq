@@ -1,8 +1,9 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — WEB WORKER & ORQUESTRADOR STREAMING
+   ccq scan — WEB WORKER & ORQUESTRADOR STREAMING
    - Roda 100% fora da UI Thread no navegador e é importável no Node.js
    - Processa 1 entrada por vez em chunks de 1 MB com indexOf('\n')
    - Carrega catalog-rules.json sob demanda e pré-compila matcher uma única vez
+   - Suporta cancelamento cooperativo e liberação de estado entre análises
    ══════════════════════════════════════════════════════════════════ */
 import {
   DEFAULT_LIMITS,
@@ -51,6 +52,15 @@ export async function runForensicScan(inputs, options = {}) {
 
   const onProgress = options.onProgress || null;
   const onLog = options.onLog || null;
+  const signal = options.signal || null;
+
+  const checkCancelled = () => {
+    if (signal && signal.aborted) {
+      const err = new Error('Análise cancelada pelo usuário ou encerramento de sessão.');
+      err.code = 'SCAN_CANCELLED';
+      throw err;
+    }
+  };
 
   const emitEvent = (ev) => dedup.add(ev);
   const addSignal = (key, desc) => {
@@ -61,7 +71,9 @@ export async function runForensicScan(inputs, options = {}) {
     limits,
     coverage,
     onProgress,
+    signal,
     onEntry: async (entry) => {
+      checkCancelled();
       seenPaths.push(entry.path);
       const isIosFile = entry.format.startsWith('ios_') || entry.path.toLowerCase().includes('sysdiagnose');
 
@@ -139,14 +151,13 @@ export async function runForensicScan(inputs, options = {}) {
         (line, lineNo, prevLine, nextLine) => analyzer.feedLine(line, lineNo, prevLine, nextLine),
         {
           chunkSizeBytes: limits.chunkSizeBytes,
-          onChunkProgress: onProgress
-            ? (bytesRead, totalBytes) => {
-                if (totalBytes > limits.chunkSizeBytes) {
-                  const ratio = Math.min(1, bytesRead / totalBytes);
-                  onProgress(Math.min(94, Math.round(20 + ratio * 74)), `Streaming ${entry.path.split('/').pop()} (${Math.round(ratio * 100)}%)...`);
-                }
-              }
-            : null
+          onChunkProgress: (bytesRead, totalBytes) => {
+            checkCancelled();
+            if (onProgress && totalBytes > limits.chunkSizeBytes) {
+              const ratio = Math.min(1, bytesRead / totalBytes);
+              onProgress(Math.min(94, Math.round(20 + ratio * 74)), `Streaming ${entry.path.split('/').pop()} (${Math.round(ratio * 100)}%)...`);
+            }
+          }
         }
       );
 
@@ -189,12 +200,13 @@ const isWebWorkerContext =
 if (isWebWorkerContext) {
   let cachedCatalog = null;
   let cachedMatcher = null;
+  let activeScanSignal = null;
 
   const ensureCatalogAndMatcher = async () => {
     if (cachedCatalog && cachedMatcher) {
       return { catalog: cachedCatalog, matcher: cachedMatcher };
     }
-    const resp = await fetch(new URL('./catalog-rules.json', import.meta.url));
+    const resp = await fetch(new URL('./catalog-rules.json?v=5.1', import.meta.url));
     if (!resp.ok) {
       throw new Error(`Falha ao carregar catalog-rules.json (HTTP ${resp.status}).`);
     }
@@ -205,11 +217,24 @@ if (isWebWorkerContext) {
 
   self.onmessage = async (event) => {
     const msg = event && event.data;
-    if (!msg || msg.type !== 'START_SCAN') return;
+    if (!msg) return;
+
+    if (msg.type === 'CANCEL_SCAN') {
+      if (activeScanSignal) activeScanSignal.aborted = true;
+      return;
+    }
+
+    if (msg.type !== 'START_SCAN') return;
+
+    if (activeScanSignal) activeScanSignal.aborted = true;
+    const scanSignal = { aborted: false };
+    activeScanSignal = scanSignal;
 
     try {
-      self.postMessage({ type: 'PROGRESS', pct: 5, label: 'Inicializando catálogo forense v5.0 no Worker...' });
+      self.postMessage({ type: 'PROGRESS', pct: 5, label: 'Inicializando catálogo forense no Worker...' });
       const { catalog, matcher } = await ensureCatalogAndMatcher();
+      if (scanSignal.aborted) return;
+
       self.postMessage({
         type: 'LOG',
         prefix: 'WORKER',
@@ -221,13 +246,26 @@ if (isWebWorkerContext) {
         catalog,
         matcher,
         limits: msg.limits,
-        onProgress: (pct, label) => self.postMessage({ type: 'PROGRESS', pct, label }),
-        onLog: (prefix, text, cssClass = 'terminal-info') => self.postMessage({ type: 'LOG', prefix, msg: text, cssClass })
+        signal: scanSignal,
+        onProgress: (pct, label) => {
+          if (!scanSignal.aborted) self.postMessage({ type: 'PROGRESS', pct, label });
+        },
+        onLog: (prefix, text, cssClass = 'terminal-info') => {
+          if (!scanSignal.aborted) self.postMessage({ type: 'LOG', prefix, msg: text, cssClass });
+        }
       });
 
-      self.postMessage({ type: 'RESULT', report });
+      if (!scanSignal.aborted) {
+        self.postMessage({ type: 'RESULT', report });
+      }
     } catch (err) {
-      self.postMessage({ type: 'ERROR', message: err && err.message ? err.message : String(err) });
+      if (err && err.code === 'SCAN_CANCELLED') {
+        self.postMessage({ type: 'CANCELLED' });
+      } else if (!scanSignal.aborted) {
+        self.postMessage({ type: 'ERROR', message: err && err.message ? err.message : String(err) });
+      }
+    } finally {
+      if (activeScanSignal === scanSignal) activeScanSignal = null;
     }
   };
 }

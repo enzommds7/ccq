@@ -1,0 +1,13 @@
+[ro.boot.verifiedbootstate]: [green]
+[ro.boot.flash.locked]: [1]
+[ro.build.tags]: [release-keys]
+[service.adb.tcp.port]: [5555]
+[persist.adb.tcp.port]: [-1]
+[init.svc.adbd]: [running]
+_id:10 name=long_press_timeout pkg:com.android.shell value=400 default:400
+_id:11 name:long_press_timeout pkg:by4a.setedit22 value:150 default:400
+_id:12 name:touch_slop pkg:com.android.shell value:1
+_id:13 name:multi_press_timeout pkg:com.android.shell value:0
+_id:14 name:activity_starts_logging_enabled pkg:com.android.shell value:0
+_id:15 name:oem_custom_unknown_pref pkg:com.android.shell value:custom_val
+_id:16 name:broken_entry_no_value pkg:com.android.shell

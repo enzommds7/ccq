@@ -1,11 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE CORE — ÁUDIO WEB API & FEEDBACK HÁPTICO
+   ccq scan — ÁUDIO WEB API & FEEDBACK HÁPTICO
    ══════════════════════════════════════════════════════════════════ */
 import { showToast } from './ui-utils.js';
 
 export class SoundController {
   constructor() {
     this.ctx = null;
+    this.domBound = false;
     try {
       this.enabled = typeof localStorage !== 'undefined' && localStorage.getItem('cacique_sfx_enabled') === 'true';
     } catch (_) {
@@ -15,6 +16,8 @@ export class SoundController {
   }
 
   bindDom() {
+    if (this.domBound) return;
+    this.domBound = true;
     this.toggleBtn = document.getElementById('soundToggle');
     this.updateBtnState();
     if (this.toggleBtn) {
@@ -28,7 +31,7 @@ export class SoundController {
       if (AudioCtx) this.ctx = new AudioCtx();
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 

@@ -1,6 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════
-   CACIQUE SCAN v5.0 — SCAN UI CONTROLLER (THREAD PRINCIPAL LEVE)
+   ccq scan — SCAN UI CONTROLLER (THREAD PRINCIPAL LEVE)
    - Lazy-loads Web Worker (scan.worker.js) apenas quando o scan é iniciado
+   - Encerra Worker e libera memória/DOM no logout e em "Nova Análise"
    - Exibe Veredito, Eventos Únicos vs. Brutos, Cobertura separada de
      Índice Heurístico, filtros por estado/domínio e motivo técnico
    ══════════════════════════════════════════════════════════════════ */
@@ -24,15 +25,99 @@ let scanBusy = false;
 let currentScanMode = 'zip';
 let currentReport = null;
 let activeFilter = 'all';
+let authChecker = () => false;
+
+function terminateWorker() {
+  if (activeWorker) {
+    try {
+      activeWorker.onmessage = null;
+      activeWorker.onerror = null;
+      activeWorker.terminate();
+    } catch (_) {}
+    activeWorker = null;
+  }
+}
 
 function getOrCreateWorker() {
   if (activeWorker) return activeWorker;
-  activeWorker = new Worker(new URL('./scan.worker.js', import.meta.url), { type: 'module' });
+  activeWorker = new Worker(new URL('./scan.worker.js?v=5.1', import.meta.url), { type: 'module' });
   return activeWorker;
 }
 
+function clearScanDomAndState({ keepWorker = false } = {}) {
+  scanBusy = false;
+  currentReport = null;
+  activeFilter = 'all';
+
+  if (!keepWorker) {
+    terminateWorker();
+  }
+
+  const scanUploadBox = document.getElementById('scanUploadBox');
+  const scanTerminalWrap = document.getElementById('scanTerminalWrap');
+  const scanResults = document.getElementById('scanResults');
+  const terminalLines = document.getElementById('terminalLines');
+  const resultSummary = document.getElementById('resultSummary');
+  const scanDeviceCard = document.getElementById('scanDeviceCard');
+  const scanFilters = document.getElementById('scanFilters');
+  const resultDetails = document.getElementById('resultDetails');
+  const scanProgressFill = document.getElementById('scanProgressFill');
+  const scanProgressPercent = document.getElementById('scanProgressPercent');
+  const scanProgressLabel = document.getElementById('scanProgressLabel');
+  const terminalStatus = document.getElementById('terminalStatus');
+
+  if (scanUploadBox) {
+    scanUploadBox.style.display = 'block';
+    scanUploadBox.classList.remove('dragover');
+  }
+  if (scanTerminalWrap) scanTerminalWrap.style.display = 'none';
+  if (scanResults) scanResults.style.display = 'none';
+  if (terminalLines) terminalLines.innerHTML = '';
+  if (resultSummary) resultSummary.innerHTML = '';
+  if (scanDeviceCard) {
+    scanDeviceCard.innerHTML = '';
+    scanDeviceCard.style.display = 'none';
+  }
+  if (scanFilters) {
+    scanFilters.innerHTML = '';
+    scanFilters.style.display = 'none';
+  }
+  if (resultDetails) resultDetails.innerHTML = '';
+  if (scanProgressFill) scanProgressFill.style.width = '0%';
+  if (scanProgressPercent) scanProgressPercent.textContent = '0%';
+  if (scanProgressLabel) scanProgressLabel.textContent = 'Iniciando motor de análise...';
+  if (terminalStatus) {
+    terminalStatus.textContent = 'ANALISANDO';
+    terminalStatus.className = 'terminal-status-indicator';
+  }
+
+  ['scanFileInput', 'scanFolderInput', 'scanLooseInput'].forEach(id => {
+    const inp = document.getElementById(id);
+    if (inp) inp.value = '';
+  });
+}
+
+export function cancelActiveScan() {
+  if (activeWorker && scanBusy) {
+    try {
+      activeWorker.postMessage({ type: 'CANCEL_SCAN' });
+    } catch (_) {}
+  }
+  terminateWorker();
+  scanBusy = false;
+}
+
+export function resetScanSession() {
+  clearScanDomAndState({ keepWorker: false });
+}
+
 export function initScanUI({ isAdminAuthenticated }) {
-  if (initialized) return;
+  authChecker = typeof isAdminAuthenticated === 'function' ? isAdminAuthenticated : () => false;
+  if (initialized) {
+    // Ao re-autenticar após logout, garante painel limpo e pronto para nova análise
+    clearScanDomAndState({ keepWorker: false });
+    return;
+  }
   initialized = true;
 
   const scanUploadBox = document.getElementById('scanUploadBox');
@@ -313,7 +398,8 @@ export function initScanUI({ isAdminAuthenticated }) {
   }
 
   function processUploadedFiles(fileList) {
-    if (!isAdminAuthenticated()) {
+    if (!authChecker()) {
+      resetScanSession();
       lockScanDashboard();
       showToast('error', 'Acesso Restrito', 'Autentique-se com usuário e senha de ADM antes de escanear.');
       return;
@@ -325,16 +411,18 @@ export function initScanUI({ isAdminAuthenticated }) {
     }
 
     scanBusy = true;
+    currentReport = null;
     if (scanUploadBox) scanUploadBox.style.display = 'none';
     if (scanTerminalWrap) scanTerminalWrap.style.display = 'block';
     if (scanResults) scanResults.style.display = 'none';
+    if (resultDetails) resultDetails.innerHTML = '';
     if (terminalLines) terminalLines.innerHTML = '';
     if (terminalStatus) {
       terminalStatus.textContent = 'ANALISANDO (WORKER)';
       terminalStatus.className = 'terminal-status-indicator';
     }
 
-    logTerminal('SYS', 'Iniciando Web Worker v5.0 em modo streaming (UI Thread livre)...', 'terminal-info');
+    logTerminal('SYS', 'Iniciando Web Worker ccq scan em modo streaming (UI Thread livre)...', 'terminal-info');
     logTerminal('IO', `Enviando ${fileList.length} entrada(s) em streaming para o Worker...`, 'terminal-info');
     updateScanProgress(3, 'Inicializando Web Worker...');
     sfx.start();
@@ -343,11 +431,19 @@ export function initScanUI({ isAdminAuthenticated }) {
     const filesArray = Array.from(fileList);
 
     worker.onmessage = (e) => {
+      if (!authChecker()) {
+        resetScanSession();
+        return;
+      }
       const msg = e.data || {};
       if (msg.type === 'PROGRESS') {
         updateScanProgress(msg.pct || 0, msg.label || 'Analisando...');
       } else if (msg.type === 'LOG') {
         logTerminal(msg.prefix || 'LOG', msg.msg || '', msg.cssClass || 'terminal-info');
+      } else if (msg.type === 'CANCELLED') {
+        scanBusy = false;
+        clearFileInputs();
+        logTerminal('SYS', 'Análise cancelada.', 'terminal-info');
       } else if (msg.type === 'RESULT') {
         scanBusy = false;
         clearFileInputs();
@@ -398,6 +494,10 @@ export function initScanUI({ isAdminAuthenticated }) {
     };
 
     worker.onerror = (err) => {
+      if (!authChecker()) {
+        resetScanSession();
+        return;
+      }
       scanBusy = false;
       clearFileInputs();
       logTerminal('ERR', `Erro fatal no Worker: ${err.message || 'desconhecido'}`, 'terminal-err');
@@ -406,23 +506,31 @@ export function initScanUI({ isAdminAuthenticated }) {
         terminalStatus.className = 'terminal-status-indicator is-error';
       }
       sfx.error();
-      activeWorker?.terminate();
-      activeWorker = null;
+      terminateWorker();
     };
 
     worker.postMessage({ type: 'START_SCAN', files: filesArray });
   }
 
+  const triggerFilePicker = () => {
+    if (!authChecker()) {
+      resetScanSession();
+      lockScanDashboard();
+      showToast('error', 'Acesso Negado', 'Faça login com as credenciais de ADM para usar o scanner.');
+      return;
+    }
+    if (currentScanMode === 'zip') scanFileInput?.click();
+    else if (currentScanMode === 'folder') scanFolderInput?.click();
+    else scanLooseInput?.click();
+  };
+
   if (scanUploadBox) {
-    scanUploadBox.addEventListener('click', () => {
-      if (!isAdminAuthenticated()) {
-        lockScanDashboard();
-        showToast('error', 'Acesso Negado', 'Faça login com as credenciais de ADM para usar o scanner.');
-        return;
+    scanUploadBox.addEventListener('click', triggerFilePicker);
+    scanUploadBox.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerFilePicker();
       }
-      if (currentScanMode === 'zip') scanFileInput?.click();
-      else if (currentScanMode === 'folder') scanFolderInput?.click();
-      else scanLooseInput?.click();
     });
 
     scanUploadBox.addEventListener('dragover', (e) => {
@@ -435,7 +543,7 @@ export function initScanUI({ isAdminAuthenticated }) {
     scanUploadBox.addEventListener('drop', (e) => {
       e.preventDefault();
       scanUploadBox.classList.remove('dragover');
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         processUploadedFiles(e.dataTransfer.files);
       }
     });
@@ -457,7 +565,7 @@ export function initScanUI({ isAdminAuthenticated }) {
       const r = currentReport;
       const c = r.counters || {};
       const cov = r.coverage || {};
-      let txt = `🛡️ *RELATÓRIO FORENSE — CACIQUE SCAN v${r.engine_version}* 🛡️\n`;
+      let txt = `🛡️ *RELATÓRIO FORENSE — ccq scan v${r.engine_version}* 🛡️\n`;
       txt += `📌 Veredito: ${r.verdict.status}\n`;
       txt += `📦 Cobertura: ${(cov.status || '').toUpperCase()} (${cov.analyzed_files || 0} analisados | ${cov.unsupported_files?.length || 0} não suportados | ${cov.gaps?.length || 0} lacunas)\n`;
       txt += `📊 Eventos Únicos: ${c.unique_events || 0} / Brutos: ${c.raw_occurrences || 0} | Corroborados: ${c.corroborated_evidence || 0} | Revisão: ${c.anomaly_review || 0} | Índice Heurístico: ${r.heuristic_index || 0}/100\n\n`;
@@ -468,17 +576,20 @@ export function initScanUI({ isAdminAuthenticated }) {
         txt += `  Motivo: ${ev.interpretation}\n`;
         txt += `  Ação: ${ev.recommended_action}\n\n`;
       }
-      txt += `----------------------------------\nTribo Oficial: https://enzommds7.github.io/ccq/`;
-      performCopy(txt, scanBtnCopyReport, 'Relatório Copiado!', sfx);
+      txt += `----------------------------------\nccq scan: https://enzommds7.github.io/ccq/`;
+      performCopy(txt, scanBtnCopyReport, 'Relatório Copiado!', sfx).catch((err) => {
+        console.error('[ccq scan copy]', err);
+      });
     });
   }
 
   if (scanBtnNew) {
     scanBtnNew.addEventListener('click', () => {
-      if (scanUploadBox) scanUploadBox.style.display = 'block';
-      if (scanTerminalWrap) scanTerminalWrap.style.display = 'none';
-      if (scanResults) scanResults.style.display = 'none';
-      clearFileInputs();
+      // Libera relatório anterior e DOM grande; se houver Worker travado/ocupado, encerra-o
+      if (scanBusy) {
+        cancelActiveScan();
+      }
+      clearScanDomAndState({ keepWorker: true });
       sfx.tick(700);
     });
   }
