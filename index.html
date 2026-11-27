@@ -126,6 +126,14 @@
     #header .nav-brand-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
     #header .nav-brand { position: static; }
     #header .sound-toggle { background: #000; }
+    #scan .section-header { align-items: center; text-align: center; }
+    #scan .ccq-identity { width: 100%; max-width: none; text-align: center; }
+    #scan .ccq-emblem { margin-left: auto; margin-right: auto; }
+    #scan .section-header h2 { width: 100%; max-width: none; font-size: clamp(32px, 6.2vw, 108px); white-space: nowrap; text-transform: uppercase; text-align: center; }
+    #scan .section-header p { margin-left: auto; margin-right: auto; }
+    #scan .ccq-formats { justify-content: center; }
+    #scan .ccq-signature { text-align: center; }
+    @media (max-width: 760px) { #scan .section-header h2 { font-size: clamp(32px, 9vw, 64px); } }
   </style>
 </head>
 
@@ -178,7 +186,7 @@
           <div class="ccq-identity">
             <img src="logo.webp" alt="" width="104" height="104" class="ccq-emblem">
             <span class="section-label">MOBILE FORENSICS / 5.1</span>
-            <h2>ccq scan<span class="ccq-period">.</span></h2>
+            <h2>CCQ SCAN<span class="ccq-period">.</span></h2>
             <p class="ccq-motto">A evidência acima da suspeita.</p>
             <p>Análise forense de arquivos Android e iOS.</p>
             <div class="ccq-formats"><span>ANDROID / BUGREPORT</span><span>iOS / SYSDIAGNOSE</span></div>
