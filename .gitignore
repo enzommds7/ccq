@@ -18,3 +18,11 @@ api/app.py
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Local authentication secrets (never deploy to GitHub Pages)
+/secrets/
+/js/core/auth.local.js
+/js/core/auth.secrets.js
+/credentials.json
+*.pem
+*.key
