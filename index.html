@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ccq scan</title>
+  <title>Ccq Scan</title>
   <meta name="description" content="ccq scan — análise forense de dispositivos Android e iOS.">
   <meta name="theme-color" content="#0d0e12">
   <link rel="canonical" href="https://enzommds7.github.io/ccq/">
@@ -85,6 +85,42 @@
     .password-toggle svg { width: 20px; height: 20px; pointer-events: none; }
     .password-toggle .password-slash { display: none; }
     .password-toggle[aria-pressed="true"] .password-slash { display: block; }
+  
+    html, body, #scan, #header { background: #000; }
+    #header { border-bottom: 1px solid #a61920; }
+    #scan > .container:has(#scanDashboardView[hidden]) { max-width: none; width: 100%; padding: 0; gap: 0; grid-template-columns: minmax(0, 1fr) minmax(340px, 29%); align-items: stretch; min-height: calc(100vh - 100px); }
+    #scan:has(#scanDashboardView[hidden]) { padding: 76px 0 0; }
+    #scan .section-header { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: center; padding: clamp(32px, 7vw, 110px); }
+    #scan .section-header::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: linear-gradient(90deg, transparent 49%, #5a1115 50%, transparent 51%), linear-gradient(0deg, transparent 49%, #5a1115 50%, transparent 51%); background-size: 76px 76px; opacity: .12; mask-image: radial-gradient(ellipse at 70% 45%, black, transparent 75%); }
+    #scan .section-header::after { content: ""; position: absolute; z-index: -1; pointer-events: none; top: 0; left: 0; right: 0; height: 1px; background: #a61920; opacity: .3; animation: ccq-sweep 12s linear infinite; }
+    @keyframes ccq-sweep { from { top: 0; } to { top: 100%; } }
+    .ccq-emblem { display: block; object-fit: contain; margin-bottom: 32px; }
+    #scan .section-header h2 { font-size: clamp(56px, 8vw, 120px); letter-spacing: -.065em; margin: 14px 0; }
+    .ccq-period { color: #c71920; }
+    #scan .section-header .ccq-motto { color: #eee; font-size: clamp(19px, 2vw, 28px); }
+    .ccq-formats { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 32px; font: 11px Geist Mono, monospace; color: #aaa; }
+    .ccq-formats span { border-left: 2px solid #a61920; padding-left: 10px; }
+    .ccq-signature { margin-top: 64px; }
+    #scan .ccq-signature p { font-size: 14px; color: #ddd; }
+    .ccq-signature span, .ccq-signature a { display: block; margin-top: 8px; font: 10px Geist Mono, monospace; color: #999; letter-spacing: .06em; }
+    .ccq-signature a { margin-top: 22px; text-decoration: none; }
+    .ccq-signature a:hover { color: #eee; }
+    #scan > .container:has(#scanDashboardView[hidden]) .scan-wrapper { display: flex; align-items: center; padding: 40px clamp(24px, 3vw, 52px); border-left: 1px solid #292929; background: #000; }
+    .ccq-login-kicker, .ccq-field-label { display: block; font: 11px Geist Mono, monospace; letter-spacing: .08em; color: #aaa; margin-bottom: 10px; }
+    .ccq-login-kicker { color: #e5484d; margin-bottom: 24px; }
+    #scan .scan-input { background: #000; border-color: #454545; }
+    #scan .scan-btn-login { background: #a61920; }
+    #scan .scan-btn-login:hover { background: #c71920; }
+    .ccq-local { font-size: 11px; color: #999; margin-top: 24px; }
+    #scan .scan-dashboard, #scan .scan-upload-box { background: #000; }
+    @media (prefers-reduced-motion: reduce) { #scan .section-header::after { animation: none; } }
+    @media (max-width: 760px) {
+      #scan > .container:has(#scanDashboardView[hidden]) { grid-template-columns: 1fr; }
+      #scan .section-header { padding: 36px 24px; }
+      .ccq-emblem { width: 64px; height: 64px; margin-bottom: 20px; }
+      .ccq-signature { margin-top: 30px; }
+      #scan > .container:has(#scanDashboardView[hidden]) .scan-wrapper { border-left: 0; border-top: 1px solid #292929; padding: 32px 24px; }
+    }
   </style>
 </head>
 
@@ -134,9 +170,15 @@
 <section class="scan" id="scan">
       <div class="container">
         <header class="section-header">
-          <span class="section-label">MOBILE FORENSICS</span>
-          <h2>Scanner forense</h2>
-          <p>Análise forense de arquivos Android e iOS.</p>
+          <div class="ccq-identity">
+            <img src="logo.webp" alt="" width="104" height="104" class="ccq-emblem">
+            <span class="section-label">MOBILE FORENSICS / 5.1</span>
+            <h2>ccq scan<span class="ccq-period">.</span></h2>
+            <p class="ccq-motto">A evidência acima da suspeita.</p>
+            <p>Análise forense de arquivos Android e iOS.</p>
+            <div class="ccq-formats"><span>ANDROID / BUGREPORT</span><span>iOS / SYSDIAGNOSE</span></div>
+          </div>
+          <div class="ccq-signature"><p>“Examinai tudo. Retende o bem.”</p><span>1 TESSALONICENSES 5:21</span><a href="https://github.com/enzommds7" target="_blank" rel="noopener noreferrer">DESENVOLVIDO POR ENZOMMDS7 / 2026</a></div>
         </header>
 
         <div class="scan-wrapper">
@@ -148,12 +190,12 @@
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </figure>
-            <h3>Acesso restrito</h3>
+            <span class="ccq-login-kicker">01 / AUTENTICAÇÃO</span><h3>Acesso restrito</h3>
             <p class="scan-hint">Entre com suas credenciais de operador.</p>
-            <input type="text" id="scanUser" placeholder="Usuário" aria-label="Usuário" class="scan-input" autocomplete="username">
-            <div class="password-field"><input type="password" id="scanPass" placeholder="Senha" aria-label="Senha" class="scan-input"
+            <label class="ccq-field-label" for="scanUser">Usuário</label><input type="text" id="scanUser" placeholder="Usuário" aria-label="Usuário" class="scan-input" autocomplete="username">
+            <label class="ccq-field-label" for="scanPass">Senha</label><div class="password-field"><input type="password" id="scanPass" placeholder="Senha" aria-label="Senha" class="scan-input"
               autocomplete="current-password"><button type="button" class="password-toggle" aria-controls="scanPass" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path class="password-slash" d="M3 3l18 18"/></svg></button></div>
-            <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Acessar scanner</button>
+            <button class="btn btn-primary scan-btn-login" id="scanBtnLogin">Acessar scanner</button><p class="ccq-local">Arquivos processados localmente no navegador.</p>
           </article>
 
           <!-- Dashboard do Scanner Liberado -->
