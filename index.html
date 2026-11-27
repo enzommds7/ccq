@@ -121,6 +121,11 @@
       .ccq-signature { margin-top: 30px; }
       #scan > .container:has(#scanDashboardView[hidden]) .scan-wrapper { border-left: 0; border-top: 1px solid #292929; padding: 32px 24px; }
     }
+    #header, #header::before, #header::after, #header nav.container { background: #000 !important; background-image: none !important; }
+    #header nav.container { position: relative; }
+    #header .nav-brand-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+    #header .nav-brand { position: static; }
+    #header .sound-toggle { background: #000; }
   </style>
 </head>
 
@@ -132,7 +137,7 @@
           <source srcset="logo.webp" type="image/webp">
           <img src="logo.jpg" alt="Logo ccq scan" width="34" height="34" class="nav-logo">
         </picture>
-        <span class="nav-brand-title">ccq scan</span>
+        <span class="nav-brand-title">CCQ SCAN</span>
       </a>
 
       
